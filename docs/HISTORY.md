@@ -1,0 +1,35 @@
+# 작업 이력 (HISTORY)
+
+이 프로젝트에서 진행한 작업을 시간순으로 기록한다.
+다른 사람이나 다른 AI가 이어받을 때 "지금까지 무슨 일이 있었는지"를 여기서 파악한다.
+
+> 규칙: 의미 있는 변경(배포 방식 변경, 데이터 구조 변경, 기능 추가/수정)을 할 때마다
+> 이 문서 맨 위 "변경 이력"에 새 항목을 추가한다. 날짜·무엇을·왜 순으로 적는다.
+
+---
+
+## 변경 이력 (최신이 위)
+
+### 2026-09-25 — 문서화 체계 수립
+- **무엇**: `.kiro/steering/`(product/tech/structure)와 `docs/`(HISTORY, domain-sangbogi) 문서를 신설.
+- **왜**: 다른 사람/AI가 프로젝트를 이어받아도 맥락을 쉽게 잡고, 변경 시마다 최신 상태를 유지하기 위해.
+- **영향**: 코드(`index.html`) 변경 없음. 문서만 추가.
+
+### 2026-09-25 — Netlify → GitHub Pages 이전 완료
+- **무엇**:
+  - 기존 Netlify 배포본(`eunhodang.netlify.app`)의 `index.html`을 그대로 가져와 저장소로 정리.
+  - GitHub 저장소 `leftdrawer/calends_prep`(Public) 생성, `main` 브랜치에 커밋·push.
+  - GitHub Pages 활성화 → https://leftdrawer.github.io/calends_prep/
+  - `.gitignore`, `.nojekyll`, `README.md` 추가.
+  - 동작 확인 후 Netlify 사이트 삭제(현재 `eunhodang.netlify.app`은 404).
+- **왜**: 사용자가 GitHub Pages로 완전히 갈아타기를 원함.
+- **데이터 이관 여부**: 불필요. 데이터는 Supabase에 있어 배포처와 무관하게 그대로 유지됨.
+- **확인**: 새 주소에서 기존 기록이 정상 표시됨을 사용자가 확인.
+
+---
+
+## 배경 사실 (변하지 않는 것들)
+- 앱은 원래 Netlify + Supabase 조합으로 운영되고 있었다.
+- `index.html` 안에 이미 "깃허브 페이지로 옮길 때 REMOTE 세 줄만 채우면 된다"는 주석이 있어,
+  제작자가 처음부터 이전을 염두에 두고 만들었다.
+- 데이터는 화면과 분리되어 Supabase에 저장되므로, 배포 위치를 바꿔도 기록은 안전하다.
