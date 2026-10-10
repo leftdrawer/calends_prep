@@ -20,6 +20,22 @@
   - 프로젝트 `CLAUDE.md`와 `DESIGN.md`(VoltAgent/awesome-design-md의 Mastercard 분석본, MIT) 추가.
 - **왜**: 돌빛 안내문은 한지 바탕에서 거의 읽히지 않았고, 작은 단추는 손끝으로 누르기 어려웠음. 40px 기준은 `DESIGN.md` 8장 Touch Targets에서 가져옴. 색·글꼴·모서리는 기존 토큰을 그대로 둠.
 - **영향**: `index.html` CSS만 바뀜. 데이터·저장 키·로직 변경 없음.
+- **어떻게 고쳤나 (선택자별 전 → 후)**:
+
+  | 위치 | 전 | 후 | 근거 |
+  |---|---|---|---|
+  | `:root` `--fill` | `var(--fill)` (자기 참조라 무효 → 바탕 투명) | `rgba(190,183,171,.26)` | 버그. 값은 `--fill-2`(.38)보다 옅게 새로 정함 |
+  | `.note` 글자 | `--stone` | `--ink-2` | 대비 1.74 → 6.18 |
+  | `.note::before` (※) | `--stone` | `--ink-3` | 장식 기호라 한 단계 옅게 |
+  | `.pnote`, `.foothint`, `#guestbadge` | `--stone` | `--ink-2` | 정보를 담은 글자 |
+  | `.mepill .txt2 em`, `.gate-or span`, `.hat`, `.ndt.none` | `--stone` | `--ink-3` | 힌트. 대비 3.28로 AA(4.5) 미달인 채로 둠 |
+  | `.monthnav button` | 34×34px, `--stone` | 44×44px, `--ink-2` | DESIGN.md 8장 |
+  | `.seg button`, `.shoprow button`, `.isrcpick button`, `.imore`, `.isrc`, `.adm`, `.npick`, `.sheet-pick button` | 높이 약 22~39px | `min-height:40px` | DESIGN.md 8장 "40px 아래 없음" |
+  | `button:focus-visible` | `.who button`에만 있었음 | 모든 단추에 놋빛 2px 테 | 기존 `.who button` 규칙을 넓힘 |
+  | `body` | 줄바꿈 기본값 | `word-break:keep-all; overflow-wrap:break-word` | 한국어 낱말 단위 줄바꿈 |
+
+- **확인 방법**: 로컬 서버(`python -m http.server`)를 띄우고 Playwright(Chromium, 390×844, 손님 보기)로 전후를 찍어 비교함. 대비 값은 WCAG 2 상대 휘도 공식으로 계산함. 주인 전용 카드는 화면으로 확인하지 못함(같은 클래스라 함께 바뀜).
+- **남은 문제 (미해결)**: 첫 화면 `.gate-mark`의 `恩熩堂`은 `Gowun Batang`으로 지정돼 있지만, Google Fonts의 Gowun Batang에는 한자가 하나도 없음(유니코드 범위 확인 결과 恩·熩·堂 모두 없음). 그래서 기기마다 시스템 글꼴로 대신 그려짐. Google Fonts의 Noto Serif KR/TC/SC/JP도 `熩`(U+71A9)은 빠져 있음. 고칠 방법은 아직 정하지 않음.
 
 ### 2026-09-25 — 추석 상·차례 규칙 확정
 - **무엇**: 만연당 선생님의 카페 글을 근거로 추석 상차림·차례 규칙을 확정하고
