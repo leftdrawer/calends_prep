@@ -7,6 +7,8 @@
 - `index.html` — 앱 본체 (HTML + 인라인 CSS + 인라인 JS)
 - `.nojekyll` — GitHub Pages 정적 서빙용 빈 파일
 - `README.md` — 저장소 소개
+- `CLAUDE.md` — Claude Code가 읽는 프로젝트 지침 (디자인 기준·프론트엔드 참고 자료)
+- `DESIGN.md` — 아직 정하지 않은 디자인 부분을 채울 때 보는 외부 디자인 파일 (원문 그대로, 따르는 범위는 `CLAUDE.md`)
 - `.kiro/steering/` — Kiro가 매 대화에서 읽는 프로젝트 지침 (이 폴더)
 - `docs/` — 사람이 읽는 상세 기록 (작업 이력, 도메인 로직)
 
