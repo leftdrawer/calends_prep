@@ -69,22 +69,15 @@ button{font-family:inherit;letter-spacing:inherit}
 .gate h2{font-size:25px;font-weight:700;letter-spacing:-.03em;line-height:1.3;margin:0 0 12px;text-align:center}
 .gate-sub{font-size:14px;line-height:1.75;color:var(--ink-2);margin:0 0 30px;text-align:center;font-weight:400}
 .who{display:flex;flex-direction:column;gap:10px;margin-bottom:4px}
-.pindots{display:flex;justify-content:center;gap:13px;margin:4px 0 0}
-.pindots i{width:12px;height:12px;border-radius:50%;background:transparent;
-  border:1.5px solid var(--stone);transition:.18s}
-.pindots i.on{background:var(--ink);border-color:var(--ink);transform:scale(1.06)}
-.pinerr{text-align:center;font-size:12.5px;font-weight:600;color:var(--cinnabar-deep);
-  margin:14px 0 6px;min-height:18px}
-.pinpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
-.pinpad button{border:1px solid var(--line);background:var(--card);border-radius:16px;
-  font-family:inherit;font-size:23px;font-weight:600;color:var(--ink);
-  padding:15px 0;cursor:pointer;transition:transform .1s, background .15s}
-.pinpad button:active{transform:scale(.94);background:var(--fill)}
-.pinpad button.wide{font-size:14px;font-weight:600;color:var(--ink-2)}
-.pinpad button.blank{border:0;background:transparent;cursor:default}
-.shake{animation:shk .34s}
-@keyframes shk{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}
-  40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+#guestbadge{font-size:11px;letter-spacing:.22em;text-indent:.22em;color:var(--stone);
+  border:1px solid var(--line);border-radius:999px;padding:6px 12px;background:var(--card);
+  white-space:nowrap}
+.otprow{display:flex;gap:8px;margin:0 0 10px}
+.otprow input{flex:1;min-width:0;margin:0}
+.otprow .btn{width:auto;flex:1;margin:0}
+#otpemail{margin-bottom:10px}
+#otperr{text-align:center;font-size:12.5px;font-weight:600;color:var(--cinnabar-deep);
+  margin:8px 0 4px;min-height:18px}
 .who button{display:flex;align-items:center;justify-content:space-between;width:100%;
   background:var(--card);border:1px solid rgba(190,183,171,.28);border-radius:18px;box-shadow:var(--shadow);
   color:var(--ink);font-size:17px;font-weight:600;padding:19px 22px;cursor:pointer;
@@ -373,12 +366,18 @@ h1{font-size:32px;font-weight:700;letter-spacing:-.035em;line-height:1.28;margin
     <p class="gate-mark">恩熩堂</p>
     <p class="gate-title">은호당</p>
     <div class="gate-rule"></div>
-    <h2>번호를 눌러주세요</h2>
-    <p class="gate-sub">여섯 자리입니다.</p>
-    <div class="pindots" id="pindots" aria-live="polite"></div>
-    <p class="pinerr" id="pinerr">&nbsp;</p>
-    <div class="pinpad" id="pinpad"></div>
-    <button class="btn ghost" id="pinback">돌아가기</button>
+    <h2>주인 확인</h2>
+    <p class="gate-sub">이메일로 여섯 자리 번호를 보내드립니다.<br>한 번 열면 이 기기에서는 다시 묻지 않습니다.</p>
+    <input type="email" id="otpemail" placeholder="이메일 주소" aria-label="이메일 주소" autocomplete="email">
+    <div class="otprow"><button class="btn solid" id="otpsend">인증번호 받기</button></div>
+    <div id="otpentering" hidden>
+      <div class="otprow">
+        <input type="text" id="otpcode" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="여섯 자리 번호" aria-label="인증번호">
+        <button class="btn solid" id="otpverify">확인</button>
+      </div>
+    </div>
+    <p id="otperr">&nbsp;</p>
+    <button class="btn ghost" id="otpback">돌아가기</button>
   </div>
 </div>
 
@@ -407,6 +406,7 @@ h1{font-size:32px;font-weight:700;letter-spacing:-.035em;line-height:1.28;margin
       <span class="ini" id="meini"></span>
       <span class="txt2"><b id="mename"></b><em>눌러서 사람 바꾸기</em></span>
     </button>
+    <span id="guestbadge" hidden>보기 전용</span>
   </div>
 
   <div class="monthnav">
@@ -674,7 +674,7 @@ const REMOTE = {
   table:'sangbogi'
 };
 const HAS_SB = () => !!(REMOTE.url && REMOTE.key);
-const sbHead = () => ({apikey:REMOTE.key, Authorization:'Bearer '+REMOTE.key});
+const sbHead = () => ({apikey:REMOTE.key, Authorization:'Bearer '+(sbToken()||REMOTE.key)});
 
 const store = {
   async get(k){
@@ -690,9 +690,11 @@ const store = {
   },
   async set(k,v){
     if(HAS_SB()){
-      const r=await fetch(REMOTE.url+'/rest/v1/'+REMOTE.table,{method:'POST',
+      const post=()=>fetch(REMOTE.url+'/rest/v1/'+REMOTE.table,{method:'POST',
         headers:Object.assign({'Content-Type':'application/json',Prefer:'resolution=merge-duplicates'},sbHead()),
         body:JSON.stringify({key:k,value:v,updated_at:new Date().toISOString()})});
+      let r=await post();
+      if(r.status===401&&sbUser&&await sbRefresh()) r=await post();
       if(!r.ok) throw new Error('set '+r.status);
       return true;
     }
@@ -796,6 +798,7 @@ function logDiff(c, before, who){
   c.hist=c.hist.slice(0,300);
 }
 function writeCycle(mutate){
+  if(!canWrite()){ setStatus('보기 전용입니다. 고치려면 은호당으로 들어가 주세요.'); return; }
   const key=keyNow();
   LOCAL[key]=normalise(LOCAL[key]);
   const before=snapshot(LOCAL[key]);
@@ -1424,7 +1427,7 @@ function renderList(el,items,withStock,verb){
     row.append(txt,tick); el.appendChild(row);
   });
 }
-function isAdmin(){return me==='은호당';}
+function isAdmin(){return me==='은호당'&&isOwnerSession();}
 
 /* ── 기록판 (은호당 전용) ─────────────────────────────
    누가 무엇을 언제 바꿨는지 보여주고, 담당을 다른 사람으로
@@ -1497,6 +1500,8 @@ function renderSheet(){
 function applyRole(){
   const admin=isAdmin();
   document.querySelectorAll('.adminonly').forEach(el=>{ el.hidden = !admin; });
+  const gb=document.getElementById('guestbadge');
+  if(gb) gb.hidden=canWrite();
 }
 function render(){
   applyRole();
@@ -1577,15 +1582,15 @@ async function loadLog(){
 
 /* ── 이름 ── */
 function askName(){
-  pin=''; unlocked=false; showLock(false);
+  showLock(false);
   document.getElementById('gatecancel').hidden = !me;
   document.getElementById('gate').hidden=false;
   document.getElementById('app').hidden=true;
 }
 async function setName(n){
   n=(n||'').trim(); if(!n) return;
-  if(n==='은호당' && !unlocked){
-    /* 문을 먼저 열어야 번호판이 보입니다.
+  if(n==='은호당' && !isOwnerSession()){
+    /* 주인 확인을 먼저 마쳐야 들어갈 수 있습니다.
        이 줄이 없어서 예전에 은호당으로 들어간 기기가 빈 화면으로 떴습니다. */
     document.getElementById('gate').hidden=false;
     document.getElementById('app').hidden=true;
@@ -1604,55 +1609,92 @@ async function setName(n){
   document.getElementById('app').hidden=false;
   start();
 }
-/* ── 은호당 자물쇠 ─────────────────────────────────────
-   숫자판을 화면에 그려 띄웁니다. 기기 자판을 부르지 않으니
-   문자가 섞여 들어올 일이 없고 한 손으로 누르기 좋습니다.
+/* ── 주인 확인 (이메일 인증번호) ─────────────────────────
+   소스 안에 박혀 있던 여섯 자리 번호는 누구나 볼 수 있어
+   진짜 자물쇠가 아니었습니다. 이제 주인의 손은 이메일로
+   날아오는 여섯 자리 번호로 확인합니다. 한 번 열면
+   이 기기에 열쇠(토큰)가 남아 다음부터는 묻지 않습니다.
+   열쇠가 있으면 Authorization에 열쇠를 싣고,
+   없으면 손님으로 읽습니다.
    ──────────────────────────────────────────────────── */
-const PIN='102938';
-let pin='', unlocked=false;
+const OWNER_EMAIL='phlogos1@gmail.com';
+const SB_SESS_KEY='sangbogi:owner_session';
+let sbUser=null;
+function sbSessionLoad(){ try{ const s=JSON.parse(localStorage.getItem(SB_SESS_KEY)); if(s&&s.access_token) sbUser=s; }catch(e){} }
+function sbSessionSave(){ try{ localStorage.setItem(SB_SESS_KEY,JSON.stringify(sbUser)); }catch(e){} }
+function sbSessionClear(){ sbUser=null; try{ localStorage.removeItem(SB_SESS_KEY); }catch(e){} }
+function sbToken(){ return sbUser&&sbUser.access_token; }
+function isOwnerSession(){ const e=sbUser&&sbUser.email; return !!e&&e.toLowerCase()===OWNER_EMAIL; }
+/* 손님 화면과 주인 화면의 갈림길. 지금은 주인만 고칩니다. */
+function canWrite(){ return isOwnerSession(); }
+async function sbAuth(path,body){
+  const r=await fetch(REMOTE.url+'/auth/v1'+path,{method:'POST',
+    headers:{apikey:REMOTE.key,'Content-Type':'application/json'},
+    body:JSON.stringify(body)});
+  let j=null; try{ j=await r.json(); }catch(e){}
+  if(!r.ok) throw new Error((j&&(j.msg||j.error_description))||('auth '+r.status));
+  return j||{};
+}
+async function sbRefresh(){
+  if(!sbUser||!sbUser.refresh_token) return false;
+  try{
+    const j=await sbAuth('/token?grant_type=refresh_token',{refresh_token:sbUser.refresh_token});
+    sbUser.access_token=j.access_token;
+    if(j.refresh_token) sbUser.refresh_token=j.refresh_token;
+    sbUser.expires_at=Date.now()+(j.expires_in||3600)*1000;
+    sbSessionSave(); return true;
+  }catch(e){ sbSessionClear(); return false; }
+}
+async function ensureSession(){
+  if(!sbUser) return false;
+  if(!sbUser.expires_at||Date.now()>sbUser.expires_at-60000) return await sbRefresh();
+  return true;
+}
+function otpErr(m){ const el=document.getElementById('otperr'); if(el) el.innerHTML=m||'&nbsp;'; }
 function showLock(on){
   document.querySelector('#gate .card-in').hidden = on;
   document.getElementById('lockpane').hidden = !on;
-  if(on){ pin=''; drawPin(); document.getElementById('pinerr').innerHTML='&nbsp;'; }
-}
-function drawPin(){
-  const el=document.getElementById('pindots'); el.innerHTML='';
-  for(let i=0;i<PIN.length;i++){
-    const d=document.createElement('i');
-    if(i<pin.length) d.className='on';
-    el.appendChild(d);
-  }
-  el.setAttribute('aria-label', pin.length+'자리 눌렀습니다');
-}
-function pinPush(n){
-  if(pin.length>=PIN.length) return;
-  pin+=n; drawPin();
-  if(pin.length===PIN.length){
-    if(pin===PIN){ unlocked=true; showLock(false); setName('은호당'); }
-    else{
-      const p=document.getElementById('lockpane');
-      document.getElementById('pinerr').textContent='번호가 맞지 않습니다';
-      p.classList.remove('shake'); void p.offsetWidth; p.classList.add('shake');
-      pin=''; setTimeout(drawPin,120);
-    }
+  if(on){
+    otpErr('');
+    document.getElementById('otpentering').hidden=true;
+    const em=document.getElementById('otpemail');
+    if(em&&!em.value) em.value=OWNER_EMAIL;
   }
 }
-(function buildPad(){
-  const pad=document.getElementById('pinpad');
-  ['1','2','3','4','5','6','7','8','9'].forEach(n=>{
-    const b=document.createElement('button'); b.textContent=n;
-    b.onclick=()=>pinPush(n); pad.appendChild(b);
-  });
-  const blank=document.createElement('button'); blank.className='blank'; blank.disabled=true;
-  const zero=document.createElement('button'); zero.textContent='0'; zero.onclick=()=>pinPush('0');
-  const del=document.createElement('button'); del.className='wide'; del.textContent='지우기';
-  del.onclick=()=>{ pin=pin.slice(0,-1); drawPin(); };
-  pad.append(blank, zero, del);
-})();
-document.getElementById('pinback').onclick=()=>showLock(false);
+async function otpSend(){
+  const email=(document.getElementById('otpemail').value||'').trim();
+  if(email.indexOf('@')<0){ otpErr('이메일 주소를 확인해주세요.'); return; }
+  otpErr('보내는 중입니다…');
+  try{
+    await sbAuth('/otp',{email:email,create_user:false});
+    document.getElementById('otpentering').hidden=false;
+    otpErr('메일에서 여섯 자리 번호를 확인해주세요.');
+    document.getElementById('otpcode').focus();
+  }catch(e){ otpErr('보내지 못했습니다. 주소를 확인해주세요.'); }
+}
+async function otpVerify(){
+  const email=(document.getElementById('otpemail').value||'').trim();
+  const token=(document.getElementById('otpcode').value||'').trim();
+  if(token.length<6){ otpErr('여섯 자리 번호를 입력해주세요.'); return; }
+  otpErr('확인하는 중입니다…');
+  try{
+    const j=await sbAuth('/verify',{type:'email',email:email,token:token});
+    const mail=String((j.user&&j.user.email)||email).toLowerCase();
+    if(mail!==OWNER_EMAIL){ otpErr('주인으로 등록된 이메일이 아닙니다.'); return; }
+    sbUser={email:mail,access_token:j.access_token,
+      refresh_token:j.refresh_token,expires_at:Date.now()+(j.expires_in||3600)*1000};
+    sbSessionSave();
+    showLock(false);
+    setName('은호당');
+  }catch(e){ otpErr('번호가 맞지 않습니다. 다시 확인해주세요.'); }
+}
+document.getElementById('otpsend').onclick=otpSend;
+document.getElementById('otpverify').onclick=otpVerify;
+document.getElementById('otpcode').addEventListener('keydown',e=>{if(e.key==='Enter')otpVerify();});
+document.getElementById('otpback').onclick=()=>showLock(false);
 
 document.querySelectorAll('.who button').forEach(b=>b.onclick=()=>{
-  if(b.dataset.name==='은호당'){ showLock(true); return; }
+  if(b.dataset.name==='은호당'&&!isOwnerSession()){ showLock(true); return; }
   setName(b.dataset.name);
 });
 document.getElementById('otherbtn').onclick=()=>setName(document.getElementById('othername').value);
@@ -1699,12 +1741,14 @@ function start(){
   window.addEventListener('pagehide',()=>{ flush(); });
 }
 (async function init(){
+  sbSessionLoad();
+  try{ await ensureSession(); }catch(e){}
   try{
     const r=await store.getMine('sangbogi:me');
     if(r){
       const v=JSON.parse(r.value);
-      /* 은호당은 번호를 받아야 하니 자동으로 들이지 않습니다.
-         어머니가 이 기기를 열었을 때 번호판이 먼저 뜨면 안 되므로
+      /* 은호당은 주인 확인을 마쳐야 하니 자동으로 들이지 않습니다.
+         어머니가 이 기기를 열었을 때 확인판이 먼저 뜨면 안 되므로
          이름 고르는 판을 먼저 띄웁니다. */
       if(v && v.name && v.name!=='은호당') return setName(v.name);
     }
