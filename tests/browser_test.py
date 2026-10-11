@@ -396,7 +396,7 @@ class BrowserRegression(unittest.TestCase):
     def test_rice_offerings_appear_each_first_day_and_stay_private(self):
         page, fixture = self.open_page()
         self.login(page)
-        names = ("소당 밥공양", "중당 밥공양", "육당 밥공양")
+        names = ("소당 밥공양", "중당 밥공양", "육당 밥공양", "건립 밥공양")
         for month in range(1, 13):
             self.select_month(page, month)
             expect(page.locator("#rice-offering-card")).to_be_visible()
@@ -404,18 +404,20 @@ class BrowserRegression(unittest.TestCase):
                 expect(page.get_by_role("checkbox", name=name, exact=True)).to_have_attribute("aria-checked", "false")
             expect(page.locator("#tiers [data-offering]")).to_have_count(3)
             expect(page.locator("#tiers [data-offering].on")).to_have_count(0)
+            expect(page.locator('#geollip-pills [data-offering="rice-offering-geollip"]')).to_have_class("pill")
             expect(page.locator("#total")).to_have_text("/18")
         self.select_month(page, 5, leap=True, year=2028)
-        expect(page.locator("#rice-offering-card [role=checkbox]")).to_have_count(3)
+        expect(page.locator("#rice-offering-card [role=checkbox]")).to_have_count(4)
         self.select_month(page, 9)
         page.locator('#eventnav [data-event="jungyang"]').click()
         expect(page.locator("#offering-prep")).to_be_empty()
         expect(page.locator("#tiers [data-offering]")).to_have_count(0)
+        expect(page.locator("#geollip-pills [data-offering]")).to_have_count(0)
         page.locator(".brand-home").click()
         self.guest(page)
         self.select_month(page, 9)
         expect(page.locator("#offering-prep")).to_be_empty()
-        expect(page.locator("#rice-offering-card, #tiers [data-offering]")).to_have_count(0)
+        expect(page.locator("#rice-offering-card, #sangcard [data-offering]")).to_have_count(0)
         self.assertNotIn("밥공양", page.locator("#app").inner_html())
         self.assertEqual(fixture.writes, [])
 
@@ -429,12 +431,12 @@ class BrowserRegression(unittest.TestCase):
         self.login(page, "어머니")
         self.select_month(page, 9)
         progress = page.locator("#done").inner_text()
-        fields = {"sodang": "소당 밥공양", "jungdang": "중당 밥공양", "yukdang": "육당 밥공양"}
+        fields = {"sodang": "소당 밥공양", "jungdang": "중당 밥공양", "yukdang": "육당 밥공양", "geollip": "건립 밥공양"}
         for suffix, label in fields.items():
             check = page.get_by_role("checkbox", name=label, exact=True)
             check.press("Space")
             self.wait_saved(page)
-            expect(page.locator(f'#tiers [data-offering="rice-offering-{suffix}"]')).to_have_class("pill on")
+            expect(page.locator(f'#sangcard [data-offering="rice-offering-{suffix}"]')).to_have_class("pill on")
         saved = json.loads(fixture.records[key])
         for suffix, label in fields.items():
             item = saved["part"]["rice-offering-" + suffix]
@@ -446,11 +448,11 @@ class BrowserRegression(unittest.TestCase):
         expect(page.locator("#done")).to_have_text(progress)
         expect(page.locator("#total")).to_have_text("/18")
         self.select_month(page, 9, year=2027)
-        expect(page.locator("#rice-offering-card [aria-checked=false]")).to_have_count(3)
+        expect(page.locator("#rice-offering-card [aria-checked=false]")).to_have_count(4)
         page.reload(wait_until="domcontentloaded")
         self.login(page, "어머니")
         self.select_month(page, 9)
-        expect(page.locator("#rice-offering-card [aria-checked=true]")).to_have_count(3)
+        expect(page.locator("#rice-offering-card [aria-checked=true]")).to_have_count(4)
         page.get_by_role("checkbox", name="중당 밥공양", exact=True).click()
         self.wait_saved(page)
         expect(page.locator('#tiers [data-offering="rice-offering-jungdang"]')).to_have_class("pill")
@@ -458,11 +460,35 @@ class BrowserRegression(unittest.TestCase):
         self.assertTrue(stored["part"]["rice-offering-sodang"]["on"])
         self.assertFalse(stored["part"]["rice-offering-jungdang"]["on"])
         self.assertTrue(stored["part"]["rice-offering-yukdang"]["on"])
+        self.assertTrue(stored["part"]["rice-offering-geollip"]["on"])
         self.select_month(page, 10)
-        expect(page.locator("#rice-offering-card [aria-checked=false]")).to_have_count(3)
+        expect(page.locator("#rice-offering-card [aria-checked=false]")).to_have_count(4)
         expect(page.locator("#bulsa-rice-check")).to_have_attribute("aria-checked", "true")
         self.assertEqual(json.loads(fixture.records[october]), october_record)
         self.assertEqual({write["key"] for write in fixture.writes}, {key})
+
+    def test_geollip_offering_is_independent_of_existing_three_tiers(self):
+        key = "sangbogi:cycle:2026-09"
+        original = legacy_cycle()
+        for suffix in ("sodang", "jungdang", "yukdang"):
+            original["part"]["rice-offering-" + suffix] = stamp(on=True)
+        page, fixture = self.open_page({key: original})
+        self.login(page)
+        self.select_month(page, 9)
+        check = page.get_by_role("checkbox", name="건립 밥공양", exact=True)
+        expect(check).to_have_attribute("aria-checked", "false")
+        expect(page.locator("#tiers [data-offering].on")).to_have_count(3)
+        expect(page.locator('#geollip-pills [data-offering="rice-offering-geollip"]')).to_have_class("pill")
+        self.assertEqual(fixture.writes, [])
+        check.press("Space")
+        self.wait_saved(page)
+        stored = json.loads(fixture.records[key])
+        self.assertTrue(stored["part"]["rice-offering-geollip"]["on"])
+        self.assertEqual(stored["part"]["rice-offering-geollip"]["by"], "은호당")
+        for item_key, item_value in original["part"].items():
+            self.assertEqual(stored["part"][item_key], item_value)
+        self.assertEqual(stored["bought"], original["bought"])
+        expect(page.locator('#geollip-pills [data-offering="rice-offering-geollip"]')).to_have_class("pill on")
 
     def test_sangdal_rice_only_appears_on_regular_tenth_month_first_day(self):
         page, fixture = self.open_page()
@@ -702,6 +728,137 @@ class BrowserRegression(unittest.TestCase):
         stored = json.loads(fixture.records["sangbogi:cycle:2026-09"])
         self.assertTrue(stored["bought"]["baek"]["on"])
         self.assertTrue(stored["bought"]["kong"]["on"])
+
+    def test_namul_keeps_active_second_slot_when_previous_save_finishes(self):
+        page, fixture = self.open_page()
+        self.login(page)
+        self.select_month(page, 9)
+        page.evaluate("""() => {
+          const original = store.set.bind(store);
+          let paused = false;
+          store.set = async (key, value) => {
+            if (!paused && key === 'sangbogi:cycle:2026-09') {
+              paused = true;
+              await new Promise(resolve => { window.releaseNamulSave = resolve; });
+            }
+            return original(key, value);
+          };
+        }""")
+        first = page.get_by_role("textbox", name="나물 1번째", exact=True)
+        second = page.get_by_role("textbox", name="나물 2번째", exact=True)
+        first.fill("고사리")
+        page.wait_for_function("typeof window.releaseNamulSave === 'function'")
+        second.fill("시금치")
+        result = page.evaluate("""async () => {
+          const input = document.activeElement;
+          input.setSelectionRange(1, 2);
+          window.releaseNamulSave();
+          while (flushing) await new Promise(resolve => setTimeout(resolve, 5));
+          const current = document.querySelector('input[aria-label="나물 2번째"]');
+          return {value: current.value, same: input === current,
+            focused: current === document.activeElement,
+            selection: [current.selectionStart, current.selectionEnd]};
+        }""")
+        self.assertEqual(result, {"value": "시금치", "same": True, "focused": True, "selection": [1, 2]})
+        page.get_by_role("textbox", name="나물 3번째", exact=True).fill("도라지")
+        self.wait_saved(page)
+        page.locator("#title").click()
+        stored = json.loads(fixture.records["sangbogi:cycle:2026-09"])
+        self.assertEqual([row["name"] for row in stored["list"]["namul"]["items"]],
+                         ["고사리", "시금치", "도라지"])
+        page.reload(wait_until="domcontentloaded")
+        self.login(page)
+        self.select_month(page, 9)
+        expect(page.get_by_role("textbox", name="나물 2번째", exact=True)).to_have_value("시금치")
+
+    def test_namul_keeps_ime_and_empty_slot_order_across_refresh_and_source_pick(self):
+        page, fixture = self.open_page()
+        self.login(page)
+        self.select_month(page, 9)
+        second = page.get_by_role("textbox", name="나물 2번째", exact=True)
+        second.focus()
+        result = page.evaluate("""async () => {
+          const input = document.activeElement;
+          input.dispatchEvent(new CompositionEvent('compositionstart', {bubbles: true}));
+          input.value = '시';
+          input.setSelectionRange(1, 1);
+          input.dispatchEvent(new InputEvent('input', {bubbles: true, data: '시', isComposing: true}));
+          await loadCycle(true);
+          await new Promise(resolve => setTimeout(resolve, 700));
+          const current = document.querySelector('input[aria-label="나물 2번째"]');
+          return {value: current.value, same: input === current, focused: current === document.activeElement};
+        }""")
+        self.assertEqual(result, {"value": "시", "same": True, "focused": True})
+        self.assertEqual(fixture.writes, [], "An unfinished IME composition must not be uploaded")
+        second.evaluate("""input => {
+          input.value = '시금치';
+          input.dispatchEvent(new CompositionEvent('compositionend', {bubbles: true, data: '시금치'}));
+          input.dispatchEvent(new InputEvent('input', {bubbles: true, data: '시금치'}));
+        }""")
+        namul = page.locator("#var .row").filter(has=page.get_by_role("textbox", name="나물 1번째", exact=True))
+        namul.get_by_role("button", name="2번째 출처와 준비한 사람", exact=True).click()
+        namul.get_by_role("button", name="집에 있음", exact=True).click()
+        third = page.get_by_role("textbox", name="나물 3번째", exact=True)
+        third.fill("도라지")
+        third.press("Tab")
+        self.wait_saved(page)
+        stored = json.loads(fixture.records["sangbogi:cycle:2026-09"])
+        self.assertEqual([row["name"] for row in stored["list"]["namul"]["items"]], ["", "시금치", "도라지"])
+        self.assertEqual(stored["list"]["namul"]["items"][1]["src"], "have")
+        expect(page.get_by_role("textbox", name="나물 1번째", exact=True)).to_have_value("")
+        expect(page.get_by_role("textbox", name="나물 2번째", exact=True)).to_have_value("시금치")
+
+    def test_namul_immediate_source_pick_and_role_change_keep_original_month(self):
+        page, fixture = self.open_page()
+        self.login(page)
+        self.select_month(page, 9)
+        page.evaluate("""() => {
+          const original = store.set.bind(store);
+          let paused = false;
+          store.set = async (key, value) => {
+            if (!paused && key === 'sangbogi:cycle:2026-09') {
+              paused = true;
+              await new Promise(resolve => { window.releaseSourceSave = resolve; });
+            }
+            return original(key, value);
+          };
+        }""")
+        first = page.get_by_role("textbox", name="나물 1번째", exact=True)
+        first.press_sequentially("고사리", delay=20)
+        page.wait_for_function("typeof window.releaseSourceSave === 'function'")
+        namul = page.locator("#var .row").filter(has=first)
+        source = namul.get_by_role("button", name="1번째 출처와 준비한 사람", exact=True)
+        source.scroll_into_view_if_needed()
+        bounds = source.bounding_box()
+        page.mouse.move(bounds["x"] + bounds["width"] / 2, bounds["y"] + bounds["height"] / 2)
+        page.mouse.down()
+        page.evaluate("window.releaseSourceSave()")
+        page.wait_for_function("!flushing")
+        page.wait_for_timeout(80)
+        page.mouse.up()
+        namul.get_by_role("button", name="집에 있음", exact=True).click()
+        second = page.get_by_role("textbox", name="나물 2번째", exact=True)
+        second.fill("시금치")
+        second.press("Tab")
+        page.wait_for_timeout(40)
+        self.assertEqual(page.evaluate("document.activeElement.getAttribute('aria-label')"),
+                         "2번째 출처와 준비한 사람")
+        # Changing the selected table and role must bypass editing-list protection.
+        self.select_month(page, 10)
+        expect(page.get_by_role("textbox", name="나물 1번째", exact=True)).to_have_value("")
+        page.locator(".brand-home").click()
+        self.guest(page)
+        expect(page.locator("#var input")).to_have_count(0)
+        self.wait_saved(page)
+        stored = json.loads(fixture.records["sangbogi:cycle:2026-09"])
+        self.assertEqual([row["name"] for row in stored["list"]["namul"]["items"]], ["고사리", "시금치"])
+        self.assertEqual(stored["list"]["namul"]["items"][0]["src"], "have")
+        self.assertEqual(stored["list"]["namul"]["by"], "은호당")
+        self.assertNotIn("sangbogi:cycle:2026-10", fixture.records)
+        namul_history = [h for h in stored["hist"] if h["k"] == "list/namul"]
+        self.assertTrue(namul_history)
+        self.assertFalse(any(h["to"] in ("고", "고사") for h in namul_history))
+        self.assertTrue(all(h["by"] == "은호당" for h in namul_history))
 
     def test_horizontal_desktop_and_vertical_mobile_wordmarks(self):
         for width, height in ((1440, 1000), (390, 844), (320, 640)):

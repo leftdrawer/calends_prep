@@ -301,7 +301,27 @@ const store = {
 const LOCAL = {};
 const LOCAL_REVISION = {};
 const pending = new Set();
+const TEXT_HISTORY = new Map();
+const CYCLE_INPUTS = new WeakMap();
+let cyclePointerDown=false,cyclePointerList=null,renderAfterPointer=null;
 let flushTimer=null, flushing=false;
+document.addEventListener('pointerdown',ev=>{
+  cyclePointerDown=true;
+  const el=ev.target.closest&&ev.target.closest('#fixed, #var, #gifts');
+  cyclePointerList=el?{el,key:keyNow(),role:me,needsRender:false}:null;
+},true);
+function endCyclePointer(){
+  cyclePointerDown=false;
+  const interaction=cyclePointerList,update=renderAfterPointer;renderAfterPointer=null;
+  setTimeout(()=>{
+    if(cyclePointerDown||cyclePointerList!==interaction)return;
+    cyclePointerList=null;
+    if(update)update();
+    else if(interaction&&interaction.needsRender&&interaction.key===keyNow()&&interaction.role===me&&isFamily())render();
+  },0);
+}
+document.addEventListener('pointerup',endCyclePointer,true);
+document.addEventListener('pointercancel',endCyclePointer,true);
 
 function emptyCycle(){return {bought:{},stock:{},mode:{},part:{},memo:{},shop:{},list:{},done:{},hist:[]};}
 function keyNow(){const code=cycleKey(LUNAR[idx]), event=getSelectedEvent();
@@ -370,14 +390,35 @@ function logDiff(c, before, who){
   });
   c.hist=c.hist.slice(0,300);
 }
-function bindCycleWriter(){const key=keyNow();return mutate=>writeCycle(mutate,key);}
-function writeCycle(mutate,targetKey){
+function bufferTextHistory(key,before,after){
+  let edits=TEXT_HISTORY.get(key);
+  if(!edits){edits=new Map();TEXT_HISTORY.set(key,edits);}
+  const at=new Date().toISOString();
+  new Set([...Object.keys(before),...Object.keys(after)]).forEach(k=>{
+    const from=before[k]||'없음',to=after[k]||'없음';
+    if(from===to)return;
+    const previous=edits.get(k);
+    edits.set(k,{k,from:previous?previous.from:from,to,by:me,at});
+  });
+}
+function finishTextHistory(key){
+  const edits=TEXT_HISTORY.get(key);
+  if(!edits)return;
+  const c=LOCAL[key];
+  edits.forEach(h=>{if(h.from!==h.to)c.hist.unshift(h);});
+  c.hist=c.hist.slice(0,300);
+  TEXT_HISTORY.delete(key);
+}
+function bindCycleWriter(){const key=keyNow();return (mutate,options)=>writeCycle(mutate,key,options);}
+function writeCycle(mutate,targetKey,options){
   if(!canWrite()){ setStatus('보기 전용입니다. 고치려면 은호당으로 들어가 주세요.'); return; }
   const key=targetKey||keyNow();
   LOCAL[key]=normalise(LOCAL[key]);
+  if(!options||!options.textInput)finishTextHistory(key);
   const before=snapshot(LOCAL[key]);
   mutate(LOCAL[key]);
-  logDiff(LOCAL[key], before);
+  if(options&&options.textInput)bufferTextHistory(key,before,snapshot(LOCAL[key]));
+  else logDiff(LOCAL[key], before);
   LOCAL_REVISION[key]=(LOCAL_REVISION[key]||0)+1;
   if(key===keyNow()) cycle=LOCAL[key];
   pending.add(key);
@@ -387,11 +428,16 @@ function writeCycle(mutate,targetKey){
 function scheduleFlush(ms){clearTimeout(flushTimer);flushTimer=setTimeout(flush, ms||400);}
 async function flush(){
   if(flushing||!pending.size) return;
+  const editing=CYCLE_INPUTS.get(document.activeElement);
+  if(editing&&editing.composing){scheduleFlush(250);return;}
   flushing=true;
   try{
     for(const key of [...pending]){
       let remote=null;
       try{const r=await store.get(key); if(r) remote=JSON.parse(r.value);}catch(e){}
+      const active=CYCLE_INPUTS.get(document.activeElement);
+      if(active&&active.composing)continue;
+      finishTextHistory(key);
       const revision=LOCAL_REVISION[key]||0;
       const merged=mergeCycle(remote, LOCAL[key]);
       await store.set(key, JSON.stringify(merged));
@@ -634,7 +680,8 @@ function renderSteps(){
 const RICE_OFFERINGS=[
   {id:'rice-offering-sodang',name:'소당 밥공양',spot:'소당'},
   {id:'rice-offering-jungdang',name:'중당 밥공양',spot:'중당'},
-  {id:'rice-offering-yukdang',name:'육당 밥공양',spot:'육당'}
+  {id:'rice-offering-yukdang',name:'육당 밥공양',spot:'육당'},
+  {id:'rice-offering-geollip',name:'건립 밥공양',spot:'건립'}
 ];
 const BULSA_RICE_ID='bulsa-rice';
 function isFamilyFirstDay(){
@@ -679,10 +726,10 @@ function renderOfferings(){
   if(!isFamilyFirstDay())return;
   const card=preparationCard('rice-offering-card','밥공양',RICE_OFFERINGS,'올림');
   const sub=document.createElement('p');sub.className='sub';
-  sub.textContent='소당·중당·육당에 한 공기씩 올립니다.';
+  sub.textContent='소당·중당·육당·건립에 한 공기씩 올립니다.';
   card.querySelector('h2').after(sub);
   const note=document.createElement('p');note.className='note';
-  note.textContent='밥공양은 소당 세 불기, 중당 한 불기, 육당 세 불기로 모두 일곱이 원칙이나 한 공기씩으로 줄여 올립니다.';
+  note.textContent='삼당의 밥공양은 소당 세 불기, 중당 한 불기, 육당 세 불기로 모두 일곱이 원칙이나 한 공기씩으로 줄여 올립니다. 건립에도 한 공기를 따로 올립니다.';
   card.appendChild(note);el.appendChild(card);
 }
 function renderSeasonalPrep(){
@@ -692,6 +739,13 @@ function renderSeasonalPrep(){
     {id:BULSA_RICE_ID,name:'불사단지 쌀 교체'}
   ],'교체');
   card.classList.add('seasonal-prep-card');el.appendChild(card);
+}
+function offeringPill(spot){
+  const offering=RICE_OFFERINGS.find(item=>item.spot===spot);
+  const pill=document.createElement('span');
+  pill.className='pill'+(cycle.part[offering.id]?.on?' on':'');
+  pill.dataset.offering=offering.id;pill.textContent='밥공양';
+  return pill;
 }
 function renderSang(){
   const el=document.getElementById('tiers'); el.innerHTML='';
@@ -708,16 +762,11 @@ function renderSang(){
     h.innerHTML=t.key+' <small>'+t.note+'</small>';
     const p=document.createElement('div'); p.className='pills';
     ALL.filter(i=>i.spots.includes(t.key)).forEach(i=>p.appendChild(mkPill(i)));
-    if(isFamilyFirstDay()){
-      const offering=RICE_OFFERINGS.find(i=>i.spot===t.key);
-      const pill=document.createElement('span');
-      pill.className='pill'+(cycle.part[offering.id]?.on?' on':'');
-      pill.dataset.offering=offering.id;pill.textContent='밥공양';
-      p.appendChild(pill);
-    }
+    if(isFamilyFirstDay())p.appendChild(offeringPill(t.key));
     d.append(h,p); el.appendChild(d);
   });
   ALL.filter(i=>i.spots.includes('건립')).forEach(i=>g.appendChild(mkPill(i)));
+  if(isFamilyFirstDay())g.appendChild(offeringPill('건립'));
 
   const done=BUY.filter(i=>secured(i.id)).length;
   document.getElementById('done').textContent=done;
@@ -755,8 +804,38 @@ function syncListBought(c, it){
   if(it.list.counts) ok = ok && it.list.counts.indexOf(filled.length)>=0;
   c.bought[it.id]=stamp({on:ok});
 }
+/* 입력 중인 목록만 유지하고, 글자는 먼저 손에 쥔 상태에 반영합니다. */
+function bindCycleInput(input,mutate){
+  const key=keyNow(),editing={key,role:me,composing:false,value:input.value};
+  CYCLE_INPUTS.set(input,editing);
+  const commit=()=>{
+    if(me!==editing.role||input.value===editing.value)return;
+    editing.value=input.value;
+    writeCycle(c=>mutate(c,input.value),key,{textInput:true});
+  };
+  input.addEventListener('input',commit);
+  input.addEventListener('compositionstart',()=>{editing.composing=true;});
+  input.addEventListener('compositionend',()=>{
+    editing.composing=false;commit();scheduleFlush();
+  });
+  input.addEventListener('blur',()=>{
+    editing.composing=false;commit();finishTextHistory(key);
+    // Tab 이동과 출처 버튼의 click이 끝난 뒤 목록을 갱신합니다.
+    const update=()=>{if(key===keyNow()&&isFamily())render();};
+    if(cyclePointerDown)renderAfterPointer=update;
+    else setTimeout(update,0);
+  });
+}
+function isEditingList(el){
+  const input=document.activeElement,editing=CYCLE_INPUTS.get(input);
+  if(!isFamily())return false;
+  const interaction=cyclePointerList;
+  if(interaction&&interaction.el===el&&interaction.role===me&&interaction.key===keyNow()){
+    interaction.needsRender=true;return true;
+  }
+  return !!editing&&editing.role===me&&editing.key===keyNow()&&el.contains(input);
+}
 function giverPicker(it){
-  const updateCycle=bindCycleWriter();
   const sh=cycle.shop[it.id];
   const box=document.createElement('div'); box.className='shops';
   const cap=document.createElement('p'); cap.className='shopcap';
@@ -768,15 +847,10 @@ function giverPicker(it){
   inp.value=(sh&&sh.name)||'';
   inp.setAttribute('aria-label',it.name+' 보내신 분');
   inp.onclick=ev=>ev.stopPropagation();
-  let tm=null;
-  inp.oninput=ev=>{
-    const v=ev.target.value;
-    clearTimeout(tm);
-    tm=setTimeout(()=>updateCycle(c=>{
-      c.shop[it.id]=stamp({name:v, gift:true});
-      c.bought[it.id]=stamp({on:!!v.trim()});
-    }),600);
-  };
+  bindCycleInput(inp,(c,v)=>{
+    c.shop[it.id]=stamp({name:v, gift:true});
+    c.bought[it.id]=stamp({on:!!v.trim()});
+  });
   wrap.appendChild(inp);
   box.appendChild(wrap);
   return box;
@@ -789,7 +863,6 @@ function syncEtcBought(c,it){
   c.bought[it.id]=stamp({on:ok});
 }
 function renderFreeGift(el, it){
-  const updateCycle=bindCycleWriter();
   const b=cycle.bought[it.id], on=!!(b&&b.on);
   const row=document.createElement('div'); row.className='row etcrow'+(on?' done':'');
   const txt=document.createElement('div'); txt.className='txt';
@@ -809,34 +882,26 @@ function renderFreeGift(el, it){
     const ni=document.createElement('input'); ni.type='text';
     ni.placeholder='무엇을 받으셨는지'; ni.value=r.name;
     ni.setAttribute('aria-label',(i+1)+'번째 받은 것');
-    let t1=null;
-    ni.oninput=ev=>{
-      const v=ev.target.value; clearTimeout(t1);
-      t1=setTimeout(()=>updateCycle(c=>{
-        const cur=itemRows(c.list[it.id]);
-        while(cur.length<=i) cur.push({name:'',who:''});
-        cur[i].name=v;
-        while(cur.length && !cur[cur.length-1].name.trim() && !cur[cur.length-1].who) cur.pop();
-        c.list[it.id]=stamp({items:cur});
-        syncEtcBought(c,it);
-      }),600);
-    };
+    bindCycleInput(ni,(c,v)=>{
+      const cur=itemRows(c.list[it.id]);
+      while(cur.length<=i) cur.push({name:'',who:''});
+      cur[i].name=v;
+      while(cur.length && !cur[cur.length-1].name.trim() && !cur[cur.length-1].who) cur.pop();
+      c.list[it.id]=stamp({items:cur});
+      syncEtcBought(c,it);
+    });
 
     const wi=document.createElement('input'); wi.type='text'; wi.className='etcwho';
     wi.placeholder='보내신 분 성함'; wi.value=r.who;
     wi.setAttribute('aria-label',(i+1)+'번째 보내신 분');
-    let t2=null;
-    wi.oninput=ev=>{
-      const v=ev.target.value; clearTimeout(t2);
-      t2=setTimeout(()=>updateCycle(c=>{
-        const cur=itemRows(c.list[it.id]);
-        while(cur.length<=i) cur.push({name:'',who:''});
-        cur[i].who=v;
-        while(cur.length && !cur[cur.length-1].name.trim() && !cur[cur.length-1].who) cur.pop();
-        c.list[it.id]=stamp({items:cur});
-        syncEtcBought(c,it);
-      }),600);
-    };
+    bindCycleInput(wi,(c,v)=>{
+      const cur=itemRows(c.list[it.id]);
+      while(cur.length<=i) cur.push({name:'',who:''});
+      cur[i].who=v;
+      while(cur.length && !cur[cur.length-1].name.trim() && !cur[cur.length-1].who) cur.pop();
+      c.list[it.id]=stamp({items:cur});
+      syncEtcBought(c,it);
+    });
 
     line.append(ni,wi);
     box.appendChild(line);
@@ -883,29 +948,31 @@ function shopPicker(it){
     inp.value=(sh&&sh.name)||'';
     inp.setAttribute('aria-label',it.name+' 구입처');
     inp.onclick=ev=>ev.stopPropagation();
-    let tm=null;
-    inp.oninput=ev=>{
-      const v=ev.target.value;
-      clearTimeout(tm);
-      tm=setTimeout(()=>updateCycle(c=>{
-        c.shop[it.id]=stamp({name:v, other:true});
-        c.bought[it.id]=stamp({on:!!v.trim()});
-      }),600);
-    };
+    bindCycleInput(inp,(c,v)=>{
+      c.shop[it.id]=stamp({name:v, other:true});
+      c.bought[it.id]=stamp({on:!!v.trim()});
+    });
     wrap.appendChild(inp);
     box.appendChild(wrap);
   }
   return box;
 }
 function renderList(el,items,withStock,verb){
+  if(isEditingList(el))return;
+  const active=document.activeElement;
+  const focusedRow=el.contains(active)&&active.matches('button.isrc')?active.closest('.row'):null;
+  const focus=focusedRow&&el.dataset.cycleKey===keyNow()&&el.dataset.role===me
+    ? {id:focusedRow.dataset.itemId,label:active.getAttribute('aria-label')}:null;
   const updateCycle=bindCycleWriter();
   verb=verb||'담음';
+  el.dataset.cycleKey=keyNow();el.dataset.role=me;
   el.innerHTML='';
   items.forEach(it=>{
     if(it.free){ renderFreeGift(el, it); return; }
     const b=cycle.bought[it.id], on=!!(b&&b.on);
     const row=document.createElement('div');
     row.className='row'+(on?' done':'');
+    row.dataset.itemId=it.id;
 
     const txt=document.createElement('div'); txt.className='txt';
     const nm=document.createElement('div'); nm.className='nm';
@@ -944,12 +1011,7 @@ function renderList(el,items,withStock,verb){
       mi.value=(mv&&mv.text)||'';
       mi.setAttribute('aria-label', it.name+' '+it.memo);
       mi.onclick=ev=>ev.stopPropagation();
-      let mt=null;
-      mi.oninput=ev=>{
-        const v=ev.target.value;
-        clearTimeout(mt);
-        mt=setTimeout(()=>updateCycle(c=>{ c.memo[it.id]=stamp({text:v}); }), 600);
-      };
+      bindCycleInput(mi,(c,v)=>{c.memo[it.id]=stamp({text:v});});
       mw.appendChild(mi);
       if(mv&&mv.text&&mv.by){
         const mb=document.createElement('span'); mb.className='memoby'; mb.textContent=mv.by;
@@ -1053,19 +1115,14 @@ function renderList(el,items,withStock,verb){
         inp.value=r.name;
         inp.setAttribute('aria-label',it.name+' '+(i+1)+'번째');
         inp.onclick=ev=>ev.stopPropagation();
-        let tm=null;
-        inp.oninput=ev=>{
-          const v=ev.target.value;
-          clearTimeout(tm);
-          tm=setTimeout(()=>updateCycle(c=>{
-            const cur=itemRows(c.list[it.id]);
-            while(cur.length<=i) cur.push({name:'',src:''});
-            cur[i].name=v;
-            while(cur.length && !cur[cur.length-1].name.trim() && !cur[cur.length-1].src && !cur[cur.length-1].who) cur.pop();
-            c.list[it.id]=stamp({items:cur});
-            syncListBought(c, it);
-          }),600);
-        };
+        bindCycleInput(inp,(c,v)=>{
+          const cur=itemRows(c.list[it.id]);
+          while(cur.length<=i) cur.push({name:'',src:''});
+          cur[i].name=v;
+          while(cur.length && !cur[cur.length-1].name.trim() && !cur[cur.length-1].src && !cur[cur.length-1].who) cur.pop();
+          c.list[it.id]=stamp({items:cur});
+          syncListBought(c,it);
+        });
         const tag=document.createElement('button'); tag.className='isrc'+(r.src?' set':'');
         tag.textContent = srcLabel(r);
         tag.setAttribute('aria-label',(i+1)+'번째 출처와 준비한 사람');
@@ -1108,12 +1165,12 @@ function renderList(el,items,withStock,verb){
             oi.value = gift ? giftName(r.src)
                             : ((r.src&&r.src!=='have'&&!isGift(r.src)&&SHOPS.indexOf(r.src)<0)?r.src:'');
             oi.onclick=ev=>ev.stopPropagation();
-            let t2=null;
-            oi.oninput=ev=>{
-              const v=ev.target.value;
-              clearTimeout(t2);
-              t2=setTimeout(()=>setRow(x=>{ x.src = gift ? 'gift:'+v : v; }),600);
-            };
+            bindCycleInput(oi,(c,v)=>{
+              const cur=itemRows(c.list[it.id]);
+              while(cur.length<=i)cur.push({name:'',src:'',who:''});
+              cur[i].src=gift?'gift:'+v:v;
+              c.list[it.id]=stamp({items:cur});syncListBought(c,it);
+            });
             wrap.appendChild(oi);
             box.appendChild(wrap);
           }
@@ -1140,12 +1197,12 @@ function renderList(el,items,withStock,verb){
             wi.placeholder='준비하신 분 성함';
             wi.value=(r.who && names.indexOf(r.who)<0)?r.who:'';
             wi.onclick=ev=>ev.stopPropagation();
-            let t3=null;
-            wi.oninput=ev=>{
-              const v=ev.target.value;
-              clearTimeout(t3);
-              t3=setTimeout(()=>setRow(x=>{x.who=v;}),600);
-            };
+            bindCycleInput(wi,(c,v)=>{
+              const cur=itemRows(c.list[it.id]);
+              while(cur.length<=i)cur.push({name:'',src:'',who:''});
+              cur[i].who=v;
+              c.list[it.id]=stamp({items:cur});syncListBought(c,it);
+            });
             wrap2.appendChild(wi);
             box.appendChild(wrap2);
           }
@@ -1186,6 +1243,11 @@ function renderList(el,items,withStock,verb){
 
     row.append(txt,tick); el.appendChild(row);
   });
+  if(focus){
+    const row=[...el.children].find(r=>r.dataset.itemId===focus.id);
+    const target=row&&[...row.querySelectorAll('button.isrc')].find(b=>b.getAttribute('aria-label')===focus.label);
+    if(target)target.focus({preventScroll:true});
+  }
 }
 function isAdmin(){return me==='은호당'&&isFamily();}
 function isFamily(){return HANDS.includes(me)&&unlockedRole===me;}

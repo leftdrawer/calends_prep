@@ -26,7 +26,10 @@
 
 - `store`: Supabase / 호스트 스토리지 / localStorage get·set·list
 - `LOCAL`, `pending`, `LOCAL_REVISION`, `flush`: 즉시 표시, 원격 항목별 병합, 실패 재시도, 저장 도중 추가된 수정 보존
-- `bindCycleWriter`: 메모·목록 등 지연 입력을 원래 상의 키에 저장
+- `bindCycleWriter`: 체크·출처 등 수정이 작성 당시 상의 키에 저장되도록 연결
+- `bindCycleInput`, `CYCLE_INPUTS`, `isEditingList`: 글자를 즉시 로컬 기록에 반영하고, 입력 중인 목록의 DOM·포커스·선택 범위·한글 조합을 저장 완료와 자동 갱신 중에도 유지. 월/행사/손님 전환은 새 화면으로 갱신
+- 목록 내부의 포인터 동작이 끝날 때까지 눌린 버튼을 유지하고, Tab으로 이동한 출처 버튼은 같은 상·역할·품목·칸의 버튼으로 포커스를 복원
+- `TEXT_HISTORY`, `bufferTextHistory`, `finishTextHistory`: 연속 입력 이력을 항목별로 모아 저장·포커스 이동·다른 수정 전에 확정하여 글자마다 이력이 생기는 것을 방지
 
 ## 로그인과 화면
 
@@ -40,7 +43,7 @@
 - `renderGuestGifts`: 구입처·메모 없이 예물과 보내신 분만 텍스트로 표시
 - `loadLog`: 이전 초하루/명절에서 실제 기여자와 예물을 모음
 - `renderList`, `renderSang`, `renderSteps`, `renderDone`: 가족 준비 화면
-- `RICE_OFFERINGS`, `isFamilyFirstDay`, `renderOfferings`: 매달 초하루의 소당·중당·육당 밥공양 체크와 진설 표시
+- `RICE_OFFERINGS`, `isFamilyFirstDay`, `renderOfferings`, `offeringPill`: 매달 초하루의 소당·중당·육당·건립 밥공양 체크와 진설 표시
 - `preparationCard`: 월별 밥공양·상달 쌀 교체에 사용하는 가족 준비 카드와 접근성 체크 버튼
 - `isSangdalFirstDay`, `renderSeasonalPrep`: 정규 음력10월 초하루의 가족 전용 불사단지 쌀 교체 카드. 그 외 화면은 슬롯을 비움
 - `BULSA_RICE_ID`: 기존 `cycle.part`에 별도 저장하는 `bulsa-rice` 키. 기존 구매 수량과 차례 단계에는 포함하지 않음
