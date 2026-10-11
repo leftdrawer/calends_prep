@@ -98,7 +98,7 @@ TLS 검증을 끄는 옵션을 사용하지 마세요. 이 환경은 쓰기 접�
 GitHub Pages는 `main` 브랜치의 루트를 사용합니다. `.nojekyll`로 정적 파일을 그대로 제공합니다.
 코드 수정과 실제 배포는 별도이며, `main`에 푸시한 뒤 GitHub Pages의 배포가 완료되어야 운영 사이트에 반영됩니다.
 배포 요청·커밋·확인 결과는 `docs/HISTORY.md`에 기록합니다. 실제 가로·세로 붓글씨 원본 연결은 아직 미완료입니다.
-2026-10-11 기능 릴리스 `c1f3f91`의 [GitHub Pages 배포 성공](https://github.com/leftdrawer/calends_prep/actions/runs/38123263147)을 확인했습니다.
+2026-10-11 기능 릴리스 `15e057c`의 [GitHub Pages 배포 성공](https://github.com/leftdrawer/calends_prep/actions/runs/38124285071)을 확인했습니다. 서명 첫 화면 복귀와 밥공양 체크를 포함합니다.
 현재 운영 버전은 기존 PNG 로고를 사용합니다. 이 클라우드에서는 운영 도메인 접근이403으로 차단되어 실제 운영 브라우저 동작까지 확인한 것은 아닙니다.
 클라우드 환경 설정을 저장하거나 게시하는 것도 GitHub Pages 배포와는 별개입니다.
 

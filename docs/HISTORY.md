@@ -18,7 +18,8 @@
 - **자료**: 기존 초하루 키의 `cycle.part`에 `rice-offering-sodang`, `rice-offering-jungdang`, `rice-offering-yukdang` 완료·작성자·시각을 저장. 생쌀 재고에서 완료를 추정하거나 기록을 옮기지 않음. `bindCycleWriter`로 작성 당시 월에 저장. 기존 구매18개·마무리6단계·상달 쌀 교체키는 유지하며 진행 문구를 ‘장볼 품목을 준비했습니다’로 맞춤.
 - **컴포넌트**: 밥공양과 불사단지 쌀 교체가 같은 `preparationCard`를 사용하도록 정리. 기존 스타일 토큰·40px 클릭 영역·키보드 체크·작성자/시각 표시 유지.
 - **검증**: `python3 tests/browser_test.py` 전체22개 통과(44.223초). 새3개는 서명 클릭/Enter와 미저장 준비·이력 보존 및 가족 PIN 재요구, 12개월/윤달 밥공양 표시·명절/손님 비노출, 당별 체크·진설 상태·어머니 저장·새로고침·연도/월 분리·기존 구매/상달 기록 보존을 확인. 기존 PC1440px·모바일390px·320px 회귀도 통과. `node --check app.js`, `git diff --check` 통과. 실제 Supabase 사용자 기록은 수정하지 않음.
-- **문서**: 도메인 규칙·제품/구조/기술 지침·README·CHANGELOG를 함께 갱신. 기존 사용자 배포 승인에 따라 `main` 정상 푸시와 Pages 성공 확인으로 운영 반영을 진행.
+- **문서**: 도메인 규칙·제품/구조/기술 지침·README·CHANGELOG를 함께 갱신.
+- **배포**: 기존 사용자 배포 승인에 따라 기능 커밋 `15e057c4bd38d2c11e6e3bebb48239facddacdc9`을 `main`에 정상 푸시. [GitHub Pages 배포 #8](https://github.com/leftdrawer/calends_prep/actions/runs/38124285071)의 대상 SHA와 성공 상태를 확인. 운영 도메인 직접 브라우저 확인은 기존 환경 접속 제한으로 수행하지 않음.
 - **왜**: 이름 입력 화면으로 쉽게 돌아가고, 쌀을 준비한 상태와 밥을 올린 상태를 구분해 초하루 공양을 빠뜨리지 않도록 하기 위해.
 
 ### 2026-10-11 — 새 버전 main 반영 및 GitHub Pages 배포 성공
