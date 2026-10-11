@@ -1443,9 +1443,9 @@ function showLock(role){
     document.getElementById('gate').hidden=false;
     document.getElementById('app').hidden=true;
     document.getElementById('locktitle').textContent=lockRole+'으로 들어가기';
-    document.getElementById('lockdesc').textContent=(digits===6?'여섯':'네')+' 자리 암호를 입력해 주세요.';
+    document.getElementById('lockdesc').textContent=digits===6?'암호를 입력해주세요':'네 자리 암호를 입력해 주세요.';
     input.maxLength=digits;
-    input.placeholder=(digits===6?'여섯':'네')+' 자리 암호';
+    input.placeholder=digits===6?'암호를 입력해주세요':'네 자리 암호';
     input.focus();
   }
 }
