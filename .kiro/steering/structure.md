@@ -40,8 +40,11 @@
 - `renderGuestGifts`: 구입처·메모 없이 예물과 보내신 분만 텍스트로 표시
 - `loadLog`: 이전 초하루/명절에서 실제 기여자와 예물을 모음
 - `renderList`, `renderSang`, `renderSteps`, `renderDone`: 가족 준비 화면
+- `RICE_OFFERINGS`, `isFamilyFirstDay`, `renderOfferings`: 매달 초하루의 소당·중당·육당 밥공양 체크와 진설 표시
+- `preparationCard`: 월별 밥공양·상달 쌀 교체에 사용하는 가족 준비 카드와 접근성 체크 버튼
 - `isSangdalFirstDay`, `renderSeasonalPrep`: 정규 음력10월 초하루의 가족 전용 불사단지 쌀 교체 카드. 그 외 화면은 슬롯을 비움
 - `BULSA_RICE_ID`: 기존 `cycle.part`에 별도 저장하는 `bulsa-rice` 키. 기존 구매 수량과 차례 단계에는 포함하지 않음
 - `renderSheet`: 담당과 변경 이력. 동적 이름·메모는 textContent로 표시
+- `askName`: 접속 바꾸기·왼쪽 위 서명에서 이름 입력 첫 화면으로 복귀. 기록과 저장 대기 입력을 보존하고 이름 입력에 포커스
 
 새 명절 품목을 구현할 때 먼저 사용자 규칙을 문서화하고, 그 명절의 별도 저장 키를 사용하세요.

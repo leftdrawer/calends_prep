@@ -631,39 +631,67 @@ function renderSteps(){
     el.appendChild(r);
   });
 }
+const RICE_OFFERINGS=[
+  {id:'rice-offering-sodang',name:'소당 밥공양',spot:'소당'},
+  {id:'rice-offering-jungdang',name:'중당 밥공양',spot:'중당'},
+  {id:'rice-offering-yukdang',name:'육당 밥공양',spot:'육당'}
+];
 const BULSA_RICE_ID='bulsa-rice';
+function isFamilyFirstDay(){
+  return isFamily()&&getSelectedEvent().id==='first';
+}
 function isSangdalFirstDay(){
   const e=LUNAR[idx];
-  return isFamily()&&e[2]===10&&!e[3]&&getSelectedEvent(e).id==='first';
+  return isFamilyFirstDay()&&e[2]===10&&!e[3];
+}
+function preparationCard(id,title,items,verb){
+  const updateCycle=bindCycleWriter();
+  const card=document.createElement('section');
+  card.id=id;card.className='card ritual-prep-card';
+  const heading=document.createElement('h2');heading.textContent=title;
+  card.appendChild(heading);
+  items.forEach(item=>{
+    const p=cycle.part[item.id],on=!!(p&&p.on);
+    const row=document.createElement('div');row.className='row'+(on?' done':'');
+    const text=document.createElement('div');text.className='txt';
+    const name=document.createElement('div');name.className='nm';name.textContent=item.name;
+    text.appendChild(name);
+    if(on&&p.by){
+      const by=document.createElement('div');by.className='by';
+      by.textContent=p.by+' '+verb+' · '+fmtStamp(p.at);text.appendChild(by);
+    }
+    const tick=document.createElement('button');tick.type='button';
+    tick.id=item.id+'-check';tick.className='tick';
+    tick.setAttribute('role','checkbox');tick.setAttribute('aria-checked',String(on));
+    tick.setAttribute('aria-label',item.name);
+    const toggle=()=>updateCycle(c=>{
+      const current=c.part[item.id];
+      c.part[item.id]=stamp({on:!(current&&current.on)});
+    });
+    row.onclick=toggle;
+    tick.onclick=event=>{event.stopPropagation();toggle();};
+    row.append(text,tick);card.appendChild(row);
+  });
+  return card;
+}
+function renderOfferings(){
+  const el=document.getElementById('offering-prep');el.replaceChildren();
+  if(!isFamilyFirstDay())return;
+  const card=preparationCard('rice-offering-card','밥공양',RICE_OFFERINGS,'올림');
+  const sub=document.createElement('p');sub.className='sub';
+  sub.textContent='소당·중당·육당에 한 공기씩 올립니다.';
+  card.querySelector('h2').after(sub);
+  const note=document.createElement('p');note.className='note';
+  note.textContent='밥공양은 소당 세 불기, 중당 한 불기, 육당 세 불기로 모두 일곱이 원칙이나 한 공기씩으로 줄여 올립니다.';
+  card.appendChild(note);el.appendChild(card);
 }
 function renderSeasonalPrep(){
-  const el=document.getElementById('seasonal-prep');
-  el.replaceChildren();
+  const el=document.getElementById('seasonal-prep');el.replaceChildren();
   if(!isSangdalFirstDay())return;
-  const updateCycle=bindCycleWriter();
-  const p=cycle.part[BULSA_RICE_ID],on=!!(p&&p.on);
-  const card=document.createElement('section');
-  card.id='bulsa-prep-card';card.className='card seasonal-prep-card';
-  const heading=document.createElement('h2');heading.textContent='상달 초하루 준비';
-  const row=document.createElement('div');row.className='row'+(on?' done':'');
-  const text=document.createElement('div');text.className='txt';
-  const name=document.createElement('div');name.className='nm';name.textContent='불사단지 쌀 교체';
-  text.appendChild(name);
-  if(on&&p.by){
-    const by=document.createElement('div');by.className='by';
-    by.textContent=p.by+' 교체 · '+fmtStamp(p.at);text.appendChild(by);
-  }
-  const tick=document.createElement('button');tick.type='button';
-  tick.id='bulsa-rice-check';tick.className='tick';
-  tick.setAttribute('role','checkbox');tick.setAttribute('aria-checked',String(on));
-  tick.setAttribute('aria-label','불사단지 쌀 교체');
-  const toggle=()=>updateCycle(c=>{
-    const current=c.part[BULSA_RICE_ID];
-    c.part[BULSA_RICE_ID]=stamp({on:!(current&&current.on)});
-  });
-  row.onclick=toggle;
-  tick.onclick=event=>{event.stopPropagation();toggle();};
-  row.append(text,tick);card.append(heading,row);el.appendChild(card);
+  const card=preparationCard('bulsa-prep-card','상달 초하루 준비',[
+    {id:BULSA_RICE_ID,name:'불사단지 쌀 교체'}
+  ],'교체');
+  card.classList.add('seasonal-prep-card');el.appendChild(card);
 }
 function renderSang(){
   const el=document.getElementById('tiers'); el.innerHTML='';
@@ -680,6 +708,13 @@ function renderSang(){
     h.innerHTML=t.key+' <small>'+t.note+'</small>';
     const p=document.createElement('div'); p.className='pills';
     ALL.filter(i=>i.spots.includes(t.key)).forEach(i=>p.appendChild(mkPill(i)));
+    if(isFamilyFirstDay()){
+      const offering=RICE_OFFERINGS.find(i=>i.spot===t.key);
+      const pill=document.createElement('span');
+      pill.className='pill'+(cycle.part[offering.id]?.on?' on':'');
+      pill.dataset.offering=offering.id;pill.textContent='밥공양';
+      p.appendChild(pill);
+    }
     d.append(h,p); el.appendChild(d);
   });
   ALL.filter(i=>i.spots.includes('건립')).forEach(i=>g.appendChild(mkPill(i)));
@@ -1175,6 +1210,8 @@ function closeSheet(){
 }
 function partLabelOf(pid){
   if(pid===BULSA_RICE_ID)return '불사단지 쌀 교체';
+  const offering=RICE_OFFERINGS.find(item=>item.id===pid);
+  if(offering)return offering.name;
   for(const i of ALL){ if(!i.parts) continue;
     for(const [k,l] of i.parts){ if(k===pid) return l; } }
   const s=STEPS.find(([k])=>k===pid);
@@ -1285,6 +1322,7 @@ function render(){
   const configured=typeof isEventConfigured!=='function'||isEventConfigured();
   const prep=document.getElementById('family-prep');
   if(prep)prep.hidden=!isFamily()||!configured;
+  renderOfferings();
   renderSeasonalPrep();
   if(isFamily()&&configured){
     renderList(document.getElementById('fixed'),FIXED,false);
@@ -1375,6 +1413,8 @@ function askName(){
   document.getElementById('gatecancel').hidden=!me;
   document.getElementById('gate').hidden=false;
   document.getElementById('app').hidden=true;
+  document.getElementById('othername').focus({preventScroll:true});
+  window.scrollTo(0,0);
 }
 async function setName(n,verified=false){
   n=String(n||'').trim(); if(!n)return;
@@ -1427,6 +1467,10 @@ document.querySelectorAll('.who button').forEach(b=>b.onclick=()=>showLock(b.dat
 document.getElementById('otherbtn').onclick=()=>setName(document.getElementById('othername').value);
 document.getElementById('othername').addEventListener('keydown',e=>{if(e.key==='Enter')setName(e.target.value);});
 document.getElementById('changeme').onclick=askName;
+document.querySelector('.brand-home').onclick=e=>{
+  e.preventDefault();
+  askName();
+};
 document.getElementById('gatecancel').onclick=()=>{
   if(!me)return;
   showLock(false);

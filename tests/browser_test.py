@@ -276,6 +276,47 @@ class BrowserRegression(unittest.TestCase):
         self.assertNotIn(PRIVATE_SHOP, page.locator("#sheet").inner_html())
         self.assertNotIn(PRIVATE_SHOP, page.locator("#app").inner_html())
 
+    def test_signature_returns_to_first_screen_without_losing_preparation(self):
+        key = "sangbogi:cycle:2026-09"
+        page, fixture = self.open_page({key: legacy_cycle()})
+        self.login(page)
+        self.select_month(page, 9)
+        fixture.fail_writes = True
+        page.locator("#fixed .row").first.get_by_role("button", name="부득이 사 옴", exact=True).click()
+        expect(page.locator("#status")).to_contain_text("아직 올리지 못했습니다")
+        self.assertEqual(page.evaluate("pending.size"), 1)
+        self.assertFalse(page.evaluate("cycle.bought.baek.on"))
+        signature = page.get_by_role("link", name="은호당 · 첫 화면으로 돌아가기", exact=True)
+        signature.click()
+        expect(page.locator("#gate")).to_be_visible()
+        expect(page.locator("#app")).to_be_hidden()
+        expect(page.locator("#othername")).to_be_focused()
+        self.assertEqual(page.evaluate("scrollY"), 0)
+        self.assertEqual(page.evaluate("pending.size"), 1)
+        self.assertFalse(page.evaluate("cycle.bought.baek.on"))
+        page.locator("#gatecancel").click()
+        expect(page.locator("#fixed .tick").first).to_have_attribute("aria-checked", "false")
+        fixture.fail_writes = False
+        page.evaluate("flush()")
+        self.wait_saved(page)
+        saved = fixture.records[key]
+        self.assertFalse(json.loads(saved)["bought"]["baek"]["on"])
+        self.assertGreater(len(json.loads(saved)["hist"]), len(legacy_cycle()["hist"]))
+        signature.focus()
+        signature.press("Enter")
+        expect(page.locator("#gate")).to_be_visible()
+        expect(page.locator("#othername")).to_be_focused()
+        page.locator('button[data-name="은호당"]').click()
+        expect(page.locator("#lockpane")).to_be_visible()
+        expect(page.locator("#familycode")).to_be_empty()
+        expect(page.locator("#app")).to_be_hidden()
+        page.locator("#familycode").fill("102938")
+        page.locator("#familycode").press("Enter")
+        expect(page.locator("#app")).to_be_visible()
+        self.select_month(page, 9)
+        expect(page.locator("#fixed .tick").first).to_have_attribute("aria-checked", "false")
+        self.assertEqual(fixture.records[key], saved)
+
     def test_stored_history_and_guest_names_render_as_literal_text(self):
         attack = '<img src=x onerror="window.injected = true">'
         record = legacy_cycle()
@@ -351,6 +392,77 @@ class BrowserRegression(unittest.TestCase):
         self.assertFalse(stored["done"]["done:초하루"]["on"])
         self.assertTrue(stored["done"]["done:중양"]["on"])
         expect(page.locator("#donebox button")).to_have_text("초하루 상을 올렸습니다")
+
+    def test_rice_offerings_appear_each_first_day_and_stay_private(self):
+        page, fixture = self.open_page()
+        self.login(page)
+        names = ("소당 밥공양", "중당 밥공양", "육당 밥공양")
+        for month in range(1, 13):
+            self.select_month(page, month)
+            expect(page.locator("#rice-offering-card")).to_be_visible()
+            for name in names:
+                expect(page.get_by_role("checkbox", name=name, exact=True)).to_have_attribute("aria-checked", "false")
+            expect(page.locator("#tiers [data-offering]")).to_have_count(3)
+            expect(page.locator("#tiers [data-offering].on")).to_have_count(0)
+            expect(page.locator("#total")).to_have_text("/18")
+        self.select_month(page, 5, leap=True, year=2028)
+        expect(page.locator("#rice-offering-card [role=checkbox]")).to_have_count(3)
+        self.select_month(page, 9)
+        page.locator('#eventnav [data-event="jungyang"]').click()
+        expect(page.locator("#offering-prep")).to_be_empty()
+        expect(page.locator("#tiers [data-offering]")).to_have_count(0)
+        page.locator(".brand-home").click()
+        self.guest(page)
+        self.select_month(page, 9)
+        expect(page.locator("#offering-prep")).to_be_empty()
+        expect(page.locator("#rice-offering-card, #tiers [data-offering]")).to_have_count(0)
+        self.assertNotIn("밥공양", page.locator("#app").inner_html())
+        self.assertEqual(fixture.writes, [])
+
+    def test_rice_offerings_save_by_tier_and_month_without_changing_purchases(self):
+        key = "sangbogi:cycle:2026-09"
+        october = "sangbogi:cycle:2026-10"
+        original = legacy_cycle()
+        october_record = legacy_cycle()
+        october_record["part"]["bulsa-rice"] = stamp(on=True)
+        page, fixture = self.open_page({key: original, october: october_record})
+        self.login(page, "어머니")
+        self.select_month(page, 9)
+        progress = page.locator("#done").inner_text()
+        fields = {"sodang": "소당 밥공양", "jungdang": "중당 밥공양", "yukdang": "육당 밥공양"}
+        for suffix, label in fields.items():
+            check = page.get_by_role("checkbox", name=label, exact=True)
+            check.press("Space")
+            self.wait_saved(page)
+            expect(page.locator(f'#tiers [data-offering="rice-offering-{suffix}"]')).to_have_class("pill on")
+        saved = json.loads(fixture.records[key])
+        for suffix, label in fields.items():
+            item = saved["part"]["rice-offering-" + suffix]
+            self.assertTrue(item["on"])
+            self.assertEqual(item["by"], "어머니")
+            self.assertTrue(item["at"])
+            self.assertIn(label, page.evaluate("nameOfKey('part/rice-offering-' + " + json.dumps(suffix) + ")"))
+        self.assertEqual(saved["bought"], original["bought"])
+        expect(page.locator("#done")).to_have_text(progress)
+        expect(page.locator("#total")).to_have_text("/18")
+        self.select_month(page, 9, year=2027)
+        expect(page.locator("#rice-offering-card [aria-checked=false]")).to_have_count(3)
+        page.reload(wait_until="domcontentloaded")
+        self.login(page, "어머니")
+        self.select_month(page, 9)
+        expect(page.locator("#rice-offering-card [aria-checked=true]")).to_have_count(3)
+        page.get_by_role("checkbox", name="중당 밥공양", exact=True).click()
+        self.wait_saved(page)
+        expect(page.locator('#tiers [data-offering="rice-offering-jungdang"]')).to_have_class("pill")
+        stored = json.loads(fixture.records[key])
+        self.assertTrue(stored["part"]["rice-offering-sodang"]["on"])
+        self.assertFalse(stored["part"]["rice-offering-jungdang"]["on"])
+        self.assertTrue(stored["part"]["rice-offering-yukdang"]["on"])
+        self.select_month(page, 10)
+        expect(page.locator("#rice-offering-card [aria-checked=false]")).to_have_count(3)
+        expect(page.locator("#bulsa-rice-check")).to_have_attribute("aria-checked", "true")
+        self.assertEqual(json.loads(fixture.records[october]), october_record)
+        self.assertEqual({write["key"] for write in fixture.writes}, {key})
 
     def test_sangdal_rice_only_appears_on_regular_tenth_month_first_day(self):
         page, fixture = self.open_page()

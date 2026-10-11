@@ -150,11 +150,11 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .tick:after{content:"";position:absolute;left:7px;top:3px;width:5px;height:10px;border:solid var(--hanji);border-width:0 2px 2px 0;transform:rotate(43deg);opacity:0}
 .row.done .tick{background:var(--brass-deep);border-color:var(--brass-deep)}
 .row.done .tick:after{opacity:1}
-.seasonal-prep-card button.tick{width:40px;height:40px;border:0;padding:0;margin-top:-6px;background:transparent}
-.seasonal-prep-card button.tick:before{content:"";box-sizing:border-box;position:absolute;left:9px;top:9px;width:22px;height:22px;border:1px solid var(--brass);border-radius:4px;background:transparent}
-.seasonal-prep-card button.tick:after{left:17px;top:13px}
-.seasonal-prep-card .row.done button.tick{background:transparent}
-.seasonal-prep-card .row.done button.tick:before{background:var(--brass-deep);border-color:var(--brass-deep)}
+.ritual-prep-card button.tick{width:40px;height:40px;border:0;padding:0;margin-top:-6px;background:transparent}
+.ritual-prep-card button.tick:before{content:"";box-sizing:border-box;position:absolute;left:9px;top:9px;width:22px;height:22px;border:1px solid var(--brass);border-radius:4px;background:transparent}
+.ritual-prep-card button.tick:after{left:17px;top:13px}
+.ritual-prep-card .row.done button.tick{background:transparent}
+.ritual-prep-card .row.done button.tick:before{background:var(--brass-deep);border-color:var(--brass-deep)}
 .note{margin:16px 0 0;padding-top:13px;border-top:1px solid var(--line-soft);font-size:11px;line-height:1.8;color:var(--ink-2)}
 .note:before{content:"※ ";color:var(--ink-3)}
 .seg{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
