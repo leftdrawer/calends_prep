@@ -6,13 +6,14 @@
 ## 문서 지도
 - `.kiro/steering/product.md` — 제품 개요·도메인 개념
 - `.kiro/steering/tech.md` — 스택·데이터·배포 방법
-- `.kiro/steering/structure.md` — `index.html` 코드 구조·심볼 지도
+- `.kiro/steering/structure.md` — HTML·CSS·JavaScript 코드 구조·심볼 지도
 - `.kiro/steering/maintenance.md` — (이 파일) 문서 유지 규칙
 - `docs/HISTORY.md` — 작업 이력·변경 이력
 - `docs/domain-sangbogi.md` — 상차림 로직 현황·개선 계획·미정 사항
+- `CLAUDE.md` / `DESIGN.md` — 디자인 기준과 외부 자료의 적용 범위
 
 ## 언제 무엇을 갱신하는가
-- **코드(`index.html`)를 고쳤다** → `docs/HISTORY.md` 변경 이력에 항목 추가.
+- **코드(`index.html`, `app.js`, `styles.css`)를 고쳤다** → `docs/HISTORY.md` 변경 이력에 항목 추가.
   구조·심볼이 바뀌었으면 `structure.md`도 갱신.
 - **배포·데이터·스택이 바뀌었다** → `tech.md` 갱신 + `HISTORY.md`에 기록.
 - **도메인 규칙을 정했다/바꿨다** (예: 대체 가능 명절 분류, 추석 상 내용 확정) →
