@@ -10,6 +10,16 @@
 
 ## 변경 이력 (최신이 위)
 
+### 2026-10-11 — 새 버전 main 반영 및 GitHub Pages 배포 성공
+
+- **실행**: 기능 커밋 `a4d4cdee728bef1b50865a40dda98bfda72d2b21`과 Claude의 최신 `main` 이력을 합친 `c1f3f91d57cd98d9244fa0967788f709f9de9e01`을 `git push origin HEAD:main`으로 정상 푸시. `a9170f5..c1f3f91` fast-forward이며 강제 푸시는 하지 않음. 원격 `refs/heads/main`이 같은 SHA임을 재확인.
+- **충돌 처리**: 최신 `main`의 전체 파일이 이전에 읽고 통합한 Claude 브랜치와 동일함을 확인. 원문 `DESIGN.md`와 Claude의 HISTORY 항목이 보존됨을 검사한 뒤 현재 분리된 HTML·CSS·JS와 통합 문서를 유지해 충돌을 해결. 앱·CSS·HTML·테스트가 직전 검증한 내용과 동일함을 확인.
+- **배포 성공 근거**: GitHub 공개 웹 화면에서 [Pages build and deployment #6](https://github.com/leftdrawer/calends_prep/actions/runs/38123263147)이 `c1f3f91`에 대해 `completed successfully`임을 확인. 운영 주소는 https://leftdrawer.github.io/calends_prep/ . 배포된 저장소 트리에서도 새 `app.js` 등 파일 존재 확인.
+- **포함**: 은호당·어머니 PIN, 초하루·명절의 별도 기록, 은호당의 대체 승인, 손님 예물·기여자 화면, Claude 디자인 보완, 상달 초하루 쌀 교체와 변경 문서. 기존 사용자 기록은 수정하지 않음.
+- **검증 한계**: 이 환경의 프록시가 운영 도메인 및 GitHub REST API를 터널403으로 차단하므로 운영 사이트의 HTML 응답·실제 브라우저 동작을 직접 확인하지는 못함. 허용된 GitHub 공개 웹 화면을 통해 배포 성공과 대상 커밋을 확인했으며 API 차단을 우회하지 않음. 기능 검증은 앞서 통과한 합성 브라우저19개 및 관련3개 결과를 사용.
+- **남은 로고**: 사용자 첨부 원본 PNG를 파일로 가져오는 접근 문제는 미해결. 운영 버전은 한자 폰트 대신 기존 PNG 로고를 표시하며 PC 가로·모바일 세로의 새 붓글씨 원본 적용은 미완료.
+- **문서**: 배포 결과를 이 HISTORY와 CHANGELOG에 추가하고 README의 현재 배포 상태를 갱신. 해당 문서 갱신은 기능 릴리스 후 별도 커밋으로 반영.
+
 ### 2026-10-11 — 사용자 승인에 따른 운영 배포 준비
 
 - **요청**: 사용자가 현재 수정본을 ‘배포해’라고 명시적으로 승인.
