@@ -41,3 +41,6 @@ GitHub Pages 저장소는 `leftdrawer/calends_prep`, 배포 소스는 `main` 루
 앱 주소: https://leftdrawer.github.io/calends_prep/
 `.nojekyll` 파일로 정적 파일을 그대로 제공합니다. 배포 시 HTML, JS, CSS, assets 모두 포함하세요.
 클라우드 실제 브라우저 HTTPS 검사는 NSS 저장소 쓰기 접근을 확인하고 TLS 검증을 유지합니다.
+
+## 중양 전용 준비 (2026-10-20)
+- 중양 준비·권장·진행안은 기존 명절 키의 cycle.part에 jungyang-* 이름으로 저장합니다. 새 테이블·실데이터 이관·로그인 변경은 없습니다. 기본 7항목만 별도로 집계하고, 완료는 done:jungyang에 기록합니다.

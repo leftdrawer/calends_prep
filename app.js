@@ -162,12 +162,13 @@ function holidaysFor(e){
       if(typeof picked==='string' && /^\d{4}-\d{2}-\d{2}$/.test(picked) &&
           diffDays(e[0],picked)>=0 && diffDays(e[0],picked)<e[4]) date=picked;
     }
-    return Object.assign({},s,{date, pick:!!s.pick, solar:!!s.solar, configured:false});
+    return Object.assign({},s,{date, pick:!!s.pick, solar:!!s.solar, configured:s.id==='jungyang'});
   });
 }
 function eventsFor(e){return [{id:'first',name:'초하루',date:e[0],day:1,configured:true},...holidaysFor(e)];}
 function getSelectedEvent(e=LUNAR[idx]){return eventsFor(e).find(x=>x.id===selectedEvent)||eventsFor(e)[0];}
-function eventPlan(){const event=getSelectedEvent();return {event,configured:event.configured,items:event.configured?ALL:[],steps:event.configured?STEPS:[]};}
+function eventPlan(){const event=getSelectedEvent();return {event,configured:event.configured,items:event.configured?(event.id==='jungyang'?GIFTS:ALL):[],steps:event.configured&&event.id==='first'?STEPS:[]};}
+function isJungyang(){return getSelectedEvent().id==='jungyang';}
 function isEventConfigured(){return !!getSelectedEvent().configured;}
 function substitutesFor(e){return holidaysFor(e);}
 function substituteFor(e){
@@ -683,6 +684,23 @@ const RICE_OFFERINGS=[
   {id:'rice-offering-yukdang',name:'육당 밥공양',spot:'육당'},
   {id:'rice-offering-geollip',name:'건립 밥공양',spot:'건립'}
 ];
+/* 은호당의 좁은 신당에 맞춘 중양 차림. 권장 격식은 기본 차림과 따로 셉니다. */
+const JUNGYANG_OFFERINGS=RICE_OFFERINGS.map(item=>({...item,id:'jungyang-'+item.id}));
+const JUNGYANG_ANCESTOR=[
+  {id:'jungyang-ancestor-rice',name:'조상상 밥 한 공기'},
+  {id:'jungyang-ancestor-wine',name:'조상상 술 한 잔'},
+  {id:'jungyang-ancestor-namul',name:'조상상 나물 세 종류'}
+];
+const JUNGYANG_RECOMMENDED=[
+  {id:'jungyang-water',name:'정화수 마련',note:'깨끗한 물을 정갈하게 올립니다.'},
+  {id:'jungyang-light',name:'향·촛불 마련',note:'기존 비품을 쓰고, 불은 안전하게 관리합니다.'},
+  {id:'jungyang-fruit',name:'집에 있는 제철과일 한 접시',note:'별도 과일 세트를 사기보다 있는 것으로 소박하게 마련합니다.'}
+];
+const JUNGYANG_PRAYERS=[
+  {id:'jungyang-prayer-gods',name:'신령님께 중양 정성을 고하기'},
+  {id:'jungyang-prayer-ancestors',name:'제사 받지 못한 조상님까지 모시기'},
+  {id:'jungyang-prayer-peace',name:'해원과 극락왕생을 빌기'}
+];
 const BULSA_RICE_ID='bulsa-rice';
 function isFamilyFirstDay(){
   return isFamily()&&getSelectedEvent().id==='first';
@@ -703,6 +721,7 @@ function preparationCard(id,title,items,verb){
     const text=document.createElement('div');text.className='txt';
     const name=document.createElement('div');name.className='nm';name.textContent=item.name;
     text.appendChild(name);
+    if(item.note){const note=document.createElement('div');note.className='wh';note.textContent=item.note;text.appendChild(note);}
     if(on&&p.by){
       const by=document.createElement('div');by.className='by';
       by.textContent=p.by+' '+verb+' · '+fmtStamp(p.at);text.appendChild(by);
@@ -723,14 +742,51 @@ function preparationCard(id,title,items,verb){
 }
 function renderOfferings(){
   const el=document.getElementById('offering-prep');el.replaceChildren();
-  if(!isFamilyFirstDay())return;
-  const card=preparationCard('rice-offering-card','밥공양',RICE_OFFERINGS,'올림');
+  if(!isFamilyFirstDay()&&!(isFamily()&&isJungyang()))return;
+  const card=preparationCard('rice-offering-card',isJungyang()?'신령님 밥공양':'밥공양',isJungyang()?JUNGYANG_OFFERINGS:RICE_OFFERINGS,'올림');
   const sub=document.createElement('p');sub.className='sub';
   sub.textContent='소당·중당·육당·건립에 한 공기씩 올립니다.';
   card.querySelector('h2').after(sub);
   const note=document.createElement('p');note.className='note';
-  note.textContent='삼당의 밥공양은 소당 세 불기, 중당 한 불기, 육당 세 불기로 모두 일곱이 원칙이나 한 공기씩으로 줄여 올립니다. 건립에도 한 공기를 따로 올립니다.';
+  note.textContent=isJungyang()?'신당 공간에 맞춘 은호당의 간소 차림입니다. 신령님 몫 네 공기와 조상상 한 공기를 합해 밥은 모두 다섯 공기입니다.':'삼당의 밥공양은 소당 세 불기, 중당 한 불기, 육당 세 불기로 모두 일곱이 원칙이나 한 공기씩으로 줄여 올립니다. 건립에도 한 공기를 따로 올립니다.';
   card.appendChild(note);el.appendChild(card);
+}
+function renderJungyang(){
+  const el=document.getElementById('jungyang-prep');el.replaceChildren();
+  if(!isFamily()||!isJungyang())return;
+  const basic=JUNGYANG_ANCESTOR.concat(JUNGYANG_OFFERINGS);
+  const count=basic.filter(item=>cycle.part[item.id]?.on).length;
+  const intro=document.createElement('section');intro.className='card jungyang-intro';
+  intro.innerHTML='<p class="section-label">중양 · 음력 구월 구일</p><h2>조상님을 대접하는 날</h2><p class="sub">기일·묘소·내력을 몰라 제사를 받지 못한 조상님까지 모시고, 한을 풀어 평안히 가시기를 빕니다.</p>';
+  const progress=document.createElement('p');progress.id='jungyang-progress';progress.className='jungyang-count';
+  progress.textContent='기본 차림 '+count+' / '+basic.length+' 준비';intro.appendChild(progress);
+  const summary=document.createElement('p');summary.className='sub';
+  summary.textContent='조상상: 밥 한 공기 · 술 한 잔 · 나물 세 종류. 전안 소당·중당·육당과 건립: 밥 한 공기씩. 모두 다섯 공기입니다.';
+  intro.appendChild(summary);
+  const boundary=document.createElement('p');boundary.className='note';
+  boundary.textContent='신당 공간에 맞춰 은호당이 정한 차림입니다. 초하루·추석 상을 그대로 옮기지 않습니다. 아래 권장·선택 항목은 기본 차림 집계에 넣지 않습니다.';
+  intro.appendChild(boundary);el.appendChild(intro);
+  el.appendChild(preparationCard('jungyang-ancestor-card','조상상 · 기본 차림',JUNGYANG_ANCESTOR,'올림'));
+}
+function renderJungyangGuide(){
+  const el=document.getElementById('jungyang-guide');el.replaceChildren();
+  if(!isFamily()||!isJungyang())return;
+  const recommended=preparationCard('jungyang-recommended-card','조금 더 갖추면 좋은 것 · 권장',JUNGYANG_RECOMMENDED,'마련');
+  const sub=document.createElement('p');sub.className='sub';sub.textContent='경문에 등장하는 정수·향·촛불·술·과실을 참고한 은호당의 절충안입니다. 모든 계보의 필수 법도는 아닙니다.';
+  recommended.querySelector('h2').after(sub);el.appendChild(recommended);
+  const seasonal=document.createElement('section');seasonal.className='card jungyang-guide-card';
+  seasonal.innerHTML='<p class="section-label">계절 격식 · 선택</p><h2>국화의 뜻은 가볍게</h2><p>술 한 잔을 마련할 때 국화주가 있으면 그 잔으로 대신합니다. 술잔을 더 늘릴 필요는 없습니다. 없으면 평소 올리던 술 한 잔으로 준비합니다.</p><p>여유가 있으면 국화전 작은 한 접시를 더해도 좋습니다. 국화주·국화전·화채를 모두 갖추지는 않습니다.</p><p class="note">국화 음식은 중양의 세시풍속을 선택해 따른 것입니다. 필수 제물이라는 뜻은 아닙니다. 직접 만들 때는 식용으로 판매된 감국만 쓰고 관상용 꽃은 넣지 않습니다.</p>';
+  el.appendChild(seasonal);
+  const prayer=preparationCard('jungyang-prayer-card','마음을 전하는 차례 · 진행안',JUNGYANG_PRAYERS,'짚음');
+  const guide=document.createElement('p');guide.className='sub';guide.textContent='기본 차림을 올린 뒤 차분히 짚습니다. 자료의 취지를 살린 간소 진행안이며, 전승된 고정 의식 순서는 아닙니다.';
+  prayer.querySelector('h2').after(guide);
+  const example=document.createElement('blockquote');example.className='jungyang-prayer';
+  example.textContent='중양을 맞아 신령님들께 정성을 고합니다. 기일과 내력을 알지 못해 제사를 받지 못한 조상님들까지 이 정성을 흠향하시고, 맺힌 한을 푸시어 평안히 가시기를 빕니다.';
+  const exampleLabel=document.createElement('p');exampleLabel.className='note';exampleLabel.textContent='은호당 간소 축원 예시입니다. 전승 경문이나 의무 경문이 아닙니다. 원하시면 아래 무명조상 해원경을 참고합니다. 특정 시각·철상 시간은 중양 자료에서 확인되지 않아 고정하지 않았습니다.';
+  prayer.append(example,exampleLabel);el.appendChild(prayer);
+  const sources=document.createElement('section');sources.className='card jungyang-guide-card';
+  sources.innerHTML='<p class="section-label">자료와 적용 범위</p><h2>참고한 글</h2><ul><li><a href="https://cafe.naver.com/f-e/cafes/11840628/articles/14197" target="_blank" rel="noopener noreferrer">중양절(음력 9월 9일)</a> · 스승니임ㅡ서울, 2023.07.31. 중양의 대상·취지와 세시풍속 참고.</li><li><a href="https://cafe.naver.com/f-e/cafes/11840628/articles/28564" target="_blank" rel="noopener noreferrer">무명조상 해원경</a> · 스승니임ㅡ서울, 2026.10.03. 작성자가 만든 중양 경문으로, 제수와 해원 발원의 취지 참고.</li></ul><p class="note">카페 글은 로그인·회원 자격이 필요할 수 있습니다. 기본 수량은 은호당의 결정이고, 덧차림·계절 격식·간소 진행안은 자료를 바탕으로 정리한 절충안입니다. 중양 상의 체크는 다른 달·초하루 기록과 따로 저장합니다.</p>';
+  el.appendChild(sources);
 }
 function renderSeasonalPrep(){
   const el=document.getElementById('seasonal-prep');el.replaceChildren();
@@ -1272,6 +1328,8 @@ function closeSheet(){
 }
 function partLabelOf(pid){
   if(pid===BULSA_RICE_ID)return '불사단지 쌀 교체';
+  const jungyangItem=JUNGYANG_ANCESTOR.concat(JUNGYANG_OFFERINGS,JUNGYANG_RECOMMENDED,JUNGYANG_PRAYERS).find(item=>item.id===pid);
+  if(jungyangItem)return jungyangItem.name;
   const offering=RICE_OFFERINGS.find(item=>item.id===pid);
   if(offering)return offering.name;
   for(const i of ALL){ if(!i.parts) continue;
@@ -1384,9 +1442,13 @@ function render(){
   const configured=typeof isEventConfigured!=='function'||isEventConfigured();
   const prep=document.getElementById('family-prep');
   if(prep)prep.hidden=!isFamily()||!configured;
-  renderOfferings();
+  const jungyang=isFamily()&&isJungyang();
+  ['shopping-grid','sangcard','stepscard','prog'].forEach(id=>{
+    document.getElementById(id).hidden=!isFamily()||!configured||jungyang;
+  });
+  renderJungyang();renderOfferings();renderJungyangGuide();
   renderSeasonalPrep();
-  if(isFamily()&&configured){
+  if(isFamily()&&configured&&!jungyang){
     renderList(document.getElementById('fixed'),FIXED,false);
     renderList(document.getElementById('var'),VARI,true);
     renderSang(); renderSteps(); renderDone();
@@ -1399,6 +1461,7 @@ function render(){
     document.getElementById('barfill').style.width='0%';
     document.getElementById('prog').hidden=true;
   }
+  if(jungyang)renderDone();
   if(isFamily()&&configured)renderList(document.getElementById('gifts'),GIFTS,false,'보냄');
   else renderGuestGifts();
   if(!isFamily())closeSheet();
@@ -1557,7 +1620,7 @@ document.getElementById('next').onclick=()=>changeMonth(1);
 document.getElementById('clear-btn').onclick=()=>{
   if(!isAdmin()||!isEventConfigured()||!confirm(getSelectedEvent().name+' 상의 체크를 비울까요? 변경 기록은 남습니다.'))return;
   writeCycle(c=>{
-    ALL.forEach(i=>{c.bought[i.id]=stamp({on:false});c.stock[i.id]=stamp({state:null});c.mode[i.id]=stamp({state:null});});
+    eventPlan().items.forEach(i=>{c.bought[i.id]=stamp({on:false});c.stock[i.id]=stamp({state:null});c.mode[i.id]=stamp({state:null});});
     Object.keys(c.part).forEach(k=>{c.part[k]=stamp({on:false});});
     Object.keys(c.memo).forEach(k=>{c.memo[k]=stamp({text:''});});
     Object.keys(c.shop).forEach(k=>{c.shop[k]=stamp({name:null});});

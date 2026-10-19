@@ -51,3 +51,7 @@
 - `askName`: 접속 바꾸기·왼쪽 위 서명에서 이름 입력 첫 화면으로 복귀. 기록과 저장 대기 입력을 보존하고 이름 입력에 포커스
 
 새 명절 품목을 구현할 때 먼저 사용자 규칙을 문서화하고, 그 명절의 별도 저장 키를 사용하세요.
+
+## 중양 전용 준비 (2026-10-20)
+- isJungyang, JUNGYANG_ANCESTOR/OFFERINGS/RECOMMENDED/PRAYERS, renderJungyang/renderJungyangGuide: 가족 전용 기본 차림과 선택 안내. index.html의 jungyang-prep·jungyang-guide 슬롯 사용. renderOfferings는 중양에서 전용 네 공양 체크를 표시합니다.
+- 중양은 configured 상태지만 초하루 장보기·진설·6단계·18개 진척은 숨기고 DOM을 비웁니다. 완료·예물 기능은 유지합니다.

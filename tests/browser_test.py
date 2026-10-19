@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import tempfile
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 import unittest
@@ -360,7 +361,7 @@ class BrowserRegression(unittest.TestCase):
         expect(page.locator("#eventnav [role=tab]")).to_have_count(1)
         self.assertEqual(fixture.writes, [])
 
-    def test_legacy_september_records_belong_to_first_day_and_holiday_stays_empty(self):
+    def test_legacy_september_records_belong_to_first_day_and_jungyang_starts_independent(self):
         record = legacy_cycle()
         record["done"] = {"done:중양": stamp(on=True)}
         key = "sangbogi:cycle:2026-09"
@@ -377,8 +378,10 @@ class BrowserRegression(unittest.TestCase):
         expect(page.locator("#title")).to_have_text("구월 중양")
         expect(page.locator("#chips")).to_contain_text("음력 9월 9일")
         expect(page.locator("#chips")).to_contain_text("10월 19일")
-        expect(page.locator("#eventplan")).to_contain_text("상차림은 아직 정하지 않았습니다")
-        expect(page.locator("#fixed .row, #var .row, #gifts .row, #steps .step, #donebox button")).to_have_count(0)
+        expect(page.locator("#jungyang-prep")).to_contain_text("조상님을 대접하는 날")
+        expect(page.locator("#jungyang-progress")).to_have_text("기본 차림 0 / 7 준비")
+        expect(page.locator("#fixed .row, #var .row, #steps .step")).to_have_count(0)
+        expect(page.locator("#donebox button")).to_have_text("중양 상을 올렸습니다")
         self.assertEqual(page.evaluate("keyNow()"), "sangbogi:event:2026-09:jungyang")
         self.assertEqual(page.evaluate("Object.keys(cycle.bought).length"), 0)
         page.locator('#eventnav [data-event="first"]').click()
@@ -410,7 +413,8 @@ class BrowserRegression(unittest.TestCase):
         expect(page.locator("#rice-offering-card [role=checkbox]")).to_have_count(4)
         self.select_month(page, 9)
         page.locator('#eventnav [data-event="jungyang"]').click()
-        expect(page.locator("#offering-prep")).to_be_empty()
+        expect(page.locator("#rice-offering-card [role=checkbox]")).to_have_count(4)
+        expect(page.locator('[id^="jungyang-rice-offering-"]')).to_have_count(4)
         expect(page.locator("#tiers [data-offering]")).to_have_count(0)
         expect(page.locator("#geollip-pills [data-offering]")).to_have_count(0)
         page.locator(".brand-home").click()
@@ -860,6 +864,92 @@ class BrowserRegression(unittest.TestCase):
         self.assertFalse(any(h["to"] in ("고", "고사") for h in namul_history))
         self.assertTrue(all(h["by"] == "은호당" for h in namul_history))
 
+    def test_jungyang_mother_prepares_independent_basic_and_recommended_items(self):
+        old_key = "sangbogi:cycle:2026-09"
+        event_key = "sangbogi:event:2026-09:jungyang"
+        page, fixture = self.open_page({old_key: legacy_cycle()})
+        original = fixture.records[old_key]
+        self.login(page, "어머니")
+        self.select_month(page, 9)
+        page.locator('#eventnav [data-event="jungyang"]').click()
+        expect(page.locator("#jungyang-progress")).to_have_text("기본 차림 0 / 7 준비")
+        expect(page.locator("#jungyang-ancestor-card [role=checkbox]")).to_have_count(3)
+        expect(page.locator("#rice-offering-card [role=checkbox]")).to_have_count(4)
+        for card in ("#shopping-grid", "#prog", "#sangcard", "#stepscard"):
+            expect(page.locator(card)).to_be_hidden()
+        expect(page.locator("#fixed .row, #var .row, #steps .step")).to_have_count(0)
+        expect(page.locator("#donecard")).to_be_visible()
+        for group in ("#jungyang-ancestor-card", "#rice-offering-card"):
+            for n in range(page.locator(group + " .row").count()):
+                page.locator(group + " .row").nth(n).click()
+        expect(page.locator("#jungyang-progress")).to_have_text("기본 차림 7 / 7 준비")
+        page.locator("#jungyang-recommended-card .row").first.click()
+        page.locator("#jungyang-prayer-card .row").first.click()
+        expect(page.locator("#jungyang-progress")).to_have_text("기본 차림 7 / 7 준비")
+        page.locator("#donebox button").click()
+        self.wait_saved(page)
+        saved = json.loads(fixture.records[event_key])
+        self.assertEqual(fixture.records[old_key], original)
+        self.assertTrue(saved["done"]["done:jungyang"]["on"])
+        self.assertTrue(saved["part"]["jungyang-water"]["on"])
+        self.assertTrue(saved["part"]["jungyang-prayer-gods"]["on"])
+        self.assertEqual(saved["bought"], {})
+        self.assertTrue(all(p["by"] == "어머니" and p["at"] for p in saved["part"].values()))
+        self.assertTrue(all(write["key"] == event_key for write in fixture.writes))
+        self.select_month(page, 9, year=2027)
+        page.locator('#eventnav [data-event="jungyang"]').click()
+        expect(page.locator("#jungyang-progress")).to_have_text("기본 차림 0 / 7 준비")
+        page.reload()
+        self.login(page, "어머니")
+        self.select_month(page, 9)
+        page.locator('#eventnav [data-event="jungyang"]').click()
+        expect(page.locator("#jungyang-progress")).to_have_text("기본 차림 7 / 7 준비")
+        expect(page.locator("#donebox button")).to_contain_text("중양 상 올림")
+        page.locator('#eventnav [data-event="first"]').click()
+        expect(page.locator("#prog")).to_be_visible()
+        expect(page.locator("#total")).to_have_text("/18")
+        expect(page.locator("#rice-offering-card [aria-checked=true]")).to_have_count(0)
+        for selector in ("#jungyang-prep", "#jungyang-guide"):
+            expect(page.locator(selector)).to_be_empty()
+        self.assertEqual(fixture.records[old_key], original)
+
+    def test_jungyang_guest_does_not_receive_private_checklists_or_sources(self):
+        key = "sangbogi:event:2026-09:jungyang"
+        record = legacy_cycle()
+        record["part"] = {"jungyang-ancestor-rice": stamp(on=True)}
+        page, fixture = self.open_page({key: record})
+        self.login(page)
+        self.select_month(page, 9)
+        page.locator('#eventnav [data-event="jungyang"]').click()
+        expect(page.locator("#jungyang-progress")).to_have_text("기본 차림 1 / 7 준비")
+        page.locator(".brand-home").click()
+        self.guest(page)
+        self.select_month(page, 9)
+        page.locator('#eventnav [data-event="jungyang"]').click()
+        for selector in ("#jungyang-prep", "#offering-prep", "#jungyang-guide", "#donebox"):
+            expect(page.locator(selector)).to_be_empty()
+        expect(page.locator("#app [role=checkbox]")).to_have_count(0)
+        expect(page.locator("#gifts")).to_contain_text("쌀")
+        self.assertEqual(fixture.writes, [])
+
+    def test_jungyang_narrow_layout_and_source_boundaries(self):
+        for width, height in ((1440, 1000), (390, 844), (320, 640)):
+            with self.subTest(viewport=f"{width}x{height}"):
+                page, _ = self.open_page(width=width, height=height)
+                self.login(page, "어머니")
+                self.select_month(page, 9)
+                page.locator('#eventnav [data-event="jungyang"]').click()
+                self.assert_no_overflow(page)
+                expect(page.locator("#jungyang-guide")).to_contain_text("모든 계보의 필수 법도는 아닙니다")
+                expect(page.locator("#jungyang-guide")).to_contain_text("술잔을 더 늘릴 필요는 없습니다")
+                expect(page.locator("#jungyang-guide")).to_contain_text("전승된 고정 의식 순서는 아닙니다")
+                expect(page.locator("#jungyang-guide a")).to_have_count(2)
+                self.assertEqual(page.evaluate("nameOfKey('part/jungyang-rice-offering-geollip')"), "건립 밥공양 · 재료")
+                for button in page.locator("#jungyang-prep button, #offering-prep button, #jungyang-guide button").all():
+                    bounds = button.bounding_box()
+                    self.assertGreaterEqual(bounds["width"], 40)
+                    self.assertGreaterEqual(bounds["height"], 40)
+
     def test_horizontal_desktop_and_vertical_mobile_wordmarks(self):
         for width, height in ((1440, 1000), (390, 844), (320, 640)):
             with self.subTest(viewport=f"{width}x{height}"):
@@ -901,7 +991,7 @@ class BrowserRegression(unittest.TestCase):
                 self.select_month(page, 9)
                 self.assert_no_overflow(page)
                 if width in (1440, 390):
-                    page.screenshot(path=f"/tmp/calends-{width}-family.png", full_page=True)
+                    page.screenshot(path=str(Path(tempfile.gettempdir()) / f"calends-{width}-family.png"), full_page=True)
                 page.locator("#changeme").click()
                 self.guest(page)
                 self.assert_no_overflow(page)
