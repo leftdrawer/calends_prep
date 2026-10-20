@@ -702,19 +702,45 @@ const JUNGYANG_PRAYERS=[
   {id:'jungyang-prayer-ancestors',name:'제사 받지 못한 조상님까지 모시기'},
   {id:'jungyang-prayer-peace',name:'해원과 극락왕생을 빌기'}
 ];
-const JUNGYANG_CHUKMUN=`유 세차 [해의 간지]년 음력 구월 구일,
-후손 [봉행자 이름]은 중양을 맞아 아버지 집안 광산김씨와 어머니 집안 창녕성씨의 역대 선조 여러 영위께 삼가 고하나이다.
+const JUNGYANG_CELEBRANT='은호당 김형석';
+const JUNGYANG_CHUKMUN=`維歲次 [年干支] 九月九日
+奉行者 [奉行者] 敢昭告于
+光山金氏 昌寧成氏 歷代祖先列位之靈
 
-저희에게 삶을 이어 주신 은혜를 생각하며, 소박한 밥과 술과 나물을 정성껏 올립니다. 성함과 기일을 아는 조상님은 물론, 내력과 묘소를 알지 못하여 제사를 받지 못한 선망조상님들까지 함께 오시어 이 정성을 흠향하여 주시옵소서.
+歲序流遷 重陽復至
+追惟先德 感慕彌深
+仰念先世 血脈相承 以至于今
+恩深罔極 飮水思源 追遠報本 夙夜不忘
 
-맺힌 한과 서러운 마음은 풀어 놓으시고, 모든 선령께서 평안과 안식을 누리시기를 빕니다. 살아 있는 가족과 후손들 또한 서로 아끼고 바르게 살아가도록 굽어살펴 주시옵소서.
+謹具飯蔬清酌 用薦微誠
+凡姓名未詳 忌日失傳 墓所莫考
+久闕祭享之先靈 亦願同臨 共歆此奠
 
-두 집안의 모든 선령께 이 정성이 고루 닿기를 빌며 삼가 잔을 올리나이다.
-상향.`;
-function jungyangChukmunText(){
+伏願列位先靈 冤結悉解 永享安寧
+庇佑後昆 親族和睦 孝友相敦 正道是行
+惟願此誠 咸達列位
+謹以至誠 奉此薄奠 伏惟尙饗`;
+const JUNGYANG_CHUKMUN_TRANSLATION=`[해의 간지]년 음력 구월 구일, 봉행자 은호당 김형석은 광산김씨와 창녕성씨의 역대 조상님 모든 영위께 삼가 고합니다.
+
+세월이 흘러 중양을 다시 맞으니, 선조의 덕을 돌아보며 감사와 그리움이 더욱 깊어집니다. 선대에서 혈맥이 이어져 오늘에 이르렀으니 그 은혜는 깊고 끝이 없습니다. 물을 마시며 그 근원을 생각하듯, 먼 선조를 기리고 근본의 은혜를 갚는 마음을 밤낮으로 잊지 않습니다.
+
+삼가 밥과 나물과 술을 갖추어 작은 정성을 올립니다. 성함과 기일이 전해지지 않고 묘소를 알 수 없어 오랫동안 제사를 받지 못한 선령께서도 함께 오시어 이 제물을 흠향하여 주십시오.
+
+모든 선령의 맺힌 원한이 풀리고 길이 평안을 누리시기를 빕니다. 후손을 보살피시어 친족이 화목하고, 효도와 우애를 두텁게 하며 바른 길을 따르게 하여 주십시오. 이 정성이 모든 영위께 고루 닿기를 빌며, 지극한 정성으로 소박한 제물을 올리오니 삼가 흠향하여 주십시오.`;
+function jungyangYearGanji(hanja=false){
   const offset=LUNAR[idx][1]-4;
-  const ganji='갑을병정무기경신임계'[((offset%10)+10)%10]+'자축인묘진사오미신유술해'[((offset%12)+12)%12];
-  return JUNGYANG_CHUKMUN.replace('[해의 간지]',ganji);
+  const stems=hanja?'甲乙丙丁戊己庚辛壬癸':'갑을병정무기경신임계';
+  const branches=hanja?'子丑寅卯辰巳午未申酉戌亥':'자축인묘진사오미신유술해';
+  return stems[((offset%10)+10)%10]+branches[((offset%12)+12)%12];
+}
+function jungyangChukmunText(){
+  return JUNGYANG_CHUKMUN.replace('[年干支]',jungyangYearGanji(true)).replace('[奉行者]',JUNGYANG_CELEBRANT);
+}
+function jungyangChukmunTranslation(){
+  return JUNGYANG_CHUKMUN_TRANSLATION.replace('[해의 간지]',jungyangYearGanji());
+}
+function jungyangChukmunDownloadText(){
+  return jungyangChukmunText()+'\n\n우리말 해석\n\n'+jungyangChukmunTranslation()+'\n';
 }
 const BULSA_RICE_ID='bulsa-rice';
 function isFamilyFirstDay(){
@@ -795,22 +821,26 @@ function renderJungyangGuide(){
   prayer.querySelector('h2').after(guide);
   el.appendChild(prayer);
   const jibang=document.createElement('section');jibang.id='jungyang-jibang-card';jibang.className='card jungyang-guide-card';
-  jibang.innerHTML='<p class="section-label">광산김씨 · 창녕성씨</p><h2>두 집안 조상님을 모시는 지방</h2><div class="jungyang-jibang-layout"><a class="jungyang-jibang-preview" href="./jibang.html" target="_blank" rel="noopener noreferrer" aria-label="두 집안 지방을 세로로 열기"><img src="./assets/jungyang-jibang-s25-ultra.png" width="852" height="1846" loading="lazy" alt="오른쪽 광산김씨, 왼쪽 창녕성씨 역대 선조의 신위를 모시는 붓글씨 지방"></a><div class="jungyang-jibang-copy"><p>두 집안의 역대 조상을 함께 모시기 위해 작성한 합동 지방입니다. 닥종이 바탕에 오른쪽은 광산김씨, 왼쪽은 창녕성씨의 신위를 세로로 담았습니다.</p><p class="note">S25 울트라와 같은 6:13 세로 비율입니다. 세로로 열고 전체 화면을 눌러주세요.</p><div class="jungyang-actions"><a class="btn" href="./jibang.html" target="_blank" rel="noopener noreferrer">세로로 열기</a><a class="btn" href="./assets/jungyang-jibang-s25-ultra.png" download="중양-광산김씨-창녕성씨-지방.png">PNG 저장</a></div></div></div>';
+  jibang.innerHTML='<p class="section-label">광산김씨 · 창녕성씨</p><h2>두 집안 조상님을 모시는 지방</h2><div class="jungyang-jibang-layout"><a class="jungyang-jibang-preview" href="./jibang.html?v=20261020-aligned" target="_blank" rel="noopener noreferrer" aria-label="두 집안 지방을 세로로 열기"><img src="./assets/jungyang-jibang-s25-ultra.png?v=20261020-aligned" width="853" height="1844" loading="lazy" alt="오른쪽 광산김씨, 왼쪽 창녕성씨 역대 선조의 신위를 모시는 붓글씨 지방"></a><div class="jungyang-jibang-copy"><p>두 집안의 역대 조상을 함께 모시기 위해 작성한 합동 지방입니다. 닥종이 바탕에 오른쪽은 광산김씨, 왼쪽은 창녕성씨의 신위를 세로로 담았습니다.</p><p class="note">S25 울트라에서 세로로 열고 전체 화면을 눌러주세요.</p><div class="jungyang-actions"><a class="btn" href="./jibang.html?v=20261020-aligned" target="_blank" rel="noopener noreferrer">세로로 열기</a><a class="btn" href="./assets/jungyang-jibang-s25-ultra.png?v=20261020-aligned" download="중양-광산김씨-창녕성씨-지방.png">PNG 저장</a></div></div></div>';
   el.appendChild(jibang);
   const chukmun=document.createElement('section');chukmun.id='jungyang-chukmun-card';chukmun.className='card jungyang-guide-card';
   const chukmunLabel=document.createElement('p');chukmunLabel.className='section-label';chukmunLabel.textContent='두 집안 선조께 고하는 글';
   const chukmunHeading=document.createElement('h2');chukmunHeading.textContent='중양 축문';
-  const chukmunIntro=document.createElement('p');chukmunIntro.className='note';chukmunIntro.textContent='[봉행자 이름]을 채워 읽어주세요. 두 집안의 선조를 함께 모시기 위해 새로 쓴 합동 중양 축문입니다.';
-  const chukmunText=document.createElement('blockquote');chukmunText.id='jungyang-chukmun';chukmunText.className='jungyang-prayer';chukmunText.textContent=jungyangChukmunText();
+  const chukmunIntro=document.createElement('p');chukmunIntro.className='note';chukmunIntro.textContent='봉행 · 은호당 김형석';
+  const chukmunText=document.createElement('blockquote');chukmunText.id='jungyang-chukmun';chukmunText.className='jungyang-prayer jungyang-chukmun-hanmun';chukmunText.lang='lzh';chukmunText.textContent=jungyangChukmunText();
+  const translation=document.createElement('section');translation.className='jungyang-translation';
+  const translationHeading=document.createElement('h3');translationHeading.textContent='우리말 해석';
+  const translationText=document.createElement('p');translationText.id='jungyang-chukmun-translation';translationText.textContent=jungyangChukmunTranslation();
+  translation.append(translationHeading,translationText);
   const chukmunActions=document.createElement('div');chukmunActions.className='jungyang-actions';
   const download=document.createElement('button');download.type='button';download.className='btn';download.textContent='축문 저장';
   download.onclick=()=>{
-    const url=URL.createObjectURL(new Blob([jungyangChukmunText()+'\n'],{type:'text/plain;charset=utf-8'}));
+    const url=URL.createObjectURL(new Blob([jungyangChukmunDownloadText()],{type:'text/plain;charset=utf-8'}));
     const link=document.createElement('a');link.href=url;link.download='중양-광산김씨-창녕성씨-축문.txt';
     link.click();setTimeout(()=>URL.revokeObjectURL(url),0);
   };
   chukmunActions.appendChild(download);
-  chukmun.append(chukmunLabel,chukmunHeading,chukmunIntro,chukmunText,chukmunActions);el.appendChild(chukmun);
+  chukmun.append(chukmunLabel,chukmunHeading,chukmunIntro,chukmunText,translation,chukmunActions);el.appendChild(chukmun);
   const sources=document.createElement('section');sources.className='card jungyang-guide-card';
   sources.innerHTML='<p class="section-label">자료와 적용 범위</p><h2>참고한 글</h2><ul><li><a href="https://cafe.naver.com/f-e/cafes/11840628/articles/14197" target="_blank" rel="noopener noreferrer">중양절(음력 9월 9일)</a> · 스승니임ㅡ서울, 2023.07.31. 중양의 대상·취지와 세시풍속 참고.</li><li><a href="https://cafe.naver.com/f-e/cafes/11840628/articles/28564" target="_blank" rel="noopener noreferrer">무명조상 해원경</a> · 스승니임ㅡ서울, 2026.10.03. 작성자가 만든 중양 경문으로, 제수와 해원 발원의 취지 참고.</li></ul><p class="note">카페 글은 로그인·회원 자격이 필요할 수 있습니다. 기본 수량은 은호당의 결정이고, 국화 음식과 간소 진행안은 자료의 취지를 참고했습니다. 지방과 축문은 두 집안을 함께 모시려는 요청에 맞춰 새로 정리했습니다. 중양 상의 체크는 다른 달·초하루 기록과 따로 저장합니다.</p>';
   el.appendChild(sources);
