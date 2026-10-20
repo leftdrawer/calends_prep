@@ -864,10 +864,13 @@ class BrowserRegression(unittest.TestCase):
         self.assertFalse(any(h["to"] in ("고", "고사") for h in namul_history))
         self.assertTrue(all(h["by"] == "은호당" for h in namul_history))
 
-    def test_jungyang_mother_prepares_independent_basic_and_recommended_items(self):
+    def test_jungyang_mother_prepares_basic_and_preserves_retired_guide_records(self):
         old_key = "sangbogi:cycle:2026-09"
         event_key = "sangbogi:event:2026-09:jungyang"
-        page, fixture = self.open_page({old_key: legacy_cycle()})
+        retired = {key: stamp(on=True) for key in ("jungyang-water", "jungyang-light", "jungyang-fruit")}
+        old_event = legacy_cycle()
+        old_event["part"] = copy.deepcopy(retired)
+        page, fixture = self.open_page({old_key: legacy_cycle(), event_key: old_event})
         original = fixture.records[old_key]
         self.login(page, "어머니")
         self.select_month(page, 9)
@@ -883,7 +886,9 @@ class BrowserRegression(unittest.TestCase):
             for n in range(page.locator(group + " .row").count()):
                 page.locator(group + " .row").nth(n).click()
         expect(page.locator("#jungyang-progress")).to_have_text("기본 차림 7 / 7 준비")
-        page.locator("#jungyang-recommended-card .row").first.click()
+        expect(page.locator("#jungyang-recommended-card")).to_have_count(0)
+        for name in ("정화수 마련", "향·촛불 마련", "집에 있는 제철과일 한 접시"):
+            expect(page.get_by_role("checkbox", name=name, exact=True)).to_have_count(0)
         page.locator("#jungyang-prayer-card .row").first.click()
         expect(page.locator("#jungyang-progress")).to_have_text("기본 차림 7 / 7 준비")
         page.locator("#donebox button").click()
@@ -891,10 +896,12 @@ class BrowserRegression(unittest.TestCase):
         saved = json.loads(fixture.records[event_key])
         self.assertEqual(fixture.records[old_key], original)
         self.assertTrue(saved["done"]["done:jungyang"]["on"])
-        self.assertTrue(saved["part"]["jungyang-water"]["on"])
+        for key, original_part in retired.items():
+            self.assertEqual(saved["part"][key], original_part)
         self.assertTrue(saved["part"]["jungyang-prayer-gods"]["on"])
-        self.assertEqual(saved["bought"], {})
-        self.assertTrue(all(p["by"] == "어머니" and p["at"] for p in saved["part"].values()))
+        self.assertEqual(saved["bought"], old_event["bought"])
+        self.assertTrue(all(p["by"] == "어머니" and p["at"]
+                            for key, p in saved["part"].items() if key not in retired))
         self.assertTrue(all(write["key"] == event_key for write in fixture.writes))
         self.select_month(page, 9, year=2027)
         page.locator('#eventnav [data-event="jungyang"]').click()
@@ -940,15 +947,62 @@ class BrowserRegression(unittest.TestCase):
                 self.select_month(page, 9)
                 page.locator('#eventnav [data-event="jungyang"]').click()
                 self.assert_no_overflow(page)
-                expect(page.locator("#jungyang-guide")).to_contain_text("모든 계보의 필수 법도는 아닙니다")
-                expect(page.locator("#jungyang-guide")).to_contain_text("술잔을 더 늘릴 필요는 없습니다")
+                expect(page.locator("#jungyang-recommended-card")).to_have_count(0)
+                expect(page.locator("#jungyang-guide")).not_to_contain_text("조금 더 갖추면 좋은 것")
+                expect(page.locator("#jungyang-guide")).to_contain_text("국화주")
+                expect(page.locator("#jungyang-guide")).to_contain_text("국화전")
                 expect(page.locator("#jungyang-guide")).to_contain_text("전승된 고정 의식 순서는 아닙니다")
-                expect(page.locator("#jungyang-guide a")).to_have_count(2)
+                expect(page.locator('#jungyang-guide a[href^="https://cafe.naver.com/"]')).to_have_count(2)
+                expect(page.locator("#jungyang-jibang-card img")).to_have_attribute("src", "./assets/jungyang-jibang-s25-ultra.png")
+                expect(page.locator("#jungyang-chukmun")).to_contain_text("유 세차 병오년")
+                expect(page.locator("#jungyang-chukmun")).to_contain_text("광산김씨")
+                expect(page.locator("#jungyang-chukmun")).to_contain_text("창녕성씨")
+                expect(page.locator("#jungyang-chukmun")).to_contain_text("[봉행자 이름]")
                 self.assertEqual(page.evaluate("nameOfKey('part/jungyang-rice-offering-geollip')"), "건립 밥공양 · 재료")
                 for button in page.locator("#jungyang-prep button, #offering-prep button, #jungyang-guide button").all():
                     bounds = button.bounding_box()
                     self.assertGreaterEqual(bounds["width"], 40)
                     self.assertGreaterEqual(bounds["height"], 40)
+
+    def test_jungyang_jibang_download_fullscreen_and_year_specific_prayer(self):
+        page, fixture = self.open_page(width=480, height=1040)
+        self.login(page)
+        self.select_month(page, 9, year=2027)
+        page.locator('#eventnav [data-event="jungyang"]').click()
+        expect(page.locator("#jungyang-chukmun")).to_contain_text("유 세차 정미년")
+        prayer = page.locator("#jungyang-chukmun").inner_text()
+        with page.expect_download() as saved_prayer:
+            page.get_by_role("button", name="축문 저장", exact=True).click()
+        self.assertEqual(Path(saved_prayer.value.path()).read_text(encoding="utf-8"), prayer + "\n")
+        image = page.locator("#jungyang-jibang-card img")
+        image.scroll_into_view_if_needed()
+        page.wait_for_function("document.querySelector('#jungyang-jibang-card img').naturalWidth > 0")
+        self.assertEqual(image.evaluate("img => [img.naturalWidth, img.naturalHeight]"), [852, 1846])
+        with page.expect_download() as saved_image:
+            page.locator("#jungyang-jibang-card a[download]").click()
+        self.assertEqual(Path(saved_image.value.path()).read_bytes(),
+                         (ROOT / "assets/jungyang-jibang-s25-ultra.png").read_bytes())
+        viewer = page.context.new_page()
+        viewer.on("pageerror", lambda error: self.page_errors.append(str(error)))
+        viewer.goto(self.base_url + "jibang.html", wait_until="load")
+        expect(viewer.locator("#jibang")).to_be_visible()
+        self.assert_no_overflow(viewer)
+        dimensions = viewer.locator("#jibang").evaluate("img => ({w:img.clientWidth,h:img.clientHeight,nw:img.naturalWidth,nh:img.naturalHeight})")
+        self.assertEqual(dimensions, {"w": 480, "h": 1040, "nw": 852, "nh": 1846})
+        viewer.get_by_role("button", name="전체 화면", exact=True).click()
+        viewer.wait_for_function("!!document.fullscreenElement")
+        expect(viewer.locator("#controls")).to_be_hidden()
+        expect(viewer.locator("#show-controls")).to_be_hidden()
+        viewer.locator("#jibang").click(position={"x": 20, "y": 20})
+        expect(viewer.locator("#controls")).to_be_visible()
+        viewer.evaluate("document.exitFullscreen()")
+        viewer.wait_for_function("!document.fullscreenElement")
+        # Browsers without the Fullscreen API retain a working PNG alternative.
+        viewer.evaluate("Object.defineProperty(document.documentElement, 'requestFullscreen', {value:undefined})")
+        viewer.get_by_role("button", name="전체 화면", exact=True).click()
+        expect(viewer.locator("#status")).to_contain_text("PNG를 저장해 갤러리에서")
+        expect(viewer.locator("#controls a[download]")).to_be_visible()
+        self.assertEqual(fixture.writes, [])
 
     def test_horizontal_desktop_and_vertical_mobile_wordmarks(self):
         for width, height in ((1440, 1000), (390, 844), (320, 640)):

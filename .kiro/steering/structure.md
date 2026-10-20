@@ -5,7 +5,8 @@
 - `index.html`: 로그인과 가족 암호 입력, 달·행사 탭, 가족 준비/공개 예물 영역, 기록판
 - `styles.css`: 로그인, PC 두 열·모바일 한 열, 행사 승인, 준비 항목과 기록판 스타일
 - `app.js`: 아래 데이터·일정·저장·화면 로직
-- `assets/`: PNG 로고와 기존 홈 아이콘
+- `jibang.html`: 합동지방의 세로 이미지 보기, 전체 화면과 설정 숨기기·PNG 저장
+- `assets/`: PNG 로고·기존 홈 아이콘·`jungyang-jibang-s25-ultra.png` 합동지방
 - `tests/browser_test.py`: 실제 외부 요청을 차단한 브라우저 회귀 검사
 - `docs/HISTORY.md`: 변경 이력
 - `docs/domain-sangbogi.md`: 명절·대체·자료 호환 규칙
@@ -53,5 +54,10 @@
 새 명절 품목을 구현할 때 먼저 사용자 규칙을 문서화하고, 그 명절의 별도 저장 키를 사용하세요.
 
 ## 중양 전용 준비 (2026-10-20)
-- isJungyang, JUNGYANG_ANCESTOR/OFFERINGS/RECOMMENDED/PRAYERS, renderJungyang/renderJungyangGuide: 가족 전용 기본 차림과 선택 안내. index.html의 jungyang-prep·jungyang-guide 슬롯 사용. renderOfferings는 중양에서 전용 네 공양 체크를 표시합니다.
+
+- `isJungyang`, `JUNGYANG_ANCESTOR`, `JUNGYANG_OFFERINGS`, `JUNGYANG_PRAYERS`, `renderJungyang`, `renderJungyangGuide`: 가족 전용 기본 7항목·진행안 3개와 국화 음식 선택 안내. `index.html`의 `jungyang-prep`·`jungyang-guide` 슬롯을 사용하고 `renderOfferings`가 중양 전용 네 공양 체크를 표시합니다.
+- `JUNGYANG_LEGACY_LABELS`: 제거한 정화수·향과 촛불·과일 권장 체크의 과거 이력 이름을 `partLabelOf`에서 유지합니다. 새 체크 UI는 생성하지 않습니다.
+- `JUNGYANG_CHUKMUN`, `jungyangChukmunText`: 두 집안을 함께 모시는 새 축문과 선택 음력 연도의 간지 치환. `jungyang-chukmun`에 텍스트로 표시하고 Blob으로 현재 본문의 TXT 다운로드를 만듭니다.
+- `renderJungyangGuide`의 `jungyang-jibang-card`: 합동지방 PNG 미리보기·저장과 `jibang.html` 링크. `jungyang-chukmun-card`는 축문과 저장 버튼입니다. 다른 행사·손님 화면에서는 안내 슬롯을 비웁니다.
+- `jibang.html`은 원본 이미지의 비율을 유지하는 `object-fit:contain`으로 표시합니다. Fullscreen API 호출 후 설정을 숨기고 이미지 터치로 다시 열며, 미지원·실패 시 PNG 저장 대안을 안내합니다.
 - 중양은 configured 상태지만 초하루 장보기·진설·6단계·18개 진척은 숨기고 DOM을 비웁니다. 완료·예물 기능은 유지합니다.

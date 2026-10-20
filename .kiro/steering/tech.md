@@ -43,4 +43,9 @@ GitHub Pages 저장소는 `leftdrawer/calends_prep`, 배포 소스는 `main` 루
 클라우드 실제 브라우저 HTTPS 검사는 NSS 저장소 쓰기 접근을 확인하고 TLS 검증을 유지합니다.
 
 ## 중양 전용 준비 (2026-10-20)
-- 중양 준비·권장·진행안은 기존 명절 키의 cycle.part에 jungyang-* 이름으로 저장합니다. 새 테이블·실데이터 이관·로그인 변경은 없습니다. 기본 7항목만 별도로 집계하고, 완료는 done:jungyang에 기록합니다.
+
+- 중양 기본 준비 7항목·진행안 3개는 기존 명절 키의 `cycle.part`에 `jungyang-*` 이름으로 저장합니다. 새 테이블·실데이터 이관·로그인 변경은 없으며, 기본 7항목만 별도 집계하고 완료는 `done:jungyang`에 기록합니다.
+- 제거한 권장 체크 `jungyang-water/light/fruit`는 저장된 값을 지우거나 다른 항목으로 옮기지 않습니다. `JUNGYANG_LEGACY_LABELS`로 과거 이력 이름을 유지합니다.
+- 합동지방은 image_gen으로 제작한 정적 PNG `assets/jungyang-jibang-s25-ultra.png`입니다. 실제 크기는 852×1846, 비율은 6:13으로 S25 울트라 1440×3120 화면과 같으며 원본 픽셀 수는 구분합니다. PNG·`jibang.html`을 HTML·JS·CSS와 함께 배포합니다. 새 이미지 라이브러리나 외부 런타임 의존성은 없습니다.
+- `jibang.html`은 사용자 버튼 동작으로 Fullscreen API를 요청하고 `object-fit:contain`을 유지합니다. 설정 숨기기·다시 열기, 미지원 시 PNG 저장 안내가 있습니다.
+- 축문은 선택한 음력 연도에서 표준 60갑자의 연간지를 구해 넣으며, 검증되지 않은 삭간지·일진을 임의로 추가하지 않습니다. `[봉행자 이름]`은 사용자가 채울 자리입니다. TXT는 현재 본문으로 로컬 Blob을 만들어 내려받고 서버에 저장하지 않습니다.

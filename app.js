@@ -684,23 +684,38 @@ const RICE_OFFERINGS=[
   {id:'rice-offering-yukdang',name:'육당 밥공양',spot:'육당'},
   {id:'rice-offering-geollip',name:'건립 밥공양',spot:'건립'}
 ];
-/* 은호당의 좁은 신당에 맞춘 중양 차림. 권장 격식은 기본 차림과 따로 셉니다. */
+/* 은호당의 좁은 신당에 맞춘 중양 차림. 선택 안내는 기본 차림과 따로 둡니다. */
 const JUNGYANG_OFFERINGS=RICE_OFFERINGS.map(item=>({...item,id:'jungyang-'+item.id}));
 const JUNGYANG_ANCESTOR=[
   {id:'jungyang-ancestor-rice',name:'조상상 밥 한 공기'},
   {id:'jungyang-ancestor-wine',name:'조상상 술 한 잔'},
   {id:'jungyang-ancestor-namul',name:'조상상 나물 세 종류'}
 ];
-const JUNGYANG_RECOMMENDED=[
-  {id:'jungyang-water',name:'정화수 마련',note:'깨끗한 물을 정갈하게 올립니다.'},
-  {id:'jungyang-light',name:'향·촛불 마련',note:'기존 비품을 쓰고, 불은 안전하게 관리합니다.'},
-  {id:'jungyang-fruit',name:'집에 있는 제철과일 한 접시',note:'별도 과일 세트를 사기보다 있는 것으로 소박하게 마련합니다.'}
-];
+// 삭제한 권장 체크의 과거 변경 이력은 이름을 그대로 읽습니다.
+const JUNGYANG_LEGACY_LABELS={
+  'jungyang-water':'정화수 마련',
+  'jungyang-light':'향·촛불 마련',
+  'jungyang-fruit':'집에 있는 제철과일 한 접시'
+};
 const JUNGYANG_PRAYERS=[
   {id:'jungyang-prayer-gods',name:'신령님께 중양 정성을 고하기'},
   {id:'jungyang-prayer-ancestors',name:'제사 받지 못한 조상님까지 모시기'},
   {id:'jungyang-prayer-peace',name:'해원과 극락왕생을 빌기'}
 ];
+const JUNGYANG_CHUKMUN=`유 세차 [해의 간지]년 음력 구월 구일,
+후손 [봉행자 이름]은 중양을 맞아 아버지 집안 광산김씨와 어머니 집안 창녕성씨의 역대 선조 여러 영위께 삼가 고하나이다.
+
+저희에게 삶을 이어 주신 은혜를 생각하며, 소박한 밥과 술과 나물을 정성껏 올립니다. 성함과 기일을 아는 조상님은 물론, 내력과 묘소를 알지 못하여 제사를 받지 못한 선망조상님들까지 함께 오시어 이 정성을 흠향하여 주시옵소서.
+
+맺힌 한과 서러운 마음은 풀어 놓으시고, 모든 선령께서 평안과 안식을 누리시기를 빕니다. 살아 있는 가족과 후손들 또한 서로 아끼고 바르게 살아가도록 굽어살펴 주시옵소서.
+
+두 집안의 모든 선령께 이 정성이 고루 닿기를 빌며 삼가 잔을 올리나이다.
+상향.`;
+function jungyangChukmunText(){
+  const offset=LUNAR[idx][1]-4;
+  const ganji='갑을병정무기경신임계'[((offset%10)+10)%10]+'자축인묘진사오미신유술해'[((offset%12)+12)%12];
+  return JUNGYANG_CHUKMUN.replace('[해의 간지]',ganji);
+}
 const BULSA_RICE_ID='bulsa-rice';
 function isFamilyFirstDay(){
   return isFamily()&&getSelectedEvent().id==='first';
@@ -764,28 +779,40 @@ function renderJungyang(){
   summary.textContent='조상상: 밥 한 공기 · 술 한 잔 · 나물 세 종류. 전안 소당·중당·육당과 건립: 밥 한 공기씩. 모두 다섯 공기입니다.';
   intro.appendChild(summary);
   const boundary=document.createElement('p');boundary.className='note';
-  boundary.textContent='신당 공간에 맞춰 은호당이 정한 차림입니다. 초하루·추석 상을 그대로 옮기지 않습니다. 아래 권장·선택 항목은 기본 차림 집계에 넣지 않습니다.';
+  boundary.textContent='신당 공간에 맞춰 은호당이 정한 차림입니다. 초하루·추석 상을 그대로 옮기지 않습니다. 아래 선택 안내와 진행안은 기본 차림 집계에 넣지 않습니다.';
   intro.appendChild(boundary);el.appendChild(intro);
   el.appendChild(preparationCard('jungyang-ancestor-card','조상상 · 기본 차림',JUNGYANG_ANCESTOR,'올림'));
 }
 function renderJungyangGuide(){
   const el=document.getElementById('jungyang-guide');el.replaceChildren();
   if(!isFamily()||!isJungyang())return;
-  const recommended=preparationCard('jungyang-recommended-card','조금 더 갖추면 좋은 것 · 권장',JUNGYANG_RECOMMENDED,'마련');
-  const sub=document.createElement('p');sub.className='sub';sub.textContent='경문에 등장하는 정수·향·촛불·술·과실을 참고한 은호당의 절충안입니다. 모든 계보의 필수 법도는 아닙니다.';
-  recommended.querySelector('h2').after(sub);el.appendChild(recommended);
   const seasonal=document.createElement('section');seasonal.className='card jungyang-guide-card';
-  seasonal.innerHTML='<p class="section-label">계절 격식 · 선택</p><h2>국화의 뜻은 가볍게</h2><p>술 한 잔을 마련할 때 국화주가 있으면 그 잔으로 대신합니다. 술잔을 더 늘릴 필요는 없습니다. 없으면 평소 올리던 술 한 잔으로 준비합니다.</p><p>여유가 있으면 국화전 작은 한 접시를 더해도 좋습니다. 국화주·국화전·화채를 모두 갖추지는 않습니다.</p><p class="note">국화 음식은 중양의 세시풍속을 선택해 따른 것입니다. 필수 제물이라는 뜻은 아닙니다. 직접 만들 때는 식용으로 판매된 감국만 쓰고 관상용 꽃은 넣지 않습니다.</p>';
+  seasonal.id='jungyang-seasonal-card';
+  seasonal.innerHTML='<p class="section-label">계절 격식 · 선택</p><h2>더 올린다면 국화의 뜻을 담아</h2><p>기왕 조금 더 올릴 거라면 중양의 계절을 담은 국화주나 국화전이면 좋겠습니다. 국화주는 기본 술 한 잔으로 올리고, 국화전은 작은 한 접시 정도로 소박하게 마련합니다.</p><p>두 가지를 모두 갖출 필요는 없습니다. 여건에 맞게 준비하고, 국화주가 없으면 평소 올리던 술 한 잔으로도 충분합니다.</p><p class="note">국화 음식은 중양의 세시풍속을 따른 선택입니다. 직접 만들 때는 식용으로 판매된 감국을 사용합니다.</p>';
   el.appendChild(seasonal);
   const prayer=preparationCard('jungyang-prayer-card','마음을 전하는 차례 · 진행안',JUNGYANG_PRAYERS,'짚음');
   const guide=document.createElement('p');guide.className='sub';guide.textContent='기본 차림을 올린 뒤 차분히 짚습니다. 자료의 취지를 살린 간소 진행안이며, 전승된 고정 의식 순서는 아닙니다.';
   prayer.querySelector('h2').after(guide);
-  const example=document.createElement('blockquote');example.className='jungyang-prayer';
-  example.textContent='중양을 맞아 신령님들께 정성을 고합니다. 기일과 내력을 알지 못해 제사를 받지 못한 조상님들까지 이 정성을 흠향하시고, 맺힌 한을 푸시어 평안히 가시기를 빕니다.';
-  const exampleLabel=document.createElement('p');exampleLabel.className='note';exampleLabel.textContent='은호당 간소 축원 예시입니다. 전승 경문이나 의무 경문이 아닙니다. 원하시면 아래 무명조상 해원경을 참고합니다. 특정 시각·철상 시간은 중양 자료에서 확인되지 않아 고정하지 않았습니다.';
-  prayer.append(example,exampleLabel);el.appendChild(prayer);
+  el.appendChild(prayer);
+  const jibang=document.createElement('section');jibang.id='jungyang-jibang-card';jibang.className='card jungyang-guide-card';
+  jibang.innerHTML='<p class="section-label">광산김씨 · 창녕성씨</p><h2>두 집안 조상님을 모시는 지방</h2><div class="jungyang-jibang-layout"><a class="jungyang-jibang-preview" href="./jibang.html" target="_blank" rel="noopener noreferrer" aria-label="두 집안 지방을 세로로 열기"><img src="./assets/jungyang-jibang-s25-ultra.png" width="852" height="1846" loading="lazy" alt="오른쪽 광산김씨, 왼쪽 창녕성씨 역대 선조의 신위를 모시는 붓글씨 지방"></a><div class="jungyang-jibang-copy"><p>두 집안의 역대 조상을 함께 모시기 위해 작성한 합동 지방입니다. 닥종이 바탕에 오른쪽은 광산김씨, 왼쪽은 창녕성씨의 신위를 세로로 담았습니다.</p><p class="note">S25 울트라와 같은 6:13 세로 비율입니다. 세로로 열고 전체 화면을 눌러주세요.</p><div class="jungyang-actions"><a class="btn" href="./jibang.html" target="_blank" rel="noopener noreferrer">세로로 열기</a><a class="btn" href="./assets/jungyang-jibang-s25-ultra.png" download="중양-광산김씨-창녕성씨-지방.png">PNG 저장</a></div></div></div>';
+  el.appendChild(jibang);
+  const chukmun=document.createElement('section');chukmun.id='jungyang-chukmun-card';chukmun.className='card jungyang-guide-card';
+  const chukmunLabel=document.createElement('p');chukmunLabel.className='section-label';chukmunLabel.textContent='두 집안 선조께 고하는 글';
+  const chukmunHeading=document.createElement('h2');chukmunHeading.textContent='중양 축문';
+  const chukmunIntro=document.createElement('p');chukmunIntro.className='note';chukmunIntro.textContent='[봉행자 이름]을 채워 읽어주세요. 두 집안의 선조를 함께 모시기 위해 새로 쓴 합동 중양 축문입니다.';
+  const chukmunText=document.createElement('blockquote');chukmunText.id='jungyang-chukmun';chukmunText.className='jungyang-prayer';chukmunText.textContent=jungyangChukmunText();
+  const chukmunActions=document.createElement('div');chukmunActions.className='jungyang-actions';
+  const download=document.createElement('button');download.type='button';download.className='btn';download.textContent='축문 저장';
+  download.onclick=()=>{
+    const url=URL.createObjectURL(new Blob([jungyangChukmunText()+'\n'],{type:'text/plain;charset=utf-8'}));
+    const link=document.createElement('a');link.href=url;link.download='중양-광산김씨-창녕성씨-축문.txt';
+    link.click();setTimeout(()=>URL.revokeObjectURL(url),0);
+  };
+  chukmunActions.appendChild(download);
+  chukmun.append(chukmunLabel,chukmunHeading,chukmunIntro,chukmunText,chukmunActions);el.appendChild(chukmun);
   const sources=document.createElement('section');sources.className='card jungyang-guide-card';
-  sources.innerHTML='<p class="section-label">자료와 적용 범위</p><h2>참고한 글</h2><ul><li><a href="https://cafe.naver.com/f-e/cafes/11840628/articles/14197" target="_blank" rel="noopener noreferrer">중양절(음력 9월 9일)</a> · 스승니임ㅡ서울, 2023.07.31. 중양의 대상·취지와 세시풍속 참고.</li><li><a href="https://cafe.naver.com/f-e/cafes/11840628/articles/28564" target="_blank" rel="noopener noreferrer">무명조상 해원경</a> · 스승니임ㅡ서울, 2026.10.03. 작성자가 만든 중양 경문으로, 제수와 해원 발원의 취지 참고.</li></ul><p class="note">카페 글은 로그인·회원 자격이 필요할 수 있습니다. 기본 수량은 은호당의 결정이고, 덧차림·계절 격식·간소 진행안은 자료를 바탕으로 정리한 절충안입니다. 중양 상의 체크는 다른 달·초하루 기록과 따로 저장합니다.</p>';
+  sources.innerHTML='<p class="section-label">자료와 적용 범위</p><h2>참고한 글</h2><ul><li><a href="https://cafe.naver.com/f-e/cafes/11840628/articles/14197" target="_blank" rel="noopener noreferrer">중양절(음력 9월 9일)</a> · 스승니임ㅡ서울, 2023.07.31. 중양의 대상·취지와 세시풍속 참고.</li><li><a href="https://cafe.naver.com/f-e/cafes/11840628/articles/28564" target="_blank" rel="noopener noreferrer">무명조상 해원경</a> · 스승니임ㅡ서울, 2026.10.03. 작성자가 만든 중양 경문으로, 제수와 해원 발원의 취지 참고.</li></ul><p class="note">카페 글은 로그인·회원 자격이 필요할 수 있습니다. 기본 수량은 은호당의 결정이고, 국화 음식과 간소 진행안은 자료의 취지를 참고했습니다. 지방과 축문은 두 집안을 함께 모시려는 요청에 맞춰 새로 정리했습니다. 중양 상의 체크는 다른 달·초하루 기록과 따로 저장합니다.</p>';
   el.appendChild(sources);
 }
 function renderSeasonalPrep(){
@@ -1328,8 +1355,9 @@ function closeSheet(){
 }
 function partLabelOf(pid){
   if(pid===BULSA_RICE_ID)return '불사단지 쌀 교체';
-  const jungyangItem=JUNGYANG_ANCESTOR.concat(JUNGYANG_OFFERINGS,JUNGYANG_RECOMMENDED,JUNGYANG_PRAYERS).find(item=>item.id===pid);
+  const jungyangItem=JUNGYANG_ANCESTOR.concat(JUNGYANG_OFFERINGS,JUNGYANG_PRAYERS).find(item=>item.id===pid);
   if(jungyangItem)return jungyangItem.name;
+  if(JUNGYANG_LEGACY_LABELS[pid])return JUNGYANG_LEGACY_LABELS[pid];
   const offering=RICE_OFFERINGS.find(item=>item.id===pid);
   if(offering)return offering.name;
   for(const i of ALL){ if(!i.parts) continue;

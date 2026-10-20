@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#eee5d1">
+  <title>광산김씨·창녕성씨 합동지방 · 은호당</title>
+  <style>
+    [hidden]{display:none!important}
+    *{box-sizing:border-box}
+    html,body{margin:0;width:100%;height:100%;background:#eee5d1}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:#292f29}
+    main{width:100%;height:100%;height:100dvh;display:grid;place-items:center}
+    #jibang{display:block;width:100%;height:100%;object-fit:contain}
+    #controls{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(440px,calc(100% - 32px));padding:14px;background:rgba(250,249,245,.97);border:1px solid #dadfd3;border-radius:5px;box-shadow:0 3px 20px #292f291a}
+    #controls p{margin:0 0 10px;font-size:13px;line-height:1.6;word-break:keep-all}
+    .actions{display:flex;flex-wrap:wrap;gap:8px}
+    button,a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 14px;border:1px solid #74816b;border-radius:4px;background:#faf9f5;color:inherit;font:inherit;font-size:14px;cursor:pointer;text-decoration:none}
+    #fullscreen{background:#40513e;color:#fff}
+    button:focus-visible,a:focus-visible{outline:2px solid #40513e;outline-offset:4px}
+    #status{margin:10px 0 0!important;color:#646c61}
+    #show-controls{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));width:44px;height:44px;padding:0;background:#faf9f5e8;font-size:22px}
+  </style>
+</head>
+<body>
+  <main aria-label="두 집안 역대 조상님을 함께 모시는 지방">
+    <img id="jibang" src="./assets/jungyang-jibang-s25-ultra.png" alt="닥종이 바탕의 붓글씨 합동지방. 오른쪽 광산김씨 역대 조상님의 신위(光山金氏歷代祖先神位), 왼쪽 창녕성씨 역대 조상님의 신위(昌寧成氏歷代祖先神位).">
+  </main>
+  <section id="controls" aria-label="지방 화면 설정">
+    <p>휴대전화를 세로로 두고 전체 화면을 누르세요. 화면을 터치하면 설정을 다시 열 수 있습니다.</p>
+    <div class="actions">
+      <button id="fullscreen" type="button">전체 화면</button>
+      <a href="./assets/jungyang-jibang-s25-ultra.png" download="광산김씨-창녕성씨-합동지방.png">PNG 저장</a>
+      <button id="hide-controls" type="button">설정 숨기기</button>
+    </div>
+    <p id="status" role="status" hidden></p>
+  </section>
+  <button id="show-controls" type="button" aria-label="지방 화면 설정 열기" hidden>⋯</button>
+  <script>
+    const controls=document.getElementById('controls');
+    const show=document.getElementById('show-controls');
+    const status=document.getElementById('status');
+    const fullscreen=document.getElementById('fullscreen');
+    function setControls(visible){
+      controls.hidden=!visible;
+      show.hidden=visible||!!document.fullscreenElement;
+      if(visible)fullscreen.focus({preventScroll:true});
+    }
+    document.getElementById('hide-controls').onclick=()=>setControls(false);
+    show.onclick=()=>setControls(true);
+    document.getElementById('jibang').onclick=()=>setControls(controls.hidden);
+    fullscreen.onclick=async()=>{
+      try{
+        if(!document.fullscreenElement){
+          if(!document.documentElement.requestFullscreen)throw new Error('unsupported');
+          await document.documentElement.requestFullscreen({navigationUI:'hide'});
+        }
+        status.hidden=true;
+        setControls(false);
+      }catch(error){
+        status.hidden=false;
+        status.textContent='이 브라우저에서는 전체 화면을 열 수 없습니다. PNG를 저장해 갤러리에서 열어주세요.';
+      }
+    };
+    document.addEventListener('fullscreenchange',()=>{
+      if(!document.fullscreenElement)setControls(true);
+    });
+    document.addEventListener('keydown',event=>{
+      if(event.key==='Escape'&&!document.fullscreenElement)setControls(true);
+    });
+    document.getElementById('jibang').onerror=()=>{
+      status.hidden=false;status.textContent='지방 이미지를 불러오지 못했습니다. 페이지를 새로고침해 주세요.';
+      setControls(true);
+    };
+  </script>
+</body>
+</html>
