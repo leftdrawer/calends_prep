@@ -1,3 +1,4 @@
+@font-face{font-family:"Eunhodang Hanja";src:url("./assets/fonts/eunhodang-hanja.woff") format("woff");font-weight:400;font-style:normal;font-display:block;unicode-range:U+5802,U+6069,U+70AF,U+71A9,U+91D1,U+932B}
 [hidden]{display:none!important}
 :root{
   --ink:#292F29;
@@ -354,7 +355,11 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .jungyang-guide-card li+li{margin-top:12px}
 .jungyang-guide-card a{display:inline-block;min-height:40px;padding:6px 0;color:var(--brass-deep);text-underline-offset:4px}
 .jungyang-prayer{margin:18px 0 0;padding:16px 18px;border-left:2px solid var(--brass);background:var(--brass-veil);font-family:"Gowun Batang",serif;font-size:16px;line-height:1.9;white-space:pre-line}
-.jungyang-chukmun-hanmun{font-family:"Noto Serif CJK KR","Noto Serif KR","Gowun Batang",serif;font-size:19px;line-height:2;letter-spacing:.04em;word-break:normal;overflow-wrap:anywhere}
+.jungyang-chukmun-hanmun{font-family:"Eunhodang Hanja","Noto Serif CJK KR","Noto Serif KR","Gowun Batang",serif;font-size:19px;line-height:2;letter-spacing:.04em;word-break:normal;overflow-wrap:anywhere;white-space:normal}
+.chukmun-line+.chukmun-line{margin-top:16px}
+.chukmun-line.chukmun-stanza{margin-top:30px}
+.jungyang-guide-card .chukmun-original{margin:0;font:inherit;color:var(--ink)}
+.jungyang-guide-card .chukmun-reading{margin:2px 0 0;font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;font-size:13px;line-height:1.7;letter-spacing:0;color:var(--ink-2);word-break:keep-all}
 .jungyang-translation{margin-top:20px;color:var(--ink-2)}
 .jungyang-translation h3{margin:0 0 8px;font-size:13px;font-weight:600}
 .jungyang-guide-card .jungyang-translation p{margin:0;font-size:13px;line-height:1.85;white-space:pre-line}

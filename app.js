@@ -702,24 +702,26 @@ const JUNGYANG_PRAYERS=[
   {id:'jungyang-prayer-ancestors',name:'제사 받지 못한 조상님까지 모시기'},
   {id:'jungyang-prayer-peace',name:'해원과 극락왕생을 빌기'}
 ];
-const JUNGYANG_CELEBRANT='은호당 金炯錫';
-const JUNGYANG_CHUKMUN=`維歲次 [年干支] 九月九日
-奉行者 [奉行者] 敢昭告于
-光山金氏 昌寧成氏 歷代祖先列位之靈
-
-歲序流遷 重陽復至
-追惟先德 感慕彌深
-仰念先世 血脈相承 以至于今
-恩深罔極 飮水思源 追遠報本 夙夜不忘
-
-謹具飯蔬清酌 用薦微誠
-凡姓名未詳 忌日失傳 墓所莫考
-久闕祭享之先靈 亦願同臨 共歆此奠
-
-伏願列位先靈 冤結悉解 永享安寧
-庇佑後昆 親族和睦 孝友相敦 正道是行
-惟願此誠 咸達列位
-謹以至誠 奉此薄奠 伏惟尙饗`;
+const JUNGYANG_CELEBRANT='恩熩堂 金炯錫';
+const JUNGYANG_CHUKMUN=[
+  ['維歲次 [年干支] 九月九日','유세차 [해의 간지] 구월구일'],
+  ['奉行者 [奉行者] 敢昭告于','봉행자 은호당 김형석 감소고우'],
+  ['光山金氏 昌寧成氏 歷代祖先列位之靈','광산김씨 창녕성씨 역대조선 열위지령'],
+  null,
+  ['歲序流遷 重陽復至','세서유천 중양부지'],
+  ['追惟先德 感慕彌深','추유선덕 감모미심'],
+  ['仰念先世 血脈相承 以至于今','앙념선세 혈맥상승 이지우금'],
+  ['恩深罔極 飮水思源 追遠報本 夙夜不忘','은심망극 음수사원 추원보본 숙야불망'],
+  null,
+  ['謹具飯蔬清酌 用薦微誠','근구반소청작 용천미성'],
+  ['凡姓名未詳 忌日失傳 墓所莫考','범성명미상 기일실전 묘소막고'],
+  ['久闕祭享之先靈 亦願同臨 共歆此奠','구궐제향지선령 역원동림 공흠차전'],
+  null,
+  ['伏願列位先靈 冤結悉解 永享安寧','복원열위선령 원결실해 영향안녕'],
+  ['庇佑後昆 親族和睦 孝友相敦 正道是行','비우후곤 친족화목 효우상돈 정도시행'],
+  ['惟願此誠 咸達列位','유원차성 함달열위'],
+  ['謹以至誠 奉此薄奠 伏惟尙饗','근이지성 봉차박전 복유상향']
+];
 const JUNGYANG_CHUKMUN_TRANSLATION=`[해의 간지]년 음력 구월 구일, 봉행자 은호당 김형석은 광산김씨와 창녕성씨의 역대 조상님 모든 영위께 삼가 고합니다.
 
 세월이 흘러 중양을 다시 맞으니, 선조의 덕을 돌아보며 감사와 그리움이 더욱 깊어집니다. 선대에서 혈맥이 이어져 오늘에 이르렀으니 그 은혜는 깊고 끝이 없습니다. 물을 마시며 그 근원을 생각하듯, 먼 선조를 기리고 근본의 은혜를 갚는 마음을 밤낮으로 잊지 않습니다.
@@ -733,14 +735,21 @@ function jungyangYearGanji(hanja=false){
   const branches=hanja?'子丑寅卯辰巳午未申酉戌亥':'자축인묘진사오미신유술해';
   return stems[((offset%10)+10)%10]+branches[((offset%12)+12)%12];
 }
+function jungyangChukmunLines(){
+  return JUNGYANG_CHUKMUN.map(line=>line?{
+    hanmun:line[0].replace('[年干支]',jungyangYearGanji(true)).replace('[奉行者]',JUNGYANG_CELEBRANT),
+    reading:line[1].replace('[해의 간지]',jungyangYearGanji())
+  }:null);
+}
 function jungyangChukmunText(){
-  return JUNGYANG_CHUKMUN.replace('[年干支]',jungyangYearGanji(true)).replace('[奉行者]',JUNGYANG_CELEBRANT);
+  return jungyangChukmunLines().map(line=>line?line.hanmun:'').join('\n');
 }
 function jungyangChukmunTranslation(){
   return JUNGYANG_CHUKMUN_TRANSLATION.replace('[해의 간지]',jungyangYearGanji());
 }
 function jungyangChukmunDownloadText(){
-  return jungyangChukmunText()+'\n\n우리말 해석\n\n'+jungyangChukmunTranslation()+'\n';
+  const paired=jungyangChukmunLines().filter(Boolean).map(line=>line.hanmun+'\n'+line.reading).join('\n\n');
+  return paired+'\n\n우리말 해석\n\n'+jungyangChukmunTranslation()+'\n';
 }
 const BULSA_RICE_ID='bulsa-rice';
 function isFamilyFirstDay(){
@@ -827,7 +836,15 @@ function renderJungyangGuide(){
   const chukmunLabel=document.createElement('p');chukmunLabel.className='section-label';chukmunLabel.textContent='두 집안 선조께 고하는 글';
   const chukmunHeading=document.createElement('h2');chukmunHeading.textContent='중양 축문';
   const chukmunIntro=document.createElement('p');chukmunIntro.className='note';chukmunIntro.textContent='봉행 · 은호당 김형석';
-  const chukmunText=document.createElement('blockquote');chukmunText.id='jungyang-chukmun';chukmunText.className='jungyang-prayer jungyang-chukmun-hanmun';chukmunText.lang='lzh';chukmunText.textContent=jungyangChukmunText();
+  const chukmunText=document.createElement('blockquote');chukmunText.id='jungyang-chukmun';chukmunText.className='jungyang-prayer jungyang-chukmun-hanmun';
+  let stanza=false;
+  jungyangChukmunLines().forEach(line=>{
+    if(!line){stanza=true;return;}
+    const pair=document.createElement('div');pair.className='chukmun-line'+(stanza?' chukmun-stanza':'');stanza=false;
+    const original=document.createElement('p');original.className='chukmun-original';original.lang='lzh';original.textContent=line.hanmun;
+    const reading=document.createElement('p');reading.className='chukmun-reading';reading.lang='ko';reading.textContent=line.reading;
+    pair.append(original,reading);chukmunText.appendChild(pair);
+  });
   const translation=document.createElement('section');translation.className='jungyang-translation';
   const translationHeading=document.createElement('h3');translationHeading.textContent='우리말 해석';
   const translationText=document.createElement('p');translationText.id='jungyang-chukmun-translation';translationText.textContent=jungyangChukmunTranslation();

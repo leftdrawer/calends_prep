@@ -4,7 +4,7 @@
 
 - 정적 HTML + CSS + 바닐라 JavaScript. 별도 프레임워크나 빌드 과정 없음.
 - `index.html`은 화면, `app.js`는 로직, `styles.css`는 반응형 스타일을 맡습니다.
-- `assets/`의 PNG 로고와 아이콘은 정적 파일입니다. 외부 의존성은 웹폰트입니다.
+- `assets/`의 PNG 로고·아이콘·합동지방과 봉행자 한자 WOFF는 정적 파일입니다. 기존 외부 웹폰트도 사용합니다.
 - 붓글씨 가로·세로 원본은 `wordmark-horizontal.png`, `wordmark-vertical.png`이며 `<picture>`로 760px 이하에서 세로를 선택합니다. 두 파일이 모두 읽혀야 적용하며 미확보 상태는 기존 `wordmark.png`로 표시합니다.
 - 테스트는 Python Playwright + Chromium을 사용합니다. 실행 명령은 `python3 tests/browser_test.py`입니다.
 
@@ -48,5 +48,8 @@ GitHub Pages 저장소는 `leftdrawer/calends_prep`, 배포 소스는 `main` 루
 - 제거한 권장 체크 `jungyang-water/light/fruit`는 저장된 값을 지우거나 다른 항목으로 옮기지 않습니다. `JUNGYANG_LEGACY_LABELS`로 과거 이력 이름을 유지합니다.
 - 합동지방은 image_gen으로 제작한 정적 PNG `assets/jungyang-jibang-s25-ultra.png`입니다. 실제 크기는 853×1844, 약 6:13의 세로 비율로 S25 울트라에서 비율을 유지해 표시합니다. PNG·`jibang.html`을 HTML·JS·CSS와 함께 배포합니다. 새 이미지 라이브러리나 외부 런타임 의존성은 없습니다.
 - `jibang.html`은 사용자 버튼 동작으로 Fullscreen API를 요청하고 `object-fit:contain`을 유지합니다. 설정 숨기기·다시 열기, 미지원 시 PNG 저장 안내가 있습니다.
-- 축문은 `維歲次 丙午 九月九日`과 같이 한문으로 표시하고 봉행자 `은호당 김형석`을 고정합니다. 한문 본문의 `JUNGYANG_CELEBRANT`는 사용자 확인에 따라 `은호당 金炯錫`이며 안내·해석은 `은호당 김형석`으로 표시합니다. 선택 음력 연도의 표준 60갑자 연간지를 한문과 우리말 해석에 연동하며(2026년 丙午/병오, 2027년 丁未/정미), 검증되지 않은 삭간지·일진을 임의로 추가하지 않습니다.
-- 한문 본문은 `lang="lzh"`, 아래 우리말 해석은 13px로 표시합니다. TXT는 현재 한문·우리말 해석 전체로 로컬 Blob을 만들어 내려받고 서버에 저장하지 않습니다.
+- 축문은 `維歲次 丙午 九月九日`과 같이 한문으로 표시하고, 한문 봉행자 `JUNGYANG_CELEBRANT`는 `恩熩堂 金炯錫`으로 고정합니다. 안내·독음·해석은 `은호당 김형석`으로 표시합니다. 선택 음력 연도의 표준 60갑자 연간지를 한문·독음·해석에 연동하며(2026년 丙午/병오, 2027년 丁未/정미), 검증되지 않은 삭간지·일진을 임의로 추가하지 않습니다.
+- `JUNGYANG_CHUKMUN`은 한문·한국식 독음 14개 쌍과 문단 구분용 `null`의 배열입니다. `jungyangChukmunLines()`가 두 언어 간지를 함께 치환하며, 각 `lang="lzh"` 한문 행 아래 `lang="ko"` 13px 독음을 표시합니다. 독음은 음을 읽는 표기이고, 맨 아래 13px 우리말 해석은 뜻풀이입니다. `重陽復至`의 독음은 ‘중양부지’, `祖先`은 ‘조선’이며 해석의 ‘조상’과 구분합니다.
+- TXT는 한문 한 줄·독음 한 줄씩과 맨 아래 전체 해석으로 로컬 Blob을 만들어 내려받고 서버에 저장하지 않습니다.
+- 봉행자의 `恩熩堂金炯錫` 여섯 글자는 로컬 `assets/fonts/eunhodang-hanja.woff`로 제공합니다. 환경에 설치된 Noto Serif CJK KR Regular 2.003 한국어 글꼴에서 fontTools로 추출한 5,932바이트 서브셋이며 `熩` U+71A9를 포함합니다. 파생 이름은 **Eunhodang Hanja**, 라이선스는 OFL 1.1이고 `OFL.txt`·`SOURCE.md`를 함께 배포합니다. 제작에 새 패키지 설치·글꼴 다운로드는 없었습니다. 과거 Google 웹폰트 서브셋의 문자 범위를 전체 Noto CJK의 범위와 혼동하지 않습니다.
+- `@font-face`의 여섯 글자 `unicode-range`와 한문 본문 첫 글꼴 지정으로 필요한 한자만 로컬 WOFF를 사용합니다. 글꼴의 원본·서브셋 해시와 저작권·제작 정보는 `assets/fonts/SOURCE.md`에 기록합니다.

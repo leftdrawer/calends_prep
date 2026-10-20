@@ -956,7 +956,17 @@ class BrowserRegression(unittest.TestCase):
                 expect(page.locator("#jungyang-jibang-card img")).to_have_attribute("src", "./assets/jungyang-jibang-s25-ultra.png?v=20261020-aligned")
                 expect(page.locator("#jungyang-chukmun")).to_contain_text("維歲次 丙午 九月九日")
                 expect(page.locator("#jungyang-chukmun")).to_contain_text("光山金氏 昌寧成氏")
-                expect(page.locator("#jungyang-chukmun")).to_contain_text("奉行者 은호당 金炯錫")
+                expect(page.locator("#jungyang-chukmun")).to_contain_text("奉行者 恩熩堂 金炯錫")
+                expect(page.locator("#jungyang-chukmun .chukmun-original")).to_have_count(14)
+                expect(page.locator("#jungyang-chukmun .chukmun-reading")).to_have_count(14)
+                expect(page.locator(".chukmun-reading").first).to_have_text("유세차 병오 구월구일")
+                expect(page.locator(".chukmun-reading").nth(1)).to_have_text("봉행자 은호당 김형석 감소고우")
+                expect(page.locator(".chukmun-reading").last).to_have_text("근이지성 봉차박전 복유상향")
+                face = page.evaluate("""async () => {
+                  const faces=await document.fonts.load('19px "Eunhodang Hanja"','恩熩堂 金炯錫');
+                  return {count:faces.length,loaded:faces.every(font=>font.status==='loaded')};
+                }""")
+                self.assertEqual(face, {"count": 1, "loaded": True})
                 expect(page.locator("#jungyang-chukmun-card")).not_to_contain_text("[봉행자 이름]")
                 translation = page.locator("#jungyang-chukmun-translation")
                 expect(translation).to_contain_text("병오년 음력 구월 구일, 봉행자 은호당 김형석")
@@ -977,7 +987,10 @@ class BrowserRegression(unittest.TestCase):
         self.select_month(page, 9, year=2027)
         page.locator('#eventnav [data-event="jungyang"]').click()
         expect(page.locator("#jungyang-chukmun")).to_contain_text("維歲次 丁未 九月九日")
-        prayer = page.locator("#jungyang-chukmun").inner_text()
+        expect(page.locator(".chukmun-reading").first).to_have_text("유세차 정미 구월구일")
+        pairs = page.locator("#jungyang-chukmun .chukmun-line").all()
+        prayer = "\n\n".join(pair.locator(".chukmun-original").inner_text() + "\n" +
+                              pair.locator(".chukmun-reading").inner_text() for pair in pairs)
         translation = page.locator("#jungyang-chukmun-translation").inner_text()
         self.assertTrue(translation.startswith("정미년"))
         with page.expect_download() as saved_prayer:
