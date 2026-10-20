@@ -24,7 +24,7 @@ assert.equal(run('nameOfKey("part/jungyang-water")'), '정화수 마련 · 재�
 assert.equal(run('nameOfKey("part/jungyang-light")'), '향·촛불 마련 · 재료');
 assert.equal(run('nameOfKey("part/jungyang-fruit")'), '집에 있는 제철과일 한 접시 · 재료');
 assert.equal(run('jungyangChukmunText().startsWith("維歲次 丙午 九月九日")'), true);
-assert.equal(run('jungyangChukmunText().includes("奉行者 은호당 김형석 敢昭告于")'), true);
+assert.equal(run('jungyangChukmunText().includes("奉行者 은호당 金炯錫 敢昭告于")'), true);
 assert.equal(run('jungyangChukmunText().includes("[奉行者]")'), false);
 assert.equal(run('jungyangChukmunTranslation().startsWith("병오년 음력 구월 구일, 봉행자 은호당 김형석")'), true);
 assert.equal(run('jungyangChukmunDownloadText().includes("우리말 해석\\n\\n"+jungyangChukmunTranslation())'), true);

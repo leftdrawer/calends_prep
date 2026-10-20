@@ -57,7 +57,7 @@
 
 - `isJungyang`, `JUNGYANG_ANCESTOR`, `JUNGYANG_OFFERINGS`, `JUNGYANG_PRAYERS`, `renderJungyang`, `renderJungyangGuide`: 가족 전용 기본 7항목·진행안 3개와 국화 음식 선택 안내. `index.html`의 `jungyang-prep`·`jungyang-guide` 슬롯을 사용하고 `renderOfferings`가 중양 전용 네 공양 체크를 표시합니다.
 - `JUNGYANG_LEGACY_LABELS`: 제거한 정화수·향과 촛불·과일 권장 체크의 과거 이력 이름을 `partLabelOf`에서 유지합니다. 새 체크 UI는 생성하지 않습니다.
-- `JUNGYANG_CELEBRANT`, `JUNGYANG_CHUKMUN`, `JUNGYANG_CHUKMUN_TRANSLATION`: 봉행자 은호당 김형석과 두 집안을 함께 모시는 한문 축문·우리말 해석입니다. 성함 한자는 확인 전까지 요청한 한글 표기를 유지합니다.
+- `JUNGYANG_CELEBRANT`, `JUNGYANG_CHUKMUN`, `JUNGYANG_CHUKMUN_TRANSLATION`: 봉행자 은호당 김형석과 두 집안을 함께 모시는 한문 축문·우리말 해석입니다. `JUNGYANG_CELEBRANT`는 사용자 확인된 `은호당 金炯錫`을 한문 본문에 넣고 안내·해석의 한글 성함을 유지합니다.
 - `jungyangYearGanji`, `jungyangChukmunText`, `jungyangChukmunTranslation`, `jungyangChukmunDownloadText`: 선택 음력 연도의 한문·한글 간지를 각 본문에 치환하고, 두 본문을 모두 담은 TXT를 만듭니다. `jungyang-chukmun`에는 `lang="lzh"` 한문 본문, `jungyang-chukmun-translation`에는 13px 우리말 해석을 텍스트로 표시합니다.
 - `renderJungyangGuide`의 `jungyang-jibang-card`: 합동지방 PNG 미리보기·저장과 `jibang.html` 링크. `jungyang-chukmun-card`는 한문 축문·해석과 Blob TXT 저장 버튼입니다. 다른 행사·손님 화면에서는 안내 슬롯을 비웁니다.
 - `jibang.html`은 원본 이미지의 비율을 유지하는 `object-fit:contain`으로 표시합니다. Fullscreen API 호출 후 설정을 숨기고 이미지 터치로 다시 열며, 미지원·실패 시 PNG 저장 대안을 안내합니다.

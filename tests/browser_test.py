@@ -956,7 +956,7 @@ class BrowserRegression(unittest.TestCase):
                 expect(page.locator("#jungyang-jibang-card img")).to_have_attribute("src", "./assets/jungyang-jibang-s25-ultra.png?v=20261020-aligned")
                 expect(page.locator("#jungyang-chukmun")).to_contain_text("維歲次 丙午 九月九日")
                 expect(page.locator("#jungyang-chukmun")).to_contain_text("光山金氏 昌寧成氏")
-                expect(page.locator("#jungyang-chukmun")).to_contain_text("奉行者 은호당 김형석")
+                expect(page.locator("#jungyang-chukmun")).to_contain_text("奉行者 은호당 金炯錫")
                 expect(page.locator("#jungyang-chukmun-card")).not_to_contain_text("[봉행자 이름]")
                 translation = page.locator("#jungyang-chukmun-translation")
                 expect(translation).to_contain_text("병오년 음력 구월 구일, 봉행자 은호당 김형석")

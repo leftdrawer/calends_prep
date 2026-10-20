@@ -702,7 +702,7 @@ const JUNGYANG_PRAYERS=[
   {id:'jungyang-prayer-ancestors',name:'제사 받지 못한 조상님까지 모시기'},
   {id:'jungyang-prayer-peace',name:'해원과 극락왕생을 빌기'}
 ];
-const JUNGYANG_CELEBRANT='은호당 김형석';
+const JUNGYANG_CELEBRANT='은호당 金炯錫';
 const JUNGYANG_CHUKMUN=`維歲次 [年干支] 九月九日
 奉行者 [奉行者] 敢昭告于
 光山金氏 昌寧成氏 歷代祖先列位之靈
