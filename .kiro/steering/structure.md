@@ -23,6 +23,7 @@
 - `MONTH_PLANS`, `loadMonthPlan`, `saveMonthPlan`: 월별 대체 승인. 저장 성공 후에만 화면 적용
 - `savePickedDate`: 해당 음력월 범위의 택일, 기존 `sangbogi:picked` 항목 보존
 - `completionRecord`: 구형 명절 이름 완료 표시를 기존 초하루에서 읽기 호환
+- `monthAfterJungyang`, `jungyangCompletionRecord`, `pickIndexRespectingDone`: 첫 진입·재로그인에서 현재 정규 구월 중양의 완료를 읽어 같은 해 시월 초하루를 선택합니다. 명시적 완료·취소와 2026년 실제 봉행 보고를 함께 판단하며 수동 월 이동·폴링에서는 다시 실행하지 않습니다.
 
 ## 저장
 
@@ -54,13 +55,15 @@
 
 새 명절 품목을 구현할 때 먼저 사용자 규칙을 문서화하고, 그 명절의 별도 저장 키를 사용하세요.
 
-## 중양 전용 준비 (2026-10-20)
+## 중양 전용 준비 (2026-10-21 갱신)
 
-- `isJungyang`, `JUNGYANG_ANCESTOR`, `JUNGYANG_OFFERINGS`, `JUNGYANG_PRAYERS`, `renderJungyang`, `renderJungyangGuide`: 가족 전용 기본 7항목·진행안 3개와 국화 음식 선택 안내. `index.html`의 `jungyang-prep`·`jungyang-guide` 슬롯을 사용하고 `renderOfferings`가 중양 전용 네 공양 체크를 표시합니다.
-- `JUNGYANG_LEGACY_LABELS`: 제거한 정화수·향과 촛불·과일 권장 체크의 과거 이력 이름을 `partLabelOf`에서 유지합니다. 새 체크 UI는 생성하지 않습니다.
-- `JUNGYANG_CELEBRANT`, `JUNGYANG_CHUKMUN`, `JUNGYANG_CHUKMUN_TRANSLATION`: 봉행자 `恩熩堂 金炯錫`, 한문·한국식 독음의 14개 쌍과 문단 구분용 `null`, 별도의 우리말 해석입니다. 안내·독음·해석에는 한글 성함 은호당 김형석을 유지합니다.
-- `jungyangYearGanji`, `jungyangChukmunLines`, `jungyangChukmunText`, `jungyangChukmunTranslation`, `jungyangChukmunDownloadText`: 선택 음력 연도의 한문·한글 간지를 치환하고 한문/독음 쌍을 만듭니다. TXT에는 한문 한 줄·독음 한 줄씩과 맨 아래 전체 해석을 담습니다.
-- `renderJungyangGuide`의 `jungyang-jibang-card`: 합동지방 PNG 미리보기·저장과 `jibang.html` 링크. `jungyang-chukmun-card`는 한문·독음·해석과 Blob TXT 저장 버튼입니다. `jungyang-chukmun`의 각 `.chukmun-original`은 `lang="lzh"` 한문, 바로 아래 `.chukmun-reading`은 `lang="ko"`의 13px 독음이며 문단 간격을 유지합니다. `jungyang-chukmun-translation`은 맨 아래 별도 13px 우리말 해석입니다. 다른 행사·손님 화면에서는 안내 슬롯을 비웁니다.
+- `isJungyang`, `JUNGYANG_ANCESTOR`, `JUNGYANG_OFFERINGS`, `JUNGYANG_PRAYERS`, `renderJungyang`, `renderJungyangGuide`: 가족 전용 기본 7항목·진행안 2개와 국화 음식 선택 안내. `index.html`의 `jungyang-prep`·`jungyang-guide` 슬롯을 사용하고 `renderOfferings`가 중양 전용 네 공양 체크를 표시합니다.
+- `JUNGYANG_LEGACY_LABELS`: 제거한 정화수·향과 촛불·과일 권장 체크 및 통합 전 `jungyang-prayer-ancestors/peace`의 과거 이력 이름을 `partLabelOf`에서 유지합니다. 새 통합 체크 `jungyang-prayer-ancestors-peace`는 이들과 독립적입니다.
+- `JUNGYANG_SERVICE_RECORDS`: 2026년 실제 봉행 완료 보고일·술 다섯 잔·식혜(후추차) 두 잔의 자리입니다. `renderJungyang`이 해당 연도 가족 화면에만 읽기 전용 `jungyang-cups-card`를 만들며 기본 체크를 수정하지 않습니다. 완료 보고는 초기 월 선택에도 사용합니다.
+- `JUNGYANG_CELEBRANT`, `JUNGYANG_CHUKMUN`: 봉행자 `恩熩堂 金炯錫`, 한문·한국식 독음·구절별 뜻풀이의 14개 묶음과 문단 구분용 `null`입니다. 독음·뜻풀이에는 한글 성함 은호당 김형석을 유지하며 별도의 긴 해석 상수는 없습니다.
+- `jungyangYearGanji`, `jungyangChukmunLines`, `jungyangChukmunText`, `jungyangChukmunDownloadText`: 선택 음력 연도의 간지를 각 구절의 `hanmun`·`reading`·`meaning`에 치환합니다. 화면과 TXT 모두 한문 한 줄·독음 한 줄·뜻풀이 한 줄 순서입니다.
+- `renderJungyangGuide`의 `jungyang-jibang-card`: 합동지방 PNG 미리보기·저장과 `jibang.html` 링크. `jungyang-chukmun-card`는 구절별 한문·독음·뜻풀이와 Blob TXT 저장 버튼입니다. `jungyang-chukmun`의 각 `.chukmun-original`은 `lang="lzh"` 한문, 이어지는 `.chukmun-reading`은 `lang="ko"`의 13px 독음, `.chukmun-meaning`은 작은 뜻풀이이며 문단 간격을 유지합니다. 다른 행사·손님 화면에서는 안내 슬롯을 비웁니다.
+- `start`는 완료를 반영한 최초 월을 고릅니다. `renderDone`에서 중양 완료를 새로 켜면 원래 중양 키에 저장하고 시월 초하루로 이동하며, 완료 취소나 수동 구월 열람은 이동시키지 않습니다.
 - `styles.css`의 `@font-face`는 `Eunhodang Hanja` WOFF와 여섯 글자 `unicode-range`를 연결합니다. `.jungyang-chukmun-hanmun`의 첫 글꼴로 적용해 `恩熩堂 金炯錫`을 기기 기본 글꼴과 독립적으로 표시합니다.
 - `jibang.html`은 원본 이미지의 비율을 유지하는 `object-fit:contain`으로 표시합니다. Fullscreen API 호출 후 설정을 숨기고 이미지 터치로 다시 열며, 미지원·실패 시 PNG 저장 대안을 안내합니다.
 - 중양은 configured 상태지만 초하루 장보기·진설·6단계·18개 진척은 숨기고 DOM을 비웁니다. 완료·예물 기능은 유지합니다.

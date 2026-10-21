@@ -367,6 +367,8 @@ class BrowserRegression(unittest.TestCase):
         key = "sangbogi:cycle:2026-09"
         page, fixture = self.open_page({key: record})
         original = fixture.records[key]
+        # Verify legacy-key independence before the later explicit completion report.
+        page.clock.install(time="2026-10-20T03:00:00Z")
         self.login(page)
         self.select_month(page, 9)
         expect(page.locator("#title")).to_have_text("구월 초하루")
@@ -865,15 +867,16 @@ class BrowserRegression(unittest.TestCase):
         self.assertTrue(all(h["by"] == "은호당" for h in namul_history))
 
     def test_jungyang_mother_prepares_basic_and_preserves_retired_guide_records(self):
-        old_key = "sangbogi:cycle:2026-09"
-        event_key = "sangbogi:event:2026-09:jungyang"
-        retired = {key: stamp(on=True) for key in ("jungyang-water", "jungyang-light", "jungyang-fruit")}
+        old_key = "sangbogi:cycle:2027-09"
+        event_key = "sangbogi:event:2027-09:jungyang"
+        retired = {key: stamp(on=True) for key in ("jungyang-water", "jungyang-light", "jungyang-fruit",
+                                                  "jungyang-prayer-ancestors", "jungyang-prayer-peace")}
         old_event = legacy_cycle()
         old_event["part"] = copy.deepcopy(retired)
         page, fixture = self.open_page({old_key: legacy_cycle(), event_key: old_event})
         original = fixture.records[old_key]
         self.login(page, "어머니")
-        self.select_month(page, 9)
+        self.select_month(page, 9, year=2027)
         page.locator('#eventnav [data-event="jungyang"]').click()
         expect(page.locator("#jungyang-progress")).to_have_text("기본 차림 0 / 7 준비")
         expect(page.locator("#jungyang-ancestor-card [role=checkbox]")).to_have_count(3)
@@ -890,6 +893,10 @@ class BrowserRegression(unittest.TestCase):
         for name in ("정화수 마련", "향·촛불 마련", "집에 있는 제철과일 한 접시"):
             expect(page.get_by_role("checkbox", name=name, exact=True)).to_have_count(0)
         page.locator("#jungyang-prayer-card .row").first.click()
+        expect(page.locator("#jungyang-prayer-card [role=checkbox]")).to_have_count(2)
+        merged = page.get_by_role("checkbox", name="제사 받지 못한 조상님들의 해원과 극락왕생을 빌기", exact=True)
+        expect(merged).to_have_attribute("aria-checked", "false")
+        merged.click()
         expect(page.locator("#jungyang-progress")).to_have_text("기본 차림 7 / 7 준비")
         page.locator("#donebox button").click()
         self.wait_saved(page)
@@ -899,16 +906,17 @@ class BrowserRegression(unittest.TestCase):
         for key, original_part in retired.items():
             self.assertEqual(saved["part"][key], original_part)
         self.assertTrue(saved["part"]["jungyang-prayer-gods"]["on"])
+        self.assertTrue(saved["part"]["jungyang-prayer-ancestors-peace"]["on"])
         self.assertEqual(saved["bought"], old_event["bought"])
         self.assertTrue(all(p["by"] == "어머니" and p["at"]
                             for key, p in saved["part"].items() if key not in retired))
         self.assertTrue(all(write["key"] == event_key for write in fixture.writes))
-        self.select_month(page, 9, year=2027)
+        self.select_month(page, 9)
         page.locator('#eventnav [data-event="jungyang"]').click()
         expect(page.locator("#jungyang-progress")).to_have_text("기본 차림 0 / 7 준비")
         page.reload()
         self.login(page, "어머니")
-        self.select_month(page, 9)
+        self.select_month(page, 9, year=2027)
         page.locator('#eventnav [data-event="jungyang"]').click()
         expect(page.locator("#jungyang-progress")).to_have_text("기본 차림 7 / 7 준비")
         expect(page.locator("#donebox button")).to_contain_text("중양 상 올림")
@@ -959,6 +967,7 @@ class BrowserRegression(unittest.TestCase):
                 expect(page.locator("#jungyang-chukmun")).to_contain_text("奉行者 恩熩堂 金炯錫")
                 expect(page.locator("#jungyang-chukmun .chukmun-original")).to_have_count(14)
                 expect(page.locator("#jungyang-chukmun .chukmun-reading")).to_have_count(14)
+                expect(page.locator("#jungyang-chukmun .chukmun-meaning")).to_have_count(14)
                 expect(page.locator(".chukmun-reading").first).to_have_text("유세차 병오 구월구일")
                 expect(page.locator(".chukmun-reading").nth(1)).to_have_text("봉행자 은호당 김형석 감소고우")
                 expect(page.locator(".chukmun-reading").last).to_have_text("근이지성 봉차박전 복유상향")
@@ -968,13 +977,15 @@ class BrowserRegression(unittest.TestCase):
                 }""")
                 self.assertEqual(face, {"count": 1, "loaded": True})
                 expect(page.locator("#jungyang-chukmun-card")).not_to_contain_text("[봉행자 이름]")
-                translation = page.locator("#jungyang-chukmun-translation")
-                expect(translation).to_contain_text("병오년 음력 구월 구일, 봉행자 은호당 김형석")
-                expect(translation).to_contain_text("광산김씨와 창녕성씨")
-                sizes = page.evaluate("""() => [document.querySelector('#jungyang-chukmun'),
-                  document.querySelector('#jungyang-chukmun-translation')].map(el => parseFloat(getComputedStyle(el).fontSize))""")
+                expect(page.locator(".chukmun-meaning").first).to_have_text("병오년 음력 구월 구일입니다.")
+                expect(page.locator(".chukmun-meaning").nth(1)).to_have_text("봉행자 은호당 김형석이 삼가 고합니다.")
+                expect(page.locator(".chukmun-meaning").nth(2)).to_contain_text("광산김씨와 창녕성씨")
+                self.assertTrue(page.locator("#jungyang-chukmun .chukmun-line").evaluate_all("""lines => lines.every(line =>
+                  [...line.children].map(el => el.className).join(',') === 'chukmun-original,chukmun-reading,chukmun-meaning')"""))
+                sizes = page.evaluate("""() => [document.querySelector('.chukmun-original'),
+                  document.querySelector('.chukmun-meaning')].map(el => parseFloat(getComputedStyle(el).fontSize))""")
                 self.assertLess(sizes[1], sizes[0])
-                self.assertTrue(page.locator("#jungyang-chukmun").evaluate("el => !!(el.compareDocumentPosition(document.querySelector('#jungyang-chukmun-translation')) & Node.DOCUMENT_POSITION_FOLLOWING)"))
+                expect(page.locator("#jungyang-chukmun-translation")).to_have_count(0)
                 self.assertEqual(page.evaluate("nameOfKey('part/jungyang-rice-offering-geollip')"), "건립 밥공양 · 재료")
                 for button in page.locator("#jungyang-prep button, #offering-prep button, #jungyang-guide button").all():
                     bounds = button.bounding_box()
@@ -990,13 +1001,13 @@ class BrowserRegression(unittest.TestCase):
         expect(page.locator(".chukmun-reading").first).to_have_text("유세차 정미 구월구일")
         pairs = page.locator("#jungyang-chukmun .chukmun-line").all()
         prayer = "\n\n".join(pair.locator(".chukmun-original").inner_text() + "\n" +
-                              pair.locator(".chukmun-reading").inner_text() for pair in pairs)
-        translation = page.locator("#jungyang-chukmun-translation").inner_text()
-        self.assertTrue(translation.startswith("정미년"))
+                              pair.locator(".chukmun-reading").inner_text() + "\n" +
+                              pair.locator(".chukmun-meaning").inner_text() for pair in pairs)
+        expect(page.locator(".chukmun-meaning").first).to_have_text("정미년 음력 구월 구일입니다.")
         with page.expect_download() as saved_prayer:
             page.get_by_role("button", name="축문 저장", exact=True).click()
         self.assertEqual(Path(saved_prayer.value.path()).read_text(encoding="utf-8"),
-                         prayer + "\n\n우리말 해석\n\n" + translation + "\n")
+                         prayer + "\n")
         image = page.locator("#jungyang-jibang-card img")
         image.scroll_into_view_if_needed()
         page.wait_for_function("document.querySelector('#jungyang-jibang-card img').naturalWidth > 0")
@@ -1072,6 +1083,137 @@ class BrowserRegression(unittest.TestCase):
                 page.locator("#changeme").click()
                 self.guest(page)
                 self.assert_no_overflow(page)
+
+
+    def test_jungyang_completed_navigation_report_and_manual_history(self):
+        event_key = "sangbogi:event:2026-09:jungyang"
+        old_event = legacy_cycle()
+        old_event["done"]["done:jungyang"] = stamp(on=False, at="2026-10-20T03:00:00.000Z")
+        for role in ("은호당", "어머니", "방문객"):
+            with self.subTest(role=role):
+                page, fixture = self.open_page({event_key: old_event})
+                original = fixture.records[event_key]
+                page.clock.install(time="2026-10-21T03:00:00Z")
+                if role == "방문객":
+                    self.guest(page, role)
+                else:
+                    self.login(page, role)
+                expect(page.locator("#title")).to_have_text("시월 초하루")
+                page.locator("#prev").click()
+                expect(page.locator("#title")).to_have_text("구월 초하루")
+                page.locator('#eventnav [data-event="jungyang"]').click()
+                expect(page.locator("#title")).to_have_text("구월 중양")
+                if role != "방문객":
+                    expect(page.locator("#donebox button")).to_contain_text("중양 상 올림")
+                # An actual polling interval must leave the manually opened record in place.
+                page.clock.run_for(12010)
+                page.evaluate("async () => { await loadCycle(true); }")
+                expect(page.locator("#title")).to_have_text("구월 중양")
+                self.assertEqual(fixture.writes, [])
+                self.assertEqual(fixture.records[event_key], original)
+                page.reload()
+                if role != "방문객":
+                    self.login(page, role)
+                expect(page.locator("#title")).to_have_text("시월 초하루")
+                self.assertEqual(fixture.writes, [])
+
+    def test_jungyang_completed_navigation_other_year_and_explicit_cancellation(self):
+        scenarios = (
+            (2026, "2026-10-21T03:00:00Z", stamp(on=False, at="2026-10-20T15:10:00.000Z"), False, "구월 초하루"),
+            (2026, "2026-10-20T03:00:00Z", None, False, "구월 초하루"),
+            (2027, "2027-10-10T03:00:00Z", None, False, "구월 초하루"),
+            (2027, "2027-10-10T03:00:00Z", None, True, "구월 초하루"),
+            (2027, "2027-10-10T03:00:00Z", stamp(on=False, at="2027-10-09T03:00:00.000Z"), True, "구월 초하루"),
+            (2027, "2027-10-10T03:00:00Z", stamp(on=True, at="2027-10-09T03:00:00.000Z"), False, "시월 초하루"),
+        )
+        for year, today, completion, first_done, title in scenarios:
+            with self.subTest(year=year, completion=completion, first_done=first_done):
+                first = legacy_cycle()
+                if first_done:
+                    first["done"]["done:초하루"] = stamp(on=True)
+                event = legacy_cycle()
+                if completion:
+                    event["done"]["done:jungyang"] = completion
+                records = {f"sangbogi:cycle:{year}-09": first,
+                           f"sangbogi:event:{year}-09:jungyang": event}
+                page, fixture = self.open_page(records)
+                original = copy.deepcopy(fixture.records)
+                page.clock.install(time=today)
+                self.login(page)
+                expect(page.locator("#title")).to_have_text(title)
+                self.assertEqual(fixture.writes, [])
+                self.assertEqual(fixture.records, original)
+
+    def test_jungyang_completed_navigation_button_saves_original_event_and_can_undo(self):
+        first_key = "sangbogi:cycle:2027-09"
+        event_key = "sangbogi:event:2027-09:jungyang"
+        first = legacy_cycle()
+        first["done"]["done:초하루"] = stamp(on=True)
+        event = legacy_cycle()
+        event["part"]["jungyang-rice-jung"] = stamp(on=True)
+        page, fixture = self.open_page({first_key: first, event_key: event})
+        original_first = fixture.records[first_key]
+        page.clock.install(time="2027-10-10T03:00:00Z")
+        self.login(page, "어머니")
+        expect(page.locator("#title")).to_have_text("구월 초하루")
+        page.locator('#eventnav [data-event="jungyang"]').click()
+        expect(page.locator("#donebox button")).to_have_text("중양 상을 올렸습니다")
+        page.locator("#donebox button").click()
+        expect(page.locator("#title")).to_have_text("시월 초하루")
+        self.wait_saved(page)
+        saved = json.loads(fixture.records[event_key])
+        self.assertTrue(saved["done"]["done:jungyang"]["on"])
+        self.assertEqual(saved["done"]["done:jungyang"]["by"], "어머니")
+        self.assertEqual(saved["part"], event["part"])
+        self.assertEqual(fixture.records[first_key], original_first)
+        self.assertTrue(all(write["key"] == event_key for write in fixture.writes))
+        page.locator("#prev").click()
+        page.locator('#eventnav [data-event="jungyang"]').click()
+        expect(page.locator("#donebox button")).to_contain_text("중양 상 올림")
+        page.locator("#donebox button").click()
+        expect(page.locator("#title")).to_have_text("구월 중양")
+        self.wait_saved(page)
+        self.assertFalse(json.loads(fixture.records[event_key])["done"]["done:jungyang"]["on"])
+        page.reload()
+        self.login(page, "어머니")
+        expect(page.locator("#title")).to_have_text("구월 초하루")
+        self.assertEqual(fixture.records[first_key], original_first)
+
+
+    def test_jungyang_reported_cups_are_scoped_to_2026_and_family(self):
+        for role in ("은호당", "어머니"):
+            with self.subTest(role=role):
+                records = {"sangbogi:cycle:2026-09": legacy_cycle(),
+                           "sangbogi:event:2026-09:jungyang": legacy_cycle()}
+                page, fixture = self.open_page(records, width=390, height=844)
+                original = copy.deepcopy(fixture.records)
+                self.login(page, role)
+                expect(page.locator("#jungyang-cups-card")).to_have_count(0)
+                self.select_month(page, 9)
+                page.locator('#eventnav [data-event="jungyang"]').click()
+                card = page.locator("#jungyang-cups-card")
+                expect(card.locator("h2")).to_have_text("올린 잔 · 2026년 중양")
+                expect(card.locator("h3")).to_have_text(["술 5잔", "식혜(후추차) 2잔"])
+                expect(card.locator("h3 + p")).to_have_text([
+                    "중당 · 육당 · 육당의 산신할아버지 상 · 건립 · 조상상",
+                    "비어있는 소당 · 조상상",
+                ])
+                expect(card.locator("button, input, [role=checkbox]")).to_have_count(0)
+                expect(page.locator("#jungyang-progress")).to_have_text("기본 차림 0 / 7 준비")
+                self.assert_no_overflow(page)
+                page.locator('#eventnav [data-event="first"]').click()
+                expect(card).to_have_count(0)
+                self.select_month(page, 9, year=2027)
+                page.locator('#eventnav [data-event="jungyang"]').click()
+                expect(card).to_have_count(0)
+                page.locator(".brand-home").click()
+                self.guest(page)
+                self.select_month(page, 9)
+                page.locator('#eventnav [data-event="jungyang"]').click()
+                expect(card).to_have_count(0)
+                expect(page.locator("#jungyang-prep")).to_be_empty()
+                self.assertEqual(fixture.writes, [])
+                self.assertEqual(fixture.records, original)
 
 
 if __name__ == "__main__":

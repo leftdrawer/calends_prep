@@ -359,10 +359,10 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .chukmun-line+.chukmun-line{margin-top:16px}
 .chukmun-line.chukmun-stanza{margin-top:30px}
 .jungyang-guide-card .chukmun-original{margin:0;font:inherit;color:var(--ink)}
-.jungyang-guide-card .chukmun-reading{margin:2px 0 0;font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;font-size:13px;line-height:1.7;letter-spacing:0;color:var(--ink-2);word-break:keep-all}
-.jungyang-translation{margin-top:20px;color:var(--ink-2)}
-.jungyang-translation h3{margin:0 0 8px;font-size:13px;font-weight:600}
-.jungyang-guide-card .jungyang-translation p{margin:0;font-size:13px;line-height:1.85;white-space:pre-line}
+.jungyang-guide-card .chukmun-reading,.jungyang-guide-card .chukmun-meaning{margin:2px 0 0;font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;font-size:13px;line-height:1.7;letter-spacing:0;color:var(--ink-2);word-break:keep-all}
+.jungyang-guide-card .chukmun-meaning{margin-top:5px}
+#jungyang-cups-card h3{margin:18px 0 4px;font-size:14px;font-weight:600;color:var(--ink)}
+#jungyang-cups-card h3+p{margin:0}
 .jungyang-jibang-layout{display:flex;align-items:center;flex-wrap:wrap;gap:24px;margin-top:18px}
 .jungyang-guide-card .jungyang-jibang-preview{display:block;flex:0 0 144px;width:144px;padding:0;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--hanji)}
 .jungyang-jibang-preview img{display:block;width:100%;height:auto}

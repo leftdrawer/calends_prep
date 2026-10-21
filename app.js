@@ -188,9 +188,35 @@ function pickIndex(){const t=todayISO();
     if(diffDays(LUNAR[i][0],t)<LUNAR[i][4]) return i;
   }
   return LUNAR.length-1;}
-/* 초하루를 마쳐도 그 달 명절은 남아 있을 수 있으므로 현재 달을 엽니다. */
+function monthAfterJungyang(i){
+  const e=LUNAR[i],next=LUNAR[i+1];
+  return e&&e[2]===9&&!e[3]&&next&&next[1]===e[1]&&next[2]===10&&!next[3]?i+1:null;
+}
+function jungyangCompletionRecord(e,state){
+  const direct=state&&state.done&&state.done['done:jungyang'];
+  const report=JUNGYANG_SERVICE_RECORDS[e[1]];
+  if(e[2]!==9||e[3]||!report||!report.completed||report.reportedOn>todayISO())return direct;
+  if(direct){
+    if(direct.on||!direct.at)return direct;
+    const time=Date.parse(direct.at);
+    if(!Number.isFinite(time))return direct;
+    const recordedOn=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(time));
+    if(recordedOn>=report.reportedOn)return direct;
+  }
+  return {on:true,by:'은호당',at:report.reportedOn+'T00:00:00+09:00'};
+}
+/* 첫 진입에서만 중양 완료를 확인합니다. 지난달을 직접 보는 동안에는 이동하지 않습니다. */
 async function pickIndexRespectingDone(){
-  return pickIndex();
+  const current=pickIndex(),next=monthAfterJungyang(current);
+  if(next===null)return current;
+  const e=LUNAR[current],key='sangbogi:event:'+cycleKey(e)+':jungyang';
+  let remote=null;
+  if(!pending.has(key)){
+    try{const r=await store.get(key);if(r)remote=JSON.parse(r.value);}catch(err){}
+  }
+  const state=pending.has(key)?LOCAL[key]:mergeCycle(remote,LOCAL[key]);
+  const done=jungyangCompletionRecord(e,state);
+  return done&&done.on?next:current;
 }
 async function loadCalendarConfig(){
   if(PICKED_SAVING)return;
@@ -636,6 +662,7 @@ function isDone(e){
 }
 function renderDone(){
   const e=LUNAR[idx],event=getSelectedEvent(),replacement=substituteFor(e),nm=event.name;
+  const renderedIndex=idx;
   const updateCycle=bindCycleWriter(), completionKey=doneKey(e);
   const el=document.getElementById('donebox'); el.innerHTML='';
   if(!isEventConfigured()) return;
@@ -644,12 +671,17 @@ function renderDone(){
     note.textContent='이번 달 초하루는 '+replacement.name+'으로 대신합니다. 별도로 지내려면 대체 승인을 취소해주세요.';
     el.appendChild(note); return;
   }
-  const d=completionRecord(e);
+  const d=event.id==='jungyang'?jungyangCompletionRecord(e,cycle):completionRecord(e);
   const on=!!(d&&d.on);
   const bt=document.createElement('button');
   bt.className='btn '+(on?'':'solid');
   bt.textContent = on ? nm+' 상 올림 · 눌러 되돌리기' : nm+' 상을 올렸습니다';
-  bt.onclick=()=>updateCycle(c=>{ c.done[completionKey]=stamp({on:!on}); });
+  bt.onclick=()=>{
+    if(!canWrite())return;
+    updateCycle(c=>{ c.done[completionKey]=stamp({on:!on}); });
+    const next=monthAfterJungyang(renderedIndex);
+    if(!on&&event.id==='jungyang'&&next!==null&&idx===renderedIndex&&getSelectedEvent().id==='jungyang')changeMonth(next-idx);
+  };
   el.appendChild(bt);
   if(on){
     const p=document.createElement('p'); p.className='note'; p.style.marginTop='10px';
@@ -695,40 +727,43 @@ const JUNGYANG_ANCESTOR=[
 const JUNGYANG_LEGACY_LABELS={
   'jungyang-water':'정화수 마련',
   'jungyang-light':'향·촛불 마련',
-  'jungyang-fruit':'집에 있는 제철과일 한 접시'
+  'jungyang-fruit':'집에 있는 제철과일 한 접시',
+  'jungyang-prayer-ancestors':'제사 받지 못한 조상님까지 모시기',
+  'jungyang-prayer-peace':'해원과 극락왕생을 빌기'
 };
 const JUNGYANG_PRAYERS=[
   {id:'jungyang-prayer-gods',name:'신령님께 중양 정성을 고하기'},
-  {id:'jungyang-prayer-ancestors',name:'제사 받지 못한 조상님까지 모시기'},
-  {id:'jungyang-prayer-peace',name:'해원과 극락왕생을 빌기'}
+  {id:'jungyang-prayer-ancestors-peace',name:'제사 받지 못한 조상님들의 해원과 극락왕생을 빌기'}
 ];
+// 사용자가 알려준 해당 연도의 실제 봉행 기록입니다. 다른 해의 차림으로 복사하지 않습니다.
+const JUNGYANG_SERVICE_RECORDS={
+  2026:{
+    completed:true,
+    reportedOn:'2026-10-21',
+    wine:['중당','육당','육당의 산신할아버지 상','건립','조상상'],
+    sikhye:['비어있는 소당','조상상']
+  }
+};
 const JUNGYANG_CELEBRANT='恩熩堂 金炯錫';
 const JUNGYANG_CHUKMUN=[
-  ['維歲次 [年干支] 九月九日','유세차 [해의 간지] 구월구일'],
-  ['奉行者 [奉行者] 敢昭告于','봉행자 은호당 김형석 감소고우'],
-  ['光山金氏 昌寧成氏 歷代祖先列位之靈','광산김씨 창녕성씨 역대조선 열위지령'],
+  ['維歲次 [年干支] 九月九日','유세차 [해의 간지] 구월구일','[해의 간지]년 음력 구월 구일입니다.'],
+  ['奉行者 [奉行者] 敢昭告于','봉행자 은호당 김형석 감소고우','봉행자 은호당 김형석이 삼가 고합니다.'],
+  ['光山金氏 昌寧成氏 歷代祖先列位之靈','광산김씨 창녕성씨 역대조선 열위지령','광산김씨와 창녕성씨의 역대 조상님 모든 영위께 올리는 말씀입니다.'],
   null,
-  ['歲序流遷 重陽復至','세서유천 중양부지'],
-  ['追惟先德 感慕彌深','추유선덕 감모미심'],
-  ['仰念先世 血脈相承 以至于今','앙념선세 혈맥상승 이지우금'],
-  ['恩深罔極 飮水思源 追遠報本 夙夜不忘','은심망극 음수사원 추원보본 숙야불망'],
+  ['歲序流遷 重陽復至','세서유천 중양부지','세월이 흘러 중양을 다시 맞았습니다.'],
+  ['追惟先德 感慕彌深','추유선덕 감모미심','선조의 덕을 돌아보니 감사와 그리움이 더욱 깊어집니다.'],
+  ['仰念先世 血脈相承 以至于今','앙념선세 혈맥상승 이지우금','선대를 우러러 생각하니 그 혈맥이 이어져 오늘에 이르렀습니다.'],
+  ['恩深罔極 飮水思源 追遠報本 夙夜不忘','은심망극 음수사원 추원보본 숙야불망','그 은혜는 끝없이 깊습니다. 근원을 생각하며 먼 선조를 기리고 근본의 은혜를 갚는 마음을 밤낮으로 잊지 않습니다.'],
   null,
-  ['謹具飯蔬清酌 用薦微誠','근구반소청작 용천미성'],
-  ['凡姓名未詳 忌日失傳 墓所莫考','범성명미상 기일실전 묘소막고'],
-  ['久闕祭享之先靈 亦願同臨 共歆此奠','구궐제향지선령 역원동림 공흠차전'],
+  ['謹具飯蔬清酌 用薦微誠','근구반소청작 용천미성','삼가 밥과 나물과 술을 갖추어 작은 정성을 올립니다.'],
+  ['凡姓名未詳 忌日失傳 墓所莫考','범성명미상 기일실전 묘소막고','성함이 분명하지 않고 기일이 전해지지 않으며 묘소를 알 수 없어,'],
+  ['久闕祭享之先靈 亦願同臨 共歆此奠','구궐제향지선령 역원동림 공흠차전','오랫동안 제사를 받지 못한 선령께서도 함께 오시어 이 제물을 흠향하여 주십시오.'],
   null,
-  ['伏願列位先靈 冤結悉解 永享安寧','복원열위선령 원결실해 영향안녕'],
-  ['庇佑後昆 親族和睦 孝友相敦 正道是行','비우후곤 친족화목 효우상돈 정도시행'],
-  ['惟願此誠 咸達列位','유원차성 함달열위'],
-  ['謹以至誠 奉此薄奠 伏惟尙饗','근이지성 봉차박전 복유상향']
+  ['伏願列位先靈 冤結悉解 永享安寧','복원열위선령 원결실해 영향안녕','모든 선령의 맺힌 원한이 풀리고 길이 평안을 누리시기를 빕니다.'],
+  ['庇佑後昆 親族和睦 孝友相敦 正道是行','비우후곤 친족화목 효우상돈 정도시행','후손을 보살피시어 친족이 화목하고, 효도와 우애를 두텁게 하며 바른 길을 따르게 하여 주십시오.'],
+  ['惟願此誠 咸達列位','유원차성 함달열위','이 정성이 모든 영위께 고루 닿기를 빕니다.'],
+  ['謹以至誠 奉此薄奠 伏惟尙饗','근이지성 봉차박전 복유상향','지극한 정성으로 소박한 제물을 올리오니 삼가 흠향하여 주십시오.']
 ];
-const JUNGYANG_CHUKMUN_TRANSLATION=`[해의 간지]년 음력 구월 구일, 봉행자 은호당 김형석은 광산김씨와 창녕성씨의 역대 조상님 모든 영위께 삼가 고합니다.
-
-세월이 흘러 중양을 다시 맞으니, 선조의 덕을 돌아보며 감사와 그리움이 더욱 깊어집니다. 선대에서 혈맥이 이어져 오늘에 이르렀으니 그 은혜는 깊고 끝이 없습니다. 물을 마시며 그 근원을 생각하듯, 먼 선조를 기리고 근본의 은혜를 갚는 마음을 밤낮으로 잊지 않습니다.
-
-삼가 밥과 나물과 술을 갖추어 작은 정성을 올립니다. 성함과 기일이 전해지지 않고 묘소를 알 수 없어 오랫동안 제사를 받지 못한 선령께서도 함께 오시어 이 제물을 흠향하여 주십시오.
-
-모든 선령의 맺힌 원한이 풀리고 길이 평안을 누리시기를 빕니다. 후손을 보살피시어 친족이 화목하고, 효도와 우애를 두텁게 하며 바른 길을 따르게 하여 주십시오. 이 정성이 모든 영위께 고루 닿기를 빌며, 지극한 정성으로 소박한 제물을 올리오니 삼가 흠향하여 주십시오.`;
 function jungyangYearGanji(hanja=false){
   const offset=LUNAR[idx][1]-4;
   const stems=hanja?'甲乙丙丁戊己庚辛壬癸':'갑을병정무기경신임계';
@@ -738,18 +773,15 @@ function jungyangYearGanji(hanja=false){
 function jungyangChukmunLines(){
   return JUNGYANG_CHUKMUN.map(line=>line?{
     hanmun:line[0].replace('[年干支]',jungyangYearGanji(true)).replace('[奉行者]',JUNGYANG_CELEBRANT),
-    reading:line[1].replace('[해의 간지]',jungyangYearGanji())
+    reading:line[1].replace('[해의 간지]',jungyangYearGanji()),
+    meaning:line[2].replace('[해의 간지]',jungyangYearGanji())
   }:null);
 }
 function jungyangChukmunText(){
   return jungyangChukmunLines().map(line=>line?line.hanmun:'').join('\n');
 }
-function jungyangChukmunTranslation(){
-  return JUNGYANG_CHUKMUN_TRANSLATION.replace('[해의 간지]',jungyangYearGanji());
-}
 function jungyangChukmunDownloadText(){
-  const paired=jungyangChukmunLines().filter(Boolean).map(line=>line.hanmun+'\n'+line.reading).join('\n\n');
-  return paired+'\n\n우리말 해석\n\n'+jungyangChukmunTranslation()+'\n';
+  return jungyangChukmunLines().filter(Boolean).map(line=>line.hanmun+'\n'+line.reading+'\n'+line.meaning).join('\n\n')+'\n';
 }
 const BULSA_RICE_ID='bulsa-rice';
 function isFamilyFirstDay(){
@@ -816,6 +848,19 @@ function renderJungyang(){
   const boundary=document.createElement('p');boundary.className='note';
   boundary.textContent='신당 공간에 맞춰 은호당이 정한 차림입니다. 초하루·추석 상을 그대로 옮기지 않습니다. 아래 선택 안내와 진행안은 기본 차림 집계에 넣지 않습니다.';
   intro.appendChild(boundary);el.appendChild(intro);
+  const service=JUNGYANG_SERVICE_RECORDS[LUNAR[idx][1]];
+  if(service){
+    const cups=document.createElement('section');cups.id='jungyang-cups-card';cups.className='card jungyang-guide-card';
+    const heading=document.createElement('h2');heading.textContent='올린 잔 · '+LUNAR[idx][1]+'년 중양';
+    cups.appendChild(heading);
+    [['술',service.wine],['식혜(후추차)',service.sikhye]].forEach(([name,places])=>{
+      const title=document.createElement('h3');title.textContent=name+' '+places.length+'잔';
+      const spots=document.createElement('p');spots.textContent=places.join(' · ');
+      cups.append(title,spots);
+    });
+    const note=document.createElement('p');note.className='note';note.textContent='이번 중양에 실제로 올린 잔을 기록했습니다.';
+    cups.appendChild(note);el.appendChild(cups);
+  }
   el.appendChild(preparationCard('jungyang-ancestor-card','조상상 · 기본 차림',JUNGYANG_ANCESTOR,'올림'));
 }
 function renderJungyangGuide(){
@@ -843,12 +888,9 @@ function renderJungyangGuide(){
     const pair=document.createElement('div');pair.className='chukmun-line'+(stanza?' chukmun-stanza':'');stanza=false;
     const original=document.createElement('p');original.className='chukmun-original';original.lang='lzh';original.textContent=line.hanmun;
     const reading=document.createElement('p');reading.className='chukmun-reading';reading.lang='ko';reading.textContent=line.reading;
-    pair.append(original,reading);chukmunText.appendChild(pair);
+    const meaning=document.createElement('p');meaning.className='chukmun-meaning';meaning.lang='ko';meaning.textContent=line.meaning;
+    pair.append(original,reading,meaning);chukmunText.appendChild(pair);
   });
-  const translation=document.createElement('section');translation.className='jungyang-translation';
-  const translationHeading=document.createElement('h3');translationHeading.textContent='우리말 해석';
-  const translationText=document.createElement('p');translationText.id='jungyang-chukmun-translation';translationText.textContent=jungyangChukmunTranslation();
-  translation.append(translationHeading,translationText);
   const chukmunActions=document.createElement('div');chukmunActions.className='jungyang-actions';
   const download=document.createElement('button');download.type='button';download.className='btn';download.textContent='축문 저장';
   download.onclick=()=>{
@@ -857,7 +899,7 @@ function renderJungyangGuide(){
     link.click();setTimeout(()=>URL.revokeObjectURL(url),0);
   };
   chukmunActions.appendChild(download);
-  chukmun.append(chukmunLabel,chukmunHeading,chukmunIntro,chukmunText,translation,chukmunActions);el.appendChild(chukmun);
+  chukmun.append(chukmunLabel,chukmunHeading,chukmunIntro,chukmunText,chukmunActions);el.appendChild(chukmun);
   const sources=document.createElement('section');sources.className='card jungyang-guide-card';
   sources.innerHTML='<p class="section-label">자료와 적용 범위</p><h2>참고한 글</h2><ul><li><a href="https://cafe.naver.com/f-e/cafes/11840628/articles/14197" target="_blank" rel="noopener noreferrer">중양절(음력 9월 9일)</a> · 스승니임ㅡ서울, 2023.07.31. 중양의 대상·취지와 세시풍속 참고.</li><li><a href="https://cafe.naver.com/f-e/cafes/11840628/articles/28564" target="_blank" rel="noopener noreferrer">무명조상 해원경</a> · 스승니임ㅡ서울, 2026.10.03. 작성자가 만든 중양 경문으로, 제수와 해원 발원의 취지 참고.</li></ul><p class="note">카페 글은 로그인·회원 자격이 필요할 수 있습니다. 기본 수량은 은호당의 결정이고, 국화 음식과 간소 진행안은 자료의 취지를 참고했습니다. 지방과 축문은 두 집안을 함께 모시려는 요청에 맞춰 새로 정리했습니다. 중양 상의 체크는 다른 달·초하루 기록과 따로 저장합니다.</p>';
   el.appendChild(sources);
@@ -1708,7 +1750,7 @@ function resumePolling(){
   poller=setInterval(()=>{if(document.getElementById('gate').hidden)loadCycle(true);},12000);
 }
 async function start(){
-  idx=pickIndex();selectedEvent='first';replacementPrompt=null;
+  idx=await pickIndexRespectingDone();selectedEvent='first';replacementPrompt=null;
   await loadCycle();
   resumePolling();
 }
