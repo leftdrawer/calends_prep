@@ -517,7 +517,9 @@ class BrowserRegression(unittest.TestCase):
         self.select_month(page, 10)
         page.locator('#eventnav [data-event="seongju"]').click()
         expect(page.locator("#bulsa-prep-card")).to_have_count(0)
-        self.assertNotIn("불사단지 쌀 교체", page.locator("#app").inner_html())
+        # Seongju reference text may mention the first-day check, but never offers it.
+        expect(page.get_by_role("checkbox", name="불사단지 쌀 교체", exact=True)).to_have_count(0)
+        expect(page.locator("#ritual-reference [role=checkbox]")).to_have_count(0)
         # The supported date table has no leap tenth month; exercise that case
         # with a synthetic month in this disposable page only.
         page.evaluate("""async () => {
@@ -1214,6 +1216,152 @@ class BrowserRegression(unittest.TestCase):
                 expect(page.locator("#jungyang-prep")).to_be_empty()
                 self.assertEqual(fixture.writes, [])
                 self.assertEqual(fixture.records, original)
+
+    RITUALS = {
+        "yeongdeung": (2, 5, 1), "chilseok": (7, 8, 2),
+        "chuseok": (8, 5, 2), "dongji": (11, 3, 1),
+    }
+    REFERENCE_ONLY = {
+        "hongsumagi": 1, "samsin": 3, "chopail": 4, "dano": 5,
+        "baekjung": 7, "seongju": 10, "samjae": 12,
+    }
+
+    def open_event(self, page, event_id, month, year=2026):
+        self.select_month(page, month, year=year)
+        page.locator(f'#eventnav [data-event="{event_id}"]').click()
+
+    def test_source_rituals_mother_saves_only_event_key_and_reloads(self):
+        for event_id, (month, count, step_count) in self.RITUALS.items():
+            with self.subTest(event=event_id):
+                first_key = f"sangbogi:cycle:2026-{month:02d}"
+                event_key = f"sangbogi:event:2026-{month:02d}:{event_id}"
+                other_year_key = f"sangbogi:event:2027-{month:02d}:{event_id}"
+                page, fixture = self.open_page({first_key: legacy_cycle()})
+                original_first = fixture.records[first_key]
+                self.login(page, "어머니")
+                self.open_event(page, event_id, month)
+                expect(page.locator("#ritual-prep #ritual-guide-card")).to_have_count(1)
+                expect(page.locator("#ritual-reference")).to_be_empty()
+                expect(page.locator("#ritual-progress")).to_have_text(f"준비안 0 / {count} 확인")
+                expect(page.locator("#ritual-items-card [role=checkbox]")).to_have_count(count)
+                expect(page.locator("#ritual-steps-card [role=checkbox]")).to_have_count(step_count)
+                for card in ("#shopping-grid", "#prog", "#sangcard", "#stepscard"):
+                    expect(page.locator(card)).to_be_hidden()
+                expect(page.locator("#fixed .row, #var .row, #steps .step")).to_have_count(0)
+                expect(page.locator("#donecard")).to_be_visible()
+                page.locator("#ritual-items-card .row").first.click()
+                page.locator("#ritual-items-card [role=checkbox]").nth(1).click()
+                page.locator("#ritual-steps-card .row").first.click()
+                expect(page.locator("#ritual-progress")).to_have_text(f"준비안 2 / {count} 확인")
+                self.wait_saved(page)
+                saved = json.loads(fixture.records[event_key])
+                ids = page.locator("#ritual-items-card [role=checkbox]").evaluate_all("els => els.map(e => e.id)")
+                step_ids = page.locator("#ritual-steps-card [role=checkbox]").evaluate_all("els => els.map(e => e.id)")
+                self.assertTrue(all(i.startswith(f"ritual-{event_id}-") and not i.startswith(f"ritual-{event_id}-step-") for i in ids))
+                self.assertTrue(all(i.startswith(f"ritual-{event_id}-step-") for i in step_ids))
+                expected = {i[:-6] for i in ids[:2] + step_ids[:1]}
+                self.assertEqual({k for k, v in saved["part"].items() if v.get("on")}, expected)
+                self.assertTrue(all(v["by"] == "어머니" and v["at"] for v in saved["part"].values()))
+                self.assertTrue(all(write["key"] == event_key for write in fixture.writes))
+                self.assertEqual(fixture.records[first_key], original_first)
+                # The first day and another year do not inherit the event's checks.
+                page.locator('#eventnav [data-event="first"]').click()
+                expect(page.locator("#ritual-prep #ritual-items-card")).to_have_count(0)
+                expect(page.locator("#total")).to_have_text("/18")
+                self.open_event(page, event_id, month, year=2027)
+                expect(page.locator("#ritual-progress")).to_have_text(f"준비안 0 / {count} 확인")
+                self.assertNotIn(other_year_key, fixture.records)
+                page.reload()
+                self.login(page, "어머니")
+                self.open_event(page, event_id, month)
+                expect(page.locator("#ritual-progress")).to_have_text(f"준비안 2 / {count} 확인")
+                expect(page.locator("#ritual-items-card [aria-checked=true]")).to_have_count(2)
+                expect(page.locator("#ritual-steps-card [aria-checked=true]")).to_have_count(1)
+                self.assertEqual(fixture.records[first_key], original_first)
+
+    def test_reference_only_events_have_guidance_without_checks_or_writes(self):
+        for event_id, month in self.REFERENCE_ONLY.items():
+            with self.subTest(event=event_id):
+                page, fixture = self.open_page()
+                original = copy.deepcopy(fixture.records)
+                self.login(page, "어머니")
+                self.open_event(page, event_id, month)
+                expect(page.locator("#ritual-reference #ritual-guide-card")).to_have_count(1)
+                expect(page.locator("#ritual-prep")).to_be_empty()
+                for selector in ("#ritual-progress", "#ritual-items-card", "#ritual-steps-card"):
+                    expect(page.locator(selector)).to_have_count(0)
+                expect(page.locator("#ritual-reference [role=checkbox]")).to_have_count(0)
+                expect(page.locator("#donebox button")).to_have_count(0)
+                details = page.locator("#ritual-reference .ritual-source-details")
+                details.locator("summary").click()
+                expect(details).to_have_attribute("open", "")
+                self.assertGreaterEqual(details.locator('a[href^="https://cafe.naver.com/"]').count(), 2)
+                self.assertEqual(fixture.writes, [])
+                self.assertEqual(fixture.records, original)
+
+    def test_source_details_stay_open_and_reading_never_writes(self):
+        page, fixture = self.open_page()
+        original = copy.deepcopy(fixture.records)
+        self.login(page, "어머니")
+        for event_id, month in ("chilseok", 7), ("dongji", 11), ("samsin", 3):
+            self.open_event(page, event_id, month)
+            details = page.locator(".ritual-source-details")
+            expect(details).to_have_count(1)
+            expect(details).not_to_have_attribute("open", "")
+            details.locator("summary").click()
+            expect(details).to_have_attribute("open", "")
+            page.evaluate("loadCycle()")
+            self.wait_saved(page)
+            expect(page.locator(".ritual-source-details")).to_have_attribute("open", "")
+        # Existing first-day guidance keeps its counts; months 2 and 10 only add reading text.
+        for month, bulsa in ((2, 0), (10, 1)):
+            self.select_month(page, month)
+            expect(page.locator("#total")).to_have_text("/18")
+            expect(page.locator("#rice-offering-card [role=checkbox]")).to_have_count(4)
+            expect(page.locator("#bulsa-prep-card [role=checkbox]")).to_have_count(bulsa)
+            expect(page.locator("#ritual-reference #ritual-guide-card")).to_have_count(1)
+            expect(page.locator("#ritual-prep")).to_be_empty()
+            expect(page.locator("#ritual-reference [role=checkbox]")).to_have_count(0)
+            details = page.locator("#ritual-reference .ritual-source-details")
+            details.locator("summary").click()
+            expect(details).to_have_attribute("open", "")
+            page.evaluate("loadCycle()")
+            expect(page.locator("#ritual-reference .ritual-source-details")).to_have_attribute("open", "")
+        self.assertEqual(fixture.writes, [])
+        self.assertEqual(fixture.records, original)
+
+    def test_guest_strips_ritual_guidance_and_checklist_nodes(self):
+        page, fixture = self.open_page()
+        self.login(page, "어머니")
+        self.open_event(page, "chuseok", 8)
+        expect(page.locator("#ritual-prep #ritual-items-card")).to_have_count(1)
+        page.locator(".brand-home").click()
+        self.guest(page)
+        for event_id, month in ("chuseok", 8), ("yeongdeung", 2), ("samsin", 3), ("dongji", 11):
+            self.open_event(page, event_id, month)
+            for selector in ("#ritual-reference", "#ritual-prep", "#donebox"):
+                expect(page.locator(selector)).to_be_empty()
+            for selector in ("#ritual-guide-card", "#ritual-progress", ".ritual-source-details", "#app [role=checkbox]"):
+                expect(page.locator(selector)).to_have_count(0)
+        self.assertEqual(fixture.writes, [])
+
+    def test_ritual_cards_fit_320_390_1440_with_large_touch_targets(self):
+        for width, height in ((1440, 1000), (390, 844), (320, 640)):
+            for event_id, month in ("chilseok", 7), ("chuseok", 8), ("dongji", 11), ("samsin", 3):
+                with self.subTest(viewport=f"{width}x{height}", event=event_id):
+                    page, _ = self.open_page(width=width, height=height)
+                    self.login(page, "어머니")
+                    self.open_event(page, event_id, month)
+                    page.locator(".ritual-source-details summary").click()
+                    self.assert_no_overflow(page)
+                    overflow = page.evaluate("""() => [...document.querySelectorAll('#ritual-reference *, #ritual-prep *')]
+                      .filter(el => el.getBoundingClientRect().right > innerWidth + 1).length""")
+                    self.assertEqual(overflow, 0)
+                    targets = page.locator("#ritual-prep button, #ritual-reference button, .ritual-source-details summary")
+                    for target in targets.all():
+                        bounds = target.bounding_box()
+                        self.assertGreaterEqual(bounds["width"], 40)
+                        self.assertGreaterEqual(bounds["height"], 40)
 
 
 if __name__ == "__main__":

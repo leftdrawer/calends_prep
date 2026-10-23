@@ -67,3 +67,7 @@
 - `styles.css`의 `@font-face`는 `Eunhodang Hanja` WOFF와 여섯 글자 `unicode-range`를 연결합니다. `.jungyang-chukmun-hanmun`의 첫 글꼴로 적용해 `恩熩堂 金炯錫`을 기기 기본 글꼴과 독립적으로 표시합니다.
 - `jibang.html`은 원본 이미지의 비율을 유지하는 `object-fit:contain`으로 표시합니다. Fullscreen API 호출 후 설정을 숨기고 이미지 터치로 다시 열며, 미지원·실패 시 PNG 저장 대안을 안내합니다.
 - 중양은 configured 상태지만 초하루 장보기·진설·6단계·18개 진척은 숨기고 DOM을 비웁니다. 완료·예물 기능은 유지합니다.
+
+## 자료 기반 상차림 확장 (2026-10-23)
+- rituals.js: RITUAL_LIBRARY의 공개 출처 메타데이터·행사 준비안·초하루 월별 설명. index.html은 app.js보다 먼저 defer로 불러옵니다.
+- getRitualGuide, isSourceRitual, ritualCheckItems, renderRitualGuidance: ritual-reference(설명만)와 ritual-prep(체크 준비안) 슬롯. 행사 준비안에는 기존 초하루 구매/진설/6단계를 생성하지 않습니다. partLabelOf가 새 항목을 읽기 이름으로 표시합니다.

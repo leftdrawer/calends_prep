@@ -57,3 +57,7 @@ GitHub Pages 저장소는 `leftdrawer/calends_prep`, 배포 소스는 `main` 루
 - `renderDone()`에서 중양 완료를 새로 켜면 해당 중양 키에 저장 대기 수정을 남기고 시월 초하루로 이동합니다. 완료를 끄는 동작은 이동하지 않습니다.
 - 봉행자의 `恩熩堂金炯錫` 여섯 글자는 로컬 `assets/fonts/eunhodang-hanja.woff`로 제공합니다. 환경에 설치된 Noto Serif CJK KR Regular 2.003 한국어 글꼴에서 fontTools로 추출한 5,932바이트 서브셋이며 `熩` U+71A9를 포함합니다. 파생 이름은 **Eunhodang Hanja**, 라이선스는 OFL 1.1이고 `OFL.txt`·`SOURCE.md`를 함께 배포합니다. 제작에 새 패키지 설치·글꼴 다운로드는 없었습니다. 과거 Google 웹폰트 서브셋의 문자 범위를 전체 Noto CJK의 범위와 혼동하지 않습니다.
 - `@font-face`의 여섯 글자 `unicode-range`와 한문 본문 첫 글꼴 지정으로 필요한 한자만 로컬 WOFF를 사용합니다. 글꼴의 원본·서브셋 해시와 저작권·제작 정보는 `assets/fonts/SOURCE.md`에 기록합니다.
+
+## 자료 기반 상차림 확장 (2026-10-23)
+- rituals.js를 HTML·app.js·styles.css와 함께 배포해야 합니다. 새 서버·테이블·마이그레이션은 없습니다. 새 part 이름은 ritual-행사id-항목id이며 기존 이벤트 키를 그대로 씁니다. 같은 상에서 펼친 자료 설명은 갱신 때 열림 상태를 유지합니다.
+- 의존성 없는 도메인 검사와 합성 Supabase를 쓰는 Python Playwright 회귀검사를 유지합니다. 테스트용 브라우저·패키지는 공개 저장소에 포함하지 않습니다.

@@ -369,3 +369,14 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .jungyang-jibang-copy{flex:1 1 180px;min-width:0}
 .jungyang-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
 .jungyang-guide-card .jungyang-actions .btn{display:inline-flex;align-items:center;justify-content:center;width:auto;min-height:42px;padding:9px 14px;font-size:13px;text-decoration:none}
+
+/* 출처 기반 행사 준비안: 새 글꼴·색상 체계 없이 기존 토큰을 유지합니다. */
+.ritual-guide-card{padding-bottom:18px}
+.ritual-source-details{border-top:1px solid var(--line);padding:12px 0 24px;margin-bottom:18px;color:var(--ink-2);font-size:13px;line-height:1.85}
+.ritual-source-details summary{cursor:pointer;min-height:44px;padding:10px 4px;color:var(--brass-deep);font-weight:600}
+.ritual-source-details summary:focus-visible{outline:2px solid var(--brass-deep);outline-offset:3px}
+.ritual-source-details h3{font-size:14px;color:var(--ink);margin:18px 0 8px}
+.ritual-source-details ul{padding-left:20px;margin:12px 0}
+.ritual-source-details li+li{margin-top:10px}
+.ritual-source-list a{display:inline-block;min-height:40px;padding:6px 0;text-underline-offset:4px;color:var(--brass-deep)}
+.ritual-source-list span{font-size:12px}

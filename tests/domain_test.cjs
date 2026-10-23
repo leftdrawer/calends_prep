@@ -5,6 +5,7 @@ const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const source = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
 const context = vm.createContext({console, Date, Intl});
+vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'rituals.js'), 'utf8'), context);
 vm.runInContext(source.slice(source.indexOf('const HOLIDAYS'), source.indexOf('/* ── 저장소')), context);
 vm.runInContext(source.slice(source.indexOf('const RICE_OFFERINGS'), source.indexOf('function preparationCard')), context);
 vm.runInContext(source.slice(source.indexOf('function partLabelOf'), source.indexOf('function renderSheet')), context);
@@ -51,8 +52,30 @@ assert.equal(run('eventPlan().steps.length'), 6);
 assert.equal(run('BUY.length'), 18);
 assert.equal(run('eventPlan().items.length'), run('ALL.length'));
 run("idx=LUNAR.findIndex(e=>e[1]===2026&&e[2]===8&&!e[3]);selectedEvent='chuseok'");
-assert.equal(run('isEventConfigured()'), false);
-assert.equal(run('eventPlan().items.length'), 0);
+assert.equal(run('isEventConfigured()'), true);
+assert.equal(run('eventPlan().items.length'), run('GIFTS.length'));
+assert.equal(run('ritualCheckItems("chuseok").length'), 5);
+assert.equal(run('eventPlan().steps.length'), 0);
+for (const [eventId, month, count] of [['yeongdeung',2,5],['chilseok',7,8],['dongji',11,3]]) {
+  run(`idx=LUNAR.findIndex(e=>e[1]===2026&&e[2]===${month}&&!e[3]);selectedEvent='${eventId}'`);
+  assert.equal(run('isSourceRitual()'), true);
+  assert.equal(run(`ritualCheckItems('${eventId}').length`), count);
+  assert.equal(run('eventPlan().items.length'), run('GIFTS.length'));
+  assert.equal(run('eventPlan().steps.length'), 0);
+}
+for (const [eventId, month] of [['hongsumagi',1],['samsin',3],['chopail',4],['dano',5],['baekjung',7],['seongju',10],['samjae',12]]) {
+  run(`idx=LUNAR.findIndex(e=>e[1]===2026&&e[2]===${month}&&!e[3]);selectedEvent='${eventId}'`);
+  assert.equal(run('isEventConfigured()'), false);
+  assert.equal(run('getRitualGuide().sources.length>0'), true);
+  assert.equal(run('ritualCheckItems(getSelectedEvent().id).length'), 0);
+}
+const allIds = run('Object.keys(RITUAL_LIBRARY.events).flatMap(id=>ritualCheckItems(id).concat(ritualCheckItems(id,"steps")).map(item=>item.id))');
+assert.equal(new Set(allIds).size, allIds.length);
+assert.equal(run('Object.values(RITUAL_LIBRARY.events).every(plan=>plan.sources.every(id=>!!RITUAL_LIBRARY.sources[id]))'), true);
+run("idx=LUNAR.findIndex(e=>e[1]===2026&&e[2]===2&&!e[3]);selectedEvent='first'");
+assert.equal(run('getRitualGuide().title.includes("영등달")'), true);
+assert.equal(run('BUY.length'), 18);
+assert.equal(run('nameOfKey("part/ritual-chilseok-rice")'), '공양밥 일곱 그릇 · 재료');
 run("idx=LUNAR.findIndex(e=>e[1]===2028&&e[2]===5&&e[3]);selectedEvent='first'");
 assert.equal(run('eventsFor(LUNAR[idx]).length'), 1);
 console.log('PASS: Jungyang date/configuration, 7 basic and 2 prayer checks, preserved retired history, year-specific Hanmun/reading/meaning triples, first-day and unconfigured-holiday preservation.');
