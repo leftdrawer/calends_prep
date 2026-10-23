@@ -69,6 +69,16 @@ for (const [eventId, month] of [['hongsumagi',1],['samsin',3],['chopail',4],['da
   assert.equal(run('getRitualGuide().sources.length>0'), true);
   assert.equal(run('ritualCheckItems(getSelectedEvent().id).length'), 0);
 }
+run("idx=LUNAR.findIndex(e=>e[1]===2026&&e[2]===1&&!e[3]);selectedEvent='daeboreum'");
+assert.equal(run('getSelectedEvent().date'), '2026-03-03');
+assert.equal(run('isEventConfigured()'), true);
+assert.equal(run('ritualCheckItems("daeboreum").length'), 3);
+assert.equal(run('ritualCheckItems("daeboreum","steps").length'), 0);
+assert.equal(run('nameOfKey("part/ritual-daeboreum-rice")'), '평소 공양 개수대로 찰밥 준비 · 재료');
+assert.equal(run('RITUAL_LIBRARY.events.daeboreum.sources[0]'), 'man55');
+assert.equal(run('RITUAL_LIBRARY.events.seongju.sources.includes("all26897")'), true);
+assert.equal(run('RITUAL_LIBRARY.events.samsin.sources.includes("all26897")'), false);
+assert.equal(run('RITUAL_LIBRARY.common.sources.includes("all26897")'), false);
 const allIds = run('Object.keys(RITUAL_LIBRARY.events).flatMap(id=>ritualCheckItems(id).concat(ritualCheckItems(id,"steps")).map(item=>item.id))');
 assert.equal(new Set(allIds).size, allIds.length);
 assert.equal(run('Object.values(RITUAL_LIBRARY.events).every(plan=>plan.sources.every(id=>!!RITUAL_LIBRARY.sources[id]))'), true);

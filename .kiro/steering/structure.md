@@ -71,3 +71,6 @@
 ## 자료 기반 상차림 확장 (2026-10-23)
 - rituals.js: RITUAL_LIBRARY의 공개 출처 메타데이터·행사 준비안·초하루 월별 설명. index.html은 app.js보다 먼저 defer로 불러옵니다.
 - getRitualGuide, isSourceRitual, ritualCheckItems, renderRitualGuidance: ritual-reference(설명만)와 ritual-prep(체크 준비안) 슬롯. 행사 준비안에는 기존 초하루 구매/진설/6단계를 생성하지 않습니다. partLabelOf가 새 항목을 읽기 이름으로 표시합니다.
+
+## 대보름 추가 (2026-10-24)
+- HOLIDAYS.daeboreum은 정규 음력1월15일입니다. RITUAL_LIBRARY.events.daeboreum의 준비3체크와 출처/대안은 기존 렌더러를 재사용하며 새 준비 슬롯·서버 API는 만들지 않습니다. 성주·삼재·횡수막이의 출처 조건만 추가하고 configured 상태를 바꾸지 않습니다.

@@ -47,6 +47,7 @@
    않으며, 은호당이 해당 달·명절·날짜를 명시적으로 승인한 경우만 대신합니다.
    id는 저장 키에 쓰이므로 이름을 바꾸더라도 유지합니다. */
 const HOLIDAYS = [
+  {id:'daeboreum', month:1, day:15, name:'정월대보름'},
   {id:'hongsumagi', month:1,  name:'홍수맥이',        pick:true},
   {id:'yeongdeung', month:2,  name:'영등맞이',        pick:true},
   {id:'samsin',     month:3,  name:'삼신날',          pick:true},
