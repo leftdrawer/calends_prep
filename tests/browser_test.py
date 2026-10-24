@@ -1219,10 +1219,10 @@ class BrowserRegression(unittest.TestCase):
 
     RITUALS = {
         "yeongdeung": (2, 5, 1), "chilseok": (7, 8, 2),
-        "chuseok": (8, 5, 2), "dongji": (11, 3, 1),
+        "chuseok": (8, 5, 2), "dongji": (11, 3, 1), "samjae": (12, 10, 1),
     }
     REFERENCE_ONLY = {"samsin": 3, "chopail": 4, "dano": 5, "baekjung": 7}
-    PARTIAL_RITUALS = {"seongju": (10, 1), "hongsumagi": (1, 9), "samjae": (12, 3)}
+    PARTIAL_RITUALS = {"seongju": (10, 1), "hongsumagi": (1, 9)}
 
     def open_event(self, page, event_id, month, year=2026):
         self.select_month(page, month, year=year)
@@ -1388,6 +1388,32 @@ class BrowserRegression(unittest.TestCase):
             expect(page.locator('#donebox button')).to_have_count(0)
             self.assertFalse(page.evaluate('isEventConfigured()'))
         self.assertEqual(fixture.writes, [])
+
+    def test_samjae_expansion_preserves_old_three_and_states_direct_quantities(self):
+        key = 'sangbogi:event:2026-12:samjae'
+        old = legacy_cycle()
+        for item_id in ('prayer-list', 'underwear', 'broom'):
+            old['part']['ritual-samjae-' + item_id] = stamp(on=True)
+        page, fixture = self.open_page({key: old}, width=390, height=844)
+        before = fixture.records[key]
+        self.login(page, '어머니')
+        self.open_event(page, 'samjae', 12)
+        expect(page.locator('#ritual-progress')).to_have_text('준비안 3 / 10 확인')
+        expect(page.locator('#ritual-items-card [aria-checked=true]')).to_have_count(3)
+        expect(page.locator('#ritual-samjae-yedan-check')).to_have_attribute('aria-checked', 'false')
+        expect(page.locator('#ritual-samjae-pollack-check')).to_have_attribute('aria-checked', 'false')
+        expect(page.locator('#ritual-items-card')).to_contain_text('예단(4마): 개인당 하나')
+        expect(page.locator('#ritual-items-card')).to_contain_text('소북어: 개인당 한 마리')
+        expect(page.locator('#ritual-items-card')).to_contain_text('기본전 세 종류 이상')
+        expect(page.locator('#ritual-items-card')).to_contain_text('직접 참석하지 않는 사람')
+        expect(page.locator('#donebox button')).to_have_count(1)
+        self.assertEqual(json.loads(fixture.records[key])['done'], {})
+        self.assertEqual(fixture.records[key], before)
+        self.assertEqual(fixture.writes, [])
+        self.assert_no_overflow(page)
+        preview_dir = os.environ.get('CALENDS_PREVIEW_DIR')
+        if preview_dir:
+            page.locator('#ritual-prep').screenshot(path=str(Path(preview_dir) / 'samjae-direct-390.png'))
 
     def test_reference_only_events_have_guidance_without_checks_or_writes(self):
         for event_id, month in self.REFERENCE_ONLY.items():

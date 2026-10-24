@@ -77,3 +77,6 @@
 
 ## 부분 준비 구조 (2026-10-24 후속)
 - RITUAL_LIBRARY.events의 partialChecklist/pending은 일부 준비와 미확인 사항입니다. isPartialRitual·ritualCheckItems·renderRitualGuidance가 재사용한 family-prep 내부 준비표와 ritual-pending-card를 표시합니다. 전체configured는 기존checklist로만 판정합니다. renderEventPlan은 부분임을 고지하고 render는 미정행사의 donecard/clear-btn을 숨깁니다.
+
+## 삼재 자료준비안 확장 (2026-10-24)
+- RITUAL_LIBRARY.events.samjae는 partialChecklist대신 checklist10·steps1을 사용합니다. 신규muv1820출처가 개인당수량·음식·불참조건의 근거입니다. 기존렌더러/완료/예물기능을 재사용하며 old3항목id는 변경하지 않습니다.

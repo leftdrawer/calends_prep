@@ -56,18 +56,18 @@ assert.equal(run('isEventConfigured()'), true);
 assert.equal(run('eventPlan().items.length'), run('GIFTS.length'));
 assert.equal(run('ritualCheckItems("chuseok").length'), 5);
 assert.equal(run('eventPlan().steps.length'), 0);
-for (const [eventId, month, count] of [['yeongdeung',2,5],['chilseok',7,8],['dongji',11,3]]) {
+for (const [eventId, month, count] of [['yeongdeung',2,5],['chilseok',7,8],['dongji',11,3],['samjae',12,10]]) {
   run(`idx=LUNAR.findIndex(e=>e[1]===2026&&e[2]===${month}&&!e[3]);selectedEvent='${eventId}'`);
   assert.equal(run('isSourceRitual()'), true);
   assert.equal(run(`ritualCheckItems('${eventId}').length`), count);
   assert.equal(run('eventPlan().items.length'), run('GIFTS.length'));
   assert.equal(run('eventPlan().steps.length'), 0);
 }
-for (const [eventId, month] of [['hongsumagi',1],['samsin',3],['chopail',4],['dano',5],['baekjung',7],['seongju',10],['samjae',12]]) {
+for (const [eventId, month] of [['hongsumagi',1],['samsin',3],['chopail',4],['dano',5],['baekjung',7],['seongju',10]]) {
   run(`idx=LUNAR.findIndex(e=>e[1]===2026&&e[2]===${month}&&!e[3]);selectedEvent='${eventId}'`);
   assert.equal(run('isEventConfigured()'), false);
   assert.equal(run('getRitualGuide().sources.length>0'), true);
-  const partialCounts={hongsumagi:9,seongju:1,samjae:3};
+  const partialCounts={hongsumagi:9,seongju:1};
   assert.equal(run('ritualCheckItems(getSelectedEvent().id).length'), partialCounts[eventId]||0);
   assert.equal(run('isPartialRitual()'), !!partialCounts[eventId]);
   assert.equal(run('eventPlan().items.length'), 0);
@@ -85,6 +85,12 @@ assert.equal(run('RITUAL_LIBRARY.events.samsin.sources.includes("all26897")'), f
 assert.equal(run('RITUAL_LIBRARY.common.sources.includes("all26897")'), false);
 assert.equal(run('Object.values(RITUAL_LIBRARY.events).every(plan=>!(plan.checklist&&plan.partialChecklist))'), true);
 assert.equal(run('nameOfKey("part/ritual-samjae-broom")'), '참여자별 싸리비 준비 · 재료');
+run("idx=LUNAR.findIndex(e=>e[1]===2026&&e[2]===12&&!e[3]);selectedEvent='samjae'");
+assert.equal(run('isEventConfigured()'), true);
+assert.equal(run('isPartialRitual()'), false);
+assert.equal(run('ritualCheckItems("samjae","steps").length'), 1);
+assert.equal(run('RITUAL_LIBRARY.events.samjae.sources[0]'), 'muv1820');
+assert.equal(run('nameOfKey("part/ritual-samjae-yedan")'), '예단(4마): 개인당 하나 · 재료');
 const allIds = run('Object.keys(RITUAL_LIBRARY.events).flatMap(id=>ritualCheckItems(id).concat(ritualCheckItems(id,"steps")).map(item=>item.id))');
 assert.equal(new Set(allIds).size, allIds.length);
 assert.equal(run('Object.values(RITUAL_LIBRARY.events).every(plan=>plan.sources.every(id=>!!RITUAL_LIBRARY.sources[id]))'), true);
