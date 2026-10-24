@@ -67,7 +67,11 @@ for (const [eventId, month] of [['hongsumagi',1],['samsin',3],['chopail',4],['da
   run(`idx=LUNAR.findIndex(e=>e[1]===2026&&e[2]===${month}&&!e[3]);selectedEvent='${eventId}'`);
   assert.equal(run('isEventConfigured()'), false);
   assert.equal(run('getRitualGuide().sources.length>0'), true);
-  assert.equal(run('ritualCheckItems(getSelectedEvent().id).length'), 0);
+  const partialCounts={hongsumagi:9,seongju:1,samjae:3};
+  assert.equal(run('ritualCheckItems(getSelectedEvent().id).length'), partialCounts[eventId]||0);
+  assert.equal(run('isPartialRitual()'), !!partialCounts[eventId]);
+  assert.equal(run('eventPlan().items.length'), 0);
+  assert.equal(run('getRitualGuide().pending.length>0'), true);
 }
 run("idx=LUNAR.findIndex(e=>e[1]===2026&&e[2]===1&&!e[3]);selectedEvent='daeboreum'");
 assert.equal(run('getSelectedEvent().date'), '2026-03-03');
@@ -79,6 +83,8 @@ assert.equal(run('RITUAL_LIBRARY.events.daeboreum.sources[0]'), 'man55');
 assert.equal(run('RITUAL_LIBRARY.events.seongju.sources.includes("all26897")'), true);
 assert.equal(run('RITUAL_LIBRARY.events.samsin.sources.includes("all26897")'), false);
 assert.equal(run('RITUAL_LIBRARY.common.sources.includes("all26897")'), false);
+assert.equal(run('Object.values(RITUAL_LIBRARY.events).every(plan=>!(plan.checklist&&plan.partialChecklist))'), true);
+assert.equal(run('nameOfKey("part/ritual-samjae-broom")'), '참여자별 싸리비 준비 · 재료');
 const allIds = run('Object.keys(RITUAL_LIBRARY.events).flatMap(id=>ritualCheckItems(id).concat(ritualCheckItems(id,"steps")).map(item=>item.id))');
 assert.equal(new Set(allIds).size, allIds.length);
 assert.equal(run('Object.values(RITUAL_LIBRARY.events).every(plan=>plan.sources.every(id=>!!RITUAL_LIBRARY.sources[id]))'), true);

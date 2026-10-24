@@ -1221,10 +1221,8 @@ class BrowserRegression(unittest.TestCase):
         "yeongdeung": (2, 5, 1), "chilseok": (7, 8, 2),
         "chuseok": (8, 5, 2), "dongji": (11, 3, 1),
     }
-    REFERENCE_ONLY = {
-        "hongsumagi": 1, "samsin": 3, "chopail": 4, "dano": 5,
-        "baekjung": 7, "seongju": 10, "samjae": 12,
-    }
+    REFERENCE_ONLY = {"samsin": 3, "chopail": 4, "dano": 5, "baekjung": 7}
+    PARTIAL_RITUALS = {"seongju": (10, 1), "hongsumagi": (1, 9), "samjae": (12, 3)}
 
     def open_event(self, page, event_id, month, year=2026):
         self.select_month(page, month, year=year)
@@ -1308,7 +1306,8 @@ class BrowserRegression(unittest.TestCase):
         self.assertEqual(fixture.records[first_key], before[first_key])
         self.assertEqual(fixture.records[hong_key], before[hong_key])
         self.open_event(page, 'hongsumagi', 1)
-        expect(page.locator('#ritual-prep')).to_be_empty()
+        expect(page.locator('#ritual-progress')).to_have_text('확인된 일부 0 / 9 · 전체 차림 미정')
+        expect(page.locator('[id^=ritual-daeboreum-]')).to_have_count(0)
         self.open_event(page, 'daeboreum', 1, year=2027)
         expect(page.locator('#ritual-progress')).to_have_text('준비안 0 / 3 확인')
         self.open_event(page, 'daeboreum', 1)
@@ -1317,7 +1316,7 @@ class BrowserRegression(unittest.TestCase):
         self.open_event(page, 'daeboreum', 1)
         expect(page.locator('#ritual-progress')).to_have_text('준비안 1 / 3 확인')
 
-    def test_seongju_fruit_conditions_are_reference_only_not_global_rules(self):
+    def test_seongju_fruit_conditions_stay_scoped_with_partial_preparation(self):
         page, fixture = self.open_page(width=390, height=844)
         self.login(page, '어머니')
         self.open_event(page, 'seongju', 10)
@@ -1325,16 +1324,69 @@ class BrowserRegression(unittest.TestCase):
         details.locator('summary').click()
         expect(details).to_contain_text('씨없는수박')
         expect(details).to_contain_text('자몽도 가능하다는 회원 댓글은 본문과 다르며')
-        expect(page.locator('#ritual-items-card, #donebox button')).to_have_count(0)
+        expect(page.locator('#ritual-items-card [role=checkbox]')).to_have_count(1)
+        expect(page.locator('#donebox button')).to_have_count(0)
         self.assertEqual(fixture.writes, [])
         self.assert_no_overflow(page)
         preview_dir = os.environ.get('CALENDS_PREVIEW_DIR')
         if preview_dir:
-            page.locator('#ritual-reference').screenshot(path=str(Path(preview_dir) / 'seongju-preview-390.png'))
+            page.locator('#ritual-prep').screenshot(path=str(Path(preview_dir) / 'partial-seongju-source-390.png'))
         self.open_event(page, 'samsin', 3)
         expect(page.locator('.ritual-source-details')).not_to_contain_text('씨없는수박')
         self.open_event(page, 'first', 10)
         expect(page.locator('.ritual-source-details')).not_to_contain_text('씨없는수박')
+        self.assertEqual(fixture.writes, [])
+
+    def test_partial_preparations_save_and_never_complete_the_event(self):
+        for event_id, (month, count) in self.PARTIAL_RITUALS.items():
+            with self.subTest(event=event_id):
+                first_key = f'sangbogi:cycle:2026-{month:02d}'
+                key = f'sangbogi:event:2026-{month:02d}:{event_id}'
+                page, fixture = self.open_page({first_key: legacy_cycle()}, width=390, height=844)
+                before_first = fixture.records[first_key]
+                self.login(page, '어머니')
+                self.open_event(page, event_id, month)
+                expect(page.locator('#family-prep')).to_be_visible()
+                expect(page.locator('#ritual-items-card [role=checkbox]')).to_have_count(count)
+                expect(page.locator('#ritual-progress')).to_have_text(f'확인된 일부 0 / {count} · 전체 차림 미정')
+                expect(page.locator('#ritual-pending-card')).to_be_visible()
+                expect(page.locator('#eventplan')).to_contain_text('일부 준비를 모두 체크해도')
+                expect(page.locator('#donecard')).to_be_hidden()
+                expect(page.locator('#donebox button, #fixed .row, #var .row, #steps .step')).to_have_count(0)
+                self.assertEqual(fixture.writes, [])
+                preview_dir = os.environ.get('CALENDS_PREVIEW_DIR')
+                if preview_dir:
+                    page.locator('#ritual-prep').screenshot(path=str(Path(preview_dir) / f'partial-{event_id}-390.png'))
+                for index in range(count):
+                    page.locator('#ritual-items-card [role=checkbox]').nth(index).click()
+                self.wait_saved(page)
+                expect(page.locator('#ritual-progress')).to_have_text(f'확인된 일부 {count} / {count} · 전체 차림 미정')
+                expect(page.locator('#donecard')).to_be_hidden()
+                saved = json.loads(fixture.records[key])
+                self.assertEqual(len([v for k, v in saved['part'].items() if k.startswith('ritual-') and v.get('on')]), count)
+                self.assertEqual(saved['done'], {})
+                self.assertEqual(fixture.records[first_key], before_first)
+                self.assertTrue(all(write['key'] == key for write in fixture.writes))
+                self.open_event(page, event_id, month, year=2027)
+                expect(page.locator('#ritual-progress')).to_have_text(f'확인된 일부 0 / {count} · 전체 차림 미정')
+                self.assertNotIn(f'sangbogi:event:2027-{month:02d}:{event_id}', fixture.records)
+                page.reload()
+                self.login(page, '어머니')
+                self.open_event(page, event_id, month)
+                expect(page.locator('#ritual-items-card [aria-checked=true]')).to_have_count(count)
+                self.assertEqual(fixture.records[first_key], before_first)
+                self.assert_no_overflow(page)
+
+    def test_partial_preparations_owner_has_no_complete_or_reset_button(self):
+        page, fixture = self.open_page()
+        self.login(page)
+        for event_id, (month, count) in self.PARTIAL_RITUALS.items():
+            self.open_event(page, event_id, month)
+            expect(page.locator('#ritual-items-card [role=checkbox]')).to_have_count(count)
+            expect(page.locator('#clear-btn')).to_be_hidden()
+            expect(page.locator('#donecard')).to_be_hidden()
+            expect(page.locator('#donebox button')).to_have_count(0)
+            self.assertFalse(page.evaluate('isEventConfigured()'))
         self.assertEqual(fixture.writes, [])
 
     def test_reference_only_events_have_guidance_without_checks_or_writes(self):
@@ -1395,7 +1447,7 @@ class BrowserRegression(unittest.TestCase):
         expect(page.locator("#ritual-prep #ritual-items-card")).to_have_count(1)
         page.locator(".brand-home").click()
         self.guest(page)
-        for event_id, month in ("chuseok", 8), ("yeongdeung", 2), ("samsin", 3), ("dongji", 11), ("daeboreum", 1), ("seongju", 10):
+        for event_id, month in ("chuseok", 8), ("yeongdeung", 2), ("samsin", 3), ("dongji", 11), ("daeboreum", 1), ("seongju", 10), ("hongsumagi", 1), ("samjae", 12):
             self.open_event(page, event_id, month)
             for selector in ("#ritual-reference", "#ritual-prep", "#donebox"):
                 expect(page.locator(selector)).to_be_empty()
@@ -1405,7 +1457,7 @@ class BrowserRegression(unittest.TestCase):
 
     def test_ritual_cards_fit_320_390_1440_with_large_touch_targets(self):
         for width, height in ((1440, 1000), (390, 844), (320, 640)):
-            for event_id, month in ("chilseok", 7), ("chuseok", 8), ("dongji", 11), ("samsin", 3), ("daeboreum", 1), ("seongju", 10):
+            for event_id, month in ("chilseok", 7), ("chuseok", 8), ("dongji", 11), ("samsin", 3), ("daeboreum", 1), ("seongju", 10), ("hongsumagi", 1), ("samjae", 12):
                 with self.subTest(viewport=f"{width}x{height}", event=event_id):
                     page, _ = self.open_page(width=width, height=height)
                     self.login(page, "어머니")

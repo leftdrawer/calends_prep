@@ -170,6 +170,7 @@ function eventsFor(e){return [{id:'first',name:'초하루',date:e[0],day:1,confi
 function getSelectedEvent(e=LUNAR[idx]){return eventsFor(e).find(x=>x.id===selectedEvent)||eventsFor(e)[0];}
 function eventPlan(){const event=getSelectedEvent();return {event,configured:event.configured,items:event.configured?(event.id==='first'?ALL:GIFTS):[],steps:event.configured&&event.id==='first'?STEPS:[]};}
 function isSourceRitual(){return !!RITUAL_LIBRARY.events[getSelectedEvent().id]?.checklist?.length;}
+function isPartialRitual(){return !!RITUAL_LIBRARY.events[getSelectedEvent().id]?.partialChecklist?.length;}
 function getRitualGuide(){
   const event=getSelectedEvent();
   if(event.id!=='first')return RITUAL_LIBRARY.events[event.id]||null;
@@ -179,7 +180,7 @@ function getRitualGuide(){
 }
 function ritualCheckItems(eventId,kind='checklist'){
   const plan=RITUAL_LIBRARY.events[eventId];
-  return (plan&&plan[kind]||[]).map(([id,name,note])=>({id:'ritual-'+eventId+'-'+(kind==='steps'?'step-':'')+id,name,note}));
+  return (plan&&(plan[kind]||(kind==='checklist'?plan.partialChecklist:[]))||[]).map(([id,name,note])=>({id:'ritual-'+eventId+'-'+(kind==='steps'?'step-':'')+id,name,note}));
 }
 function isJungyang(){return getSelectedEvent().id==='jungyang';}
 function isEventConfigured(){return !!getSelectedEvent().configured;}
@@ -595,9 +596,9 @@ function renderEventPlan(){
   el.replaceChildren(); el.hidden=!isFamily();
   if(!isFamily())return;
   if(!event.configured){
-    const title=document.createElement('h2'); title.textContent='상차림은 아직 정하지 않았습니다';
+    const title=document.createElement('h2'); title.textContent=isPartialRitual()?'전체 차림은 아직 정하지 않았습니다':'상차림은 아직 정하지 않았습니다';
     const note=document.createElement('p'); note.className='sub';
-    note.textContent=event.id==='jungyang'?'중양에는 조상님께 별도로 제사를 올립니다. 상차림은 은호당이 정한 뒤 기록합니다.':'초하루와 별도로 준비합니다. 상차림과 차례는 은호당이 정한 뒤 기록합니다.';
+    note.textContent=isPartialRitual()?'아래에서 확인된 일부 항목만 준비할 수 있습니다. 일부 준비를 모두 체크해도 행사 전체 완료나 초하루 대체 승인이 되지 않습니다.':event.id==='jungyang'?'중양에는 조상님께 별도로 제사를 올립니다. 상차림은 은호당이 정한 뒤 기록합니다.':'초하루와 별도로 준비합니다. 상차림과 차례는 은호당이 정한 뒤 기록합니다.';
     el.append(title,note);
     if(event.id==='chuseok'&&canWrite()){
       const rules=document.createElement('p'); rules.className='note';
@@ -934,9 +935,9 @@ function renderRitualGuidance(){
   if(items.length){
     const count=items.filter(item=>cycle.part[item.id]?.on).length;
     const progress=document.createElement('p');progress.id='ritual-progress';progress.className='jungyang-count';
-    progress.textContent='준비안 '+count+' / '+items.length+' 확인';card.appendChild(progress);
+    progress.textContent=isPartialRitual()?'확인된 일부 '+count+' / '+items.length+' · 전체 차림 미정':'준비안 '+count+' / '+items.length+' 확인';card.appendChild(progress);
     const scope=document.createElement('p');scope.className='sub';
-    scope.textContent=event.id==='chuseok'?'기존 은호당 추석 기준을 점검합니다.':'해당 작성자의 자료를 바탕으로 정리한 준비안입니다. 모든 신당의 의무 법도는 아니며, 수량이 없는 곳은 임의로 정하지 않았습니다.';
+    scope.textContent=isPartialRitual()?'해당 자료의 방식을 쓰기로 정했을 때만 참고할 일부 준비입니다. 은호당의 전체 차림이나 필수 구매 목록이 아니며, 미확인 수량은 만들지 않았습니다.':event.id==='chuseok'?'기존 은호당 추석 기준을 점검합니다.':'해당 작성자의 자료를 바탕으로 정리한 준비안입니다. 모든 신당의 의무 법도는 아니며, 수량이 없는 곳은 임의로 정하지 않았습니다.';
     card.appendChild(scope);
     if(event.id==='dongji'&&event.date){
       const date=document.createElement('p');date.className='sub';
@@ -945,8 +946,15 @@ function renderRitualGuidance(){
     }
   }
   slot.appendChild(card);
-  if(items.length)slot.appendChild(preparationCard('ritual-items-card','준비할 것',items,'확인'));
+  if(items.length)slot.appendChild(preparationCard('ritual-items-card',isPartialRitual()?'확인된 일부 준비':'준비할 것',items,'확인'));
   if(steps.length)slot.appendChild(preparationCard('ritual-steps-card','마음을 고하고 마무리하기',steps,'짚음'));
+  if(plan.pending?.length){
+    const pendingCard=document.createElement('section');pendingCard.className='card ritual-pending-card';pendingCard.id='ritual-pending-card';
+    const heading=document.createElement('h2');heading.textContent='아직 정할 것';
+    const list=document.createElement('ul');
+    plan.pending.forEach(text=>{const li=document.createElement('li');li.textContent=text;list.appendChild(li);});
+    pendingCard.append(heading,list);slot.appendChild(pendingCard);
+  }
   const detail=document.createElement('details');detail.className='ritual-source-details';
   detail.dataset.guideKey=keyNow();detail.open=keepOpen;
   const toggle=document.createElement('summary');toggle.textContent='자료의 설명·법도 차이·출처';detail.appendChild(toggle);
@@ -1626,7 +1634,9 @@ function render(){
   if(typeof renderEventPlan==='function')renderEventPlan();
   const configured=typeof isEventConfigured!=='function'||isEventConfigured();
   const prep=document.getElementById('family-prep');
-  if(prep)prep.hidden=!isFamily()||!configured;
+  if(prep)prep.hidden=!isFamily()||(!configured&&!isPartialRitual());
+  document.getElementById('donecard').hidden=!isFamily()||!configured;
+  document.getElementById('clear-btn').hidden=!isAdmin()||!configured;
   const jungyang=isFamily()&&isJungyang(),sourceRitual=isFamily()&&isSourceRitual();
   ['shopping-grid','sangcard','stepscard','prog'].forEach(id=>{
     document.getElementById(id).hidden=!isFamily()||!configured||jungyang||sourceRitual;

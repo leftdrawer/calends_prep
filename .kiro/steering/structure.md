@@ -74,3 +74,6 @@
 
 ## 대보름 추가 (2026-10-24)
 - HOLIDAYS.daeboreum은 정규 음력1월15일입니다. RITUAL_LIBRARY.events.daeboreum의 준비3체크와 출처/대안은 기존 렌더러를 재사용하며 새 준비 슬롯·서버 API는 만들지 않습니다. 성주·삼재·횡수막이의 출처 조건만 추가하고 configured 상태를 바꾸지 않습니다.
+
+## 부분 준비 구조 (2026-10-24 후속)
+- RITUAL_LIBRARY.events의 partialChecklist/pending은 일부 준비와 미확인 사항입니다. isPartialRitual·ritualCheckItems·renderRitualGuidance가 재사용한 family-prep 내부 준비표와 ritual-pending-card를 표시합니다. 전체configured는 기존checklist로만 판정합니다. renderEventPlan은 부분임을 고지하고 render는 미정행사의 donecard/clear-btn을 숨깁니다.
