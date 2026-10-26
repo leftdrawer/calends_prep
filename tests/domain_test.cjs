@@ -67,7 +67,7 @@ for (const [eventId, month] of [['hongsumagi',1],['samsin',3],['chopail',4],['da
   run(`idx=LUNAR.findIndex(e=>e[1]===2026&&e[2]===${month}&&!e[3]);selectedEvent='${eventId}'`);
   assert.equal(run('isEventConfigured()'), false);
   assert.equal(run('getRitualGuide().sources.length>0'), true);
-  const partialCounts={hongsumagi:9,seongju:1};
+  const partialCounts={hongsumagi:9,seongju:2};
   assert.equal(run('ritualCheckItems(getSelectedEvent().id).length'), partialCounts[eventId]||0);
   assert.equal(run('isPartialRitual()'), !!partialCounts[eventId]);
   assert.equal(run('eventPlan().items.length'), 0);
@@ -106,6 +106,14 @@ assert.equal(run('nameOfKey("part/ritual-dano-dano-fruit").includes("계절과�
 run('cycle.mode["ritual-choice-dano"]={state:"invalid"}');
 assert.equal(run('ritualOptionId("dano")'), '');
 assert.equal(run('ritualCheckItems("dano").length'), 0);
+run("idx=LUNAR.findIndex(e=>e[1]===2026&&e[2]===10&&!e[3]);selectedEvent='seongju';cycle={mode:{},part:{}}");
+assert.equal(run('isEventConfigured()'), false);
+assert.equal(run('isPartialRitual()'), true);
+assert.equal(run('ritualCheckItems("seongju").length'), 2);
+assert.equal(run('ritualCheckItems("seongju","steps").length'), 6);
+assert.equal(run('getRitualGuide().title'), '성주맞이 · 신당의 간소 고사');
+assert.equal(run('ritualCheckItems("seongju","steps")[0].name'), '정심경 → 태을보신경 → 부정경');
+assert.equal(run('nameOfKey("part/ritual-seongju-fruit")'), '법도에 맞는 제철과일 고르기 · 재료');
 const allIds = run('Object.keys(RITUAL_LIBRARY.events).flatMap(id=>allRitualCheckItems(id).map(item=>item.id))');
 assert.equal(new Set(allIds).size, allIds.length);
 assert.equal(run('Object.values(RITUAL_LIBRARY.events).every(plan=>plan.sources.every(id=>!!RITUAL_LIBRARY.sources[id]))'), true);

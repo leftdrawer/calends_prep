@@ -1222,7 +1222,7 @@ class BrowserRegression(unittest.TestCase):
         "chuseok": (8, 5, 2), "dongji": (11, 3, 1), "samjae": (12, 10, 1),
     }
     REFERENCE_ONLY = {"samsin": 3, "chopail": 4, "dano": 5, "baekjung": 7}
-    PARTIAL_RITUALS = {"seongju": (10, 1), "hongsumagi": (1, 9)}
+    PARTIAL_RITUALS = {"seongju": (10, 2), "hongsumagi": (1, 9)}
 
     def open_event(self, page, event_id, month, year=2026):
         self.select_month(page, month, year=year)
@@ -1324,7 +1324,7 @@ class BrowserRegression(unittest.TestCase):
         details.locator('summary').click()
         expect(details).to_contain_text('씨없는수박')
         expect(details).to_contain_text('자몽도 가능하다는 회원 댓글은 본문과 다르며')
-        expect(page.locator('#ritual-items-card [role=checkbox]')).to_have_count(1)
+        expect(page.locator('#ritual-items-card [role=checkbox]')).to_have_count(2)
         expect(page.locator('#donebox button')).to_have_count(0)
         self.assertEqual(fixture.writes, [])
         self.assert_no_overflow(page)
@@ -1522,6 +1522,59 @@ class BrowserRegression(unittest.TestCase):
                     page.locator('#ritual-prep').screenshot(path=str(folder / 'dano-selected-prep-390.png'))
             self.wait_saved(page)
             self.assertTrue(all(w['key'] == 'sangbogi:event:2026-05:dano' for w in fixture.writes))
+
+    def test_seongju_simple_shrine_scope_keeps_old_fruit_and_first_day_records(self):
+        key = 'sangbogi:event:2026-10:seongju'
+        first_key = 'sangbogi:cycle:2026-10'
+        first = legacy_cycle()
+        first['part']['bulsa-rice'] = stamp(on=True)
+        old = legacy_cycle()
+        old['part']['ritual-seongju-fruit'] = stamp(on=True)
+        page, fixture = self.open_page({key: old, first_key: first}, width=390, height=844)
+        old_event, old_first = fixture.records[key], fixture.records[first_key]
+        self.login(page, '어머니')
+        self.open_event(page, 'seongju', 10)
+        expect(page.locator('#ritual-guide-card')).to_contain_text('성주맞이 · 신당의 간소 고사')
+        expect(page.locator('#ritual-progress')).to_have_text('확인된 일부 1 / 2 · 전체 차림 미정')
+        expect(page.locator('#ritual-seongju-fruit-check')).to_have_attribute('aria-checked', 'true')
+        expect(page.locator('#ritual-seongju-cake-check')).to_have_attribute('aria-checked', 'false')
+        expect(page.locator('#ritual-steps-card [role=checkbox]')).to_have_count(6)
+        expect(page.locator('#donecard')).to_be_hidden()
+        self.assertEqual(fixture.writes, [])
+        self.assertEqual(fixture.records[key], old_event)
+        self.assertEqual(fixture.records[first_key], old_first)
+        page.locator('#ritual-seongju-step-opening-check').click()
+        self.wait_saved(page)
+        expect(page.locator('#ritual-progress')).to_have_text('확인된 일부 1 / 2 · 전체 차림 미정')
+        saved = json.loads(fixture.records[key])
+        self.assertTrue(saved['part']['ritual-seongju-fruit']['on'])
+        self.assertTrue(saved['part']['ritual-seongju-step-opening']['on'])
+        self.assertEqual(saved['done'], {})
+        self.assertTrue(all(w['key'] == key for w in fixture.writes))
+        self.assertEqual(fixture.records[first_key], old_first)
+        page.reload()
+        self.login(page, '어머니')
+        self.open_event(page, 'seongju', 10)
+        expect(page.locator('#ritual-seongju-step-opening-check')).to_have_attribute('aria-checked', 'true')
+        self.open_event(page, 'seongju', 10, year=2027)
+        expect(page.locator('#ritual-progress')).to_have_text('확인된 일부 0 / 2 · 전체 차림 미정')
+        expect(page.locator('#ritual-steps-card [aria-checked=true]')).to_have_count(0)
+
+    def test_seongju_reference_order_is_gosa_grouping_not_large_gut(self):
+        page, fixture = self.open_page(width=390, height=844)
+        self.login(page, '어머니')
+        self.open_event(page, 'seongju', 10)
+        expect(page.locator('#ritual-steps-card h2')).to_have_text('성주고사 순서 · 자료 참고')
+        expect(page.locator('#ritual-steps-card .nm')).to_have_text([
+            '정심경 → 태을보신경 → 부정경', '조왕경', '성주축원문 → 성주좌정 안택경',
+            '전안축원문', '길대신장축원 → 걸립축원', '전안뒤풀이'])
+        expect(page.locator('#ritual-items-card')).to_contain_text('팥시루·절편 모두 성주떡')
+        expect(page.locator('#ritual-pending-card')).not_to_contain_text('지낼 고사의 장소·규모')
+        self.assertEqual(fixture.writes, [])
+        self.assert_no_overflow(page)
+        folder = os.environ.get('CALENDS_PREVIEW_DIR')
+        if folder:
+            page.locator('#ritual-prep').screenshot(path=str(Path(folder) / 'seongju-shrine-simple-390.png'))
 
     def test_reference_only_events_have_guidance_without_checks_or_writes(self):
         for event_id, month in self.REFERENCE_ONLY.items():

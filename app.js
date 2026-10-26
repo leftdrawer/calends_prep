@@ -985,7 +985,7 @@ function renderRitualGuidance(){
   }
   slot.appendChild(card);
   if(items.length)slot.appendChild(preparationCard('ritual-items-card',isPartialRitual()?'확인된 일부 준비':'준비할 것',items,'확인'));
-  if(steps.length)slot.appendChild(preparationCard('ritual-steps-card','마음을 고하고 마무리하기',steps,'짚음'));
+  if(steps.length)slot.appendChild(preparationCard('ritual-steps-card',plan.stepTitle||'마음을 고하고 마무리하기',steps,'짚음'));
   if(plan.pending?.length){
     const pendingCard=document.createElement('section');pendingCard.className='card ritual-pending-card';pendingCard.id='ritual-pending-card';
     const heading=document.createElement('h2');heading.textContent='아직 정할 것';

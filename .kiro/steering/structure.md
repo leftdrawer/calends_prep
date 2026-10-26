@@ -84,3 +84,6 @@
 ## 조건별 자료구조 (2026-10-26)
 - RITUAL_LIBRARY.events.dano의choices는단오/단군생신자료입니다. ritualChoiceKey/ritualOptionId/ritualPlan이선택을해석하고getRitualGuide/isPartialRitual/ritualCheckItems가현재조건의자료만반환합니다. allRitualCheckItems는숨겨진조건까지모아이력이름을보존합니다.
 - renderRitualGuidance는ritual-reference에ritual-choice-card(기존seg.plan컴포넌트재사용)를만들고단오선택시에만ritual-prep를보입니다. label/snapshot/nameOfKey는mode선택의사람이읽는이력표현을지원합니다. 새CSS/외부컴포넌트는없습니다.
+
+## 성주 고사 참고진행 (2026-10-26)
+- RITUAL_LIBRARY.events.seongju는기존fruit체크+cake확인과stepTitle/steps6을가집니다. renderRitualGuidance는계획에stepTitle이있으면그제목을쓰고다른행사의기존제목은보존합니다. partialChecklist의준비집계와steps집계를섞지않습니다.

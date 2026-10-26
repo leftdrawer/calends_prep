@@ -74,3 +74,6 @@ GitHub Pages 저장소는 `leftdrawer/calends_prep`, 배포 소스는 `main` 루
 
 ## 행사종류 선택저장 (2026-10-26)
 - mode['ritual-choice-dano']={state:'dano'|'dangun'|'',by,at}를기존이벤트키에저장합니다. 기존normalise/mergeCycle/logDiff/bindCycleWriter를재사용합니다. 신규서버·테이블·데이터이관은없습니다. 인식못한기존선택값은미정으로보되읽기만으로덮어쓰지않습니다. 새상태에서숨긴part도삭제하지않습니다.
+
+## 성주 참고항목 저장 (2026-10-26)
+- 기존seongju이벤트part의ritual-seongju-fruit는그대로입니다. 새cake및step-opening/jowang/seongju/jeonan/gate/closing은독립part에저장하고기존체크에서완료를추정하지않습니다. 서버/테이블/상위그룹변경없음.
