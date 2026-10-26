@@ -1415,6 +1415,114 @@ class BrowserRegression(unittest.TestCase):
         if preview_dir:
             page.locator('#ritual-prep').screenshot(path=str(Path(preview_dir) / 'samjae-direct-390.png'))
 
+    def test_dano_owner_choice_preserves_checks_dates_history_and_year(self):
+        key = 'sangbogi:event:2026-05:dano'
+        first = 'sangbogi:cycle:2026-05'
+        picked = {'2026-05|단오 또는 단군할아버지 생신': '2026-06-19'}
+        page, fixture = self.open_page({first: legacy_cycle(), 'sangbogi:picked': picked}, width=390, height=844)
+        before_first = fixture.records[first]
+        before_picked = fixture.records['sangbogi:picked']
+        self.login(page)
+        self.open_event(page, 'dano', 5)
+        expect(page.locator('#ritual-choice-dano-none')).to_have_attribute('aria-pressed', 'true')
+        expect(page.locator('#ritual-prep')).to_be_empty()
+        self.assertEqual(fixture.writes, [])
+        date_before = page.evaluate('getSelectedEvent().date')
+        page.locator('#ritual-choice-dano-dano').click()
+        expect(page.locator('#ritual-progress')).to_have_text('확인된 일부 0 / 5 · 전체 차림 미정')
+        expect(page.locator('#ritual-items-card [role=checkbox]')).to_have_count(5)
+        expect(page.locator('#donecard')).to_be_hidden()
+        page.locator('#ritual-dano-dano-fruit-check').click()
+        self.wait_saved(page)
+        page.locator('#ritual-choice-dano-dangun').click()
+        expect(page.locator('#ritual-prep')).to_be_empty()
+        expect(page.locator('#ritual-reference')).to_contain_text('단군 생신 · 차림은 추가 확인')
+        self.wait_saved(page)
+        saved = json.loads(fixture.records[key])
+        self.assertTrue(saved['part']['ritual-dano-dano-fruit']['on'])
+        self.assertEqual(saved['mode']['ritual-choice-dano']['state'], 'dangun')
+        self.assertTrue(any(h['k'] == 'mode/ritual-choice-dano' and h['to'] == '단군 생신' for h in saved['hist']))
+        self.assertIn('계절과일', page.evaluate('nameOfKey("part/ritual-dano-dano-fruit")'))
+        page.locator('#ritual-choice-dano-dano').click()
+        expect(page.locator('#ritual-progress')).to_have_text('확인된 일부 1 / 5 · 전체 차림 미정')
+        self.wait_saved(page)
+        self.assertEqual(page.evaluate('getSelectedEvent().date'), date_before)
+        self.assertEqual(fixture.records[first], before_first)
+        self.assertEqual(fixture.records['sangbogi:picked'], before_picked)
+        self.assertTrue(all(w['key'] == key for w in fixture.writes))
+        page.reload()
+        self.login(page)
+        self.open_event(page, 'dano', 5)
+        expect(page.locator('#ritual-choice-dano-dano')).to_have_attribute('aria-pressed', 'true')
+        expect(page.locator('#ritual-dano-dano-fruit-check')).to_have_attribute('aria-checked', 'true')
+        self.open_event(page, 'dano', 5, year=2027)
+        expect(page.locator('#ritual-choice-dano-none')).to_have_attribute('aria-pressed', 'true')
+        expect(page.locator('#ritual-prep')).to_be_empty()
+        self.assertNotIn('sangbogi:event:2027-05:dano', fixture.records)
+
+    def test_dano_mother_can_prepare_but_not_choose_and_guest_has_no_private_nodes(self):
+        key = 'sangbogi:event:2026-05:dano'
+        old = legacy_cycle()
+        old['mode']['ritual-choice-dano'] = stamp(state='dano')
+        page, fixture = self.open_page({key: old})
+        self.login(page, '어머니')
+        self.open_event(page, 'dano', 5)
+        expect(page.locator('#ritual-choice-card button')).to_have_count(0)
+        expect(page.locator('#ritual-choice-card')).to_contain_text('선택한 행사: 단오')
+        expect(page.locator('#ritual-items-card [role=checkbox]')).to_have_count(5)
+        page.locator('#ritual-dano-dano-clean-check').click()
+        self.wait_saved(page)
+        saved = json.loads(fixture.records[key])
+        self.assertEqual(saved['mode']['ritual-choice-dano']['state'], 'dano')
+        self.assertEqual(saved['part']['ritual-dano-dano-clean']['by'], '어머니')
+        writes = len(fixture.writes)
+        page.locator('.brand-home').click()
+        self.guest(page)
+        self.open_event(page, 'dano', 5)
+        expect(page.locator('#ritual-reference')).to_be_empty()
+        expect(page.locator('#ritual-prep')).to_be_empty()
+        expect(page.locator('#ritual-choice-card, #ritual-pending-card, #ritual-items-card')).to_have_count(0)
+        self.assertEqual(len(fixture.writes), writes)
+
+    def test_dano_never_infers_choice_from_old_checks_or_invalid_saved_option(self):
+        key = 'sangbogi:event:2026-05:dano'
+        old = legacy_cycle()
+        old['mode']['ritual-choice-dano'] = stamp(state='unknown-old-option')
+        old['part']['ritual-dano-dano-cake'] = stamp(on=True)
+        page, fixture = self.open_page({key: old})
+        original = fixture.records[key]
+        self.login(page)
+        self.open_event(page, 'dano', 5)
+        expect(page.locator('#ritual-choice-dano-none')).to_have_attribute('aria-pressed', 'true')
+        expect(page.locator('#ritual-prep')).to_be_empty()
+        self.assertEqual(fixture.records[key], original)
+        self.assertEqual(fixture.writes, [])
+        page.locator('#ritual-choice-dano-dano').click()
+        expect(page.locator('#ritual-progress')).to_have_text('확인된 일부 1 / 5 · 전체 차림 미정')
+        page.locator('#ritual-choice-dano-none').click()
+        expect(page.locator('#ritual-prep')).to_be_empty()
+        self.wait_saved(page)
+        self.assertTrue(json.loads(fixture.records[key])['part']['ritual-dano-dano-cake']['on'])
+        expect(page.locator('#donebox button')).to_have_count(0)
+
+    def test_dano_choice_states_fit_narrow_mobile_and_desktop(self):
+        for width, height in ((320, 640), (390, 844), (1440, 1000)):
+            page, fixture = self.open_page(width=width, height=height)
+            self.login(page)
+            self.open_event(page, 'dano', 5)
+            self.assert_no_overflow(page)
+            for choice in ('dano', 'dangun', 'none'):
+                page.locator('#ritual-choice-dano-' + choice).click()
+                self.assert_no_overflow(page)
+                rects = page.locator('#ritual-choice-card button').evaluate_all('els=>els.map(e=>({w:e.getBoundingClientRect().width,h:e.getBoundingClientRect().height}))')
+                self.assertTrue(all(r['w'] >= 40 and r['h'] >= 40 for r in rects))
+                if choice == 'dano' and width == 390 and os.environ.get('CALENDS_PREVIEW_DIR'):
+                    folder = Path(os.environ['CALENDS_PREVIEW_DIR'])
+                    page.locator('#ritual-choice-card').screenshot(path=str(folder / 'dano-selection-390.png'))
+                    page.locator('#ritual-prep').screenshot(path=str(folder / 'dano-selected-prep-390.png'))
+            self.wait_saved(page)
+            self.assertTrue(all(w['key'] == 'sangbogi:event:2026-05:dano' for w in fixture.writes))
+
     def test_reference_only_events_have_guidance_without_checks_or_writes(self):
         for event_id, month in self.REFERENCE_ONLY.items():
             with self.subTest(event=event_id):

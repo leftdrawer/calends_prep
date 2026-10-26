@@ -170,17 +170,30 @@ function eventsFor(e){return [{id:'first',name:'초하루',date:e[0],day:1,confi
 function getSelectedEvent(e=LUNAR[idx]){return eventsFor(e).find(x=>x.id===selectedEvent)||eventsFor(e)[0];}
 function eventPlan(){const event=getSelectedEvent();return {event,configured:event.configured,items:event.configured?(event.id==='first'?ALL:GIFTS):[],steps:event.configured&&event.id==='first'?STEPS:[]};}
 function isSourceRitual(){return !!RITUAL_LIBRARY.events[getSelectedEvent().id]?.checklist?.length;}
-function isPartialRitual(){return !!RITUAL_LIBRARY.events[getSelectedEvent().id]?.partialChecklist?.length;}
+function ritualChoiceKey(eventId){return 'ritual-choice-'+eventId;}
+function ritualOptionId(eventId){
+  const value=typeof cycle!=='undefined'&&cycle?.mode?.[ritualChoiceKey(eventId)]?.state;
+  return (RITUAL_LIBRARY.events[eventId]?.choices||[]).some(option=>option.id===value)?value:'';
+}
+function ritualPlan(eventId,optionId=null){
+  const base=RITUAL_LIBRARY.events[eventId];if(!base)return null;
+  const choice=(base.choices||[]).find(option=>option.id===(optionId??ritualOptionId(eventId)));
+  return choice?{...base,...choice,selectedChoice:choice.id,notes:[...(choice.notes||[]),...(base.notes||[])],sources:[...new Set([...(choice.sources||[]),...(base.sources||[])])]}:base;
+}
+function isPartialRitual(){return !!ritualPlan(getSelectedEvent().id)?.partialChecklist?.length;}
 function getRitualGuide(){
   const event=getSelectedEvent();
-  if(event.id!=='first')return RITUAL_LIBRARY.events[event.id]||null;
+  if(event.id!=='first')return ritualPlan(event.id);
   const common=RITUAL_LIBRARY.common,month=RITUAL_LIBRARY.firstMonths[LUNAR[idx][2]];
   if(LUNAR[idx][3]||!month)return common;
   return {...month,notes:[...month.notes,...common.notes],sources:[...new Set([...month.sources,...common.sources])]};
 }
-function ritualCheckItems(eventId,kind='checklist'){
-  const plan=RITUAL_LIBRARY.events[eventId];
-  return (plan&&(plan[kind]||(kind==='checklist'?plan.partialChecklist:[]))||[]).map(([id,name,note])=>({id:'ritual-'+eventId+'-'+(kind==='steps'?'step-':'')+id,name,note}));
+function ritualCheckItems(eventId,kind='checklist',optionId=null){
+  const plan=ritualPlan(eventId,optionId),choice=plan?.selectedChoice;
+  return (plan&&(plan[kind]||(kind==='checklist'?plan.partialChecklist:[]))||[]).map(([id,name,note])=>({id:'ritual-'+eventId+'-'+(choice?choice+'-':'')+(kind==='steps'?'step-':'')+id,name,note}));
+}
+function allRitualCheckItems(eventId){
+  return ['',...(RITUAL_LIBRARY.events[eventId]?.choices||[]).map(option=>option.id)].flatMap(option=>ritualCheckItems(eventId,'checklist',option).concat(ritualCheckItems(eventId,'steps',option)));
 }
 function isJungyang(){return getSelectedEvent().id==='jungyang';}
 function isEventConfigured(){return !!getSelectedEvent().configured;}
@@ -398,7 +411,11 @@ function mergeCycle(a,b){
   out.hist=hist.slice(0,300);
   return out;
 }
-function label(f,v){
+function label(f,v,id){
+  if(f==='mode'&&id?.startsWith('ritual-choice-')){
+    const plan=RITUAL_LIBRARY.events[id.slice('ritual-choice-'.length)];
+    return (plan?.choices||[]).find(option=>option.id===v?.state)?.label||'아직 정하지 않음';
+  }
   if(f==='bought'||f==='part'||f==='done') return v&&v.on?'표시함':'물림';
   if(f==='memo') return (v&&v.text)||'없음';
   if(f==='shop') return (v&&v.name)||'없음';
@@ -416,7 +433,7 @@ function label(f,v){
 function snapshot(c){
   const s={};
   ['bought','stock','mode','part','memo','shop','list','done'].forEach(f=>{
-    Object.keys(c[f]).forEach(k=>{s[f+'/'+k]=label(f,c[f][k]);});
+    Object.keys(c[f]).forEach(k=>{s[f+'/'+k]=label(f,c[f][k],k);});
   });
   return s;
 }
@@ -926,6 +943,27 @@ function renderRitualGuidance(){
   if(!isFamily())return;
   const plan=getRitualGuide();if(!plan)return;
   const event=getSelectedEvent(),items=ritualCheckItems(event.id),steps=ritualCheckItems(event.id,'steps');
+  if(plan.choices?.length){
+    const choiceCard=document.createElement('section');choiceCard.id='ritual-choice-card';choiceCard.className='card';
+    const heading=document.createElement('h2');heading.textContent=plan.choiceTitle||'이번에 지낼 행사';
+    const current=(plan.choices||[]).find(option=>option.id===ritualOptionId(event.id));
+    const info=document.createElement('p');info.className='sub';info.textContent=current?'선택한 행사: '+current.label:'아직 행사 종류를 정하지 않았습니다. 날짜나 과거 체크에서 추정하지 않습니다.';
+    choiceCard.append(heading,info);
+    if(isAdmin()){
+      const group=document.createElement('div');group.className='seg plan';group.setAttribute('role','group');group.setAttribute('aria-label',heading.textContent);
+      const updateChoice=bindCycleWriter(),renderedKey=keyNow();
+      [{id:'',label:'아직 정하지 않음'},...plan.choices].forEach(option=>{
+        const button=document.createElement('button');button.type='button';button.id='ritual-choice-'+event.id+'-'+(option.id||'none');button.textContent=option.label;
+        button.setAttribute('aria-pressed',String(ritualOptionId(event.id)===option.id));
+        button.onclick=()=>{if(!isAdmin()||keyNow()!==renderedKey||ritualOptionId(event.id)===option.id)return;updateChoice(c=>{c.mode[ritualChoiceKey(event.id)]=stamp({state:option.id});});};
+        group.appendChild(button);
+      });choiceCard.appendChild(group);
+    }else{
+      const readonly=document.createElement('p');readonly.className='note';readonly.textContent='행사 종류는 은호당이 정합니다. 어머니는 선택된 행사의 준비를 함께 체크할 수 있습니다.';choiceCard.appendChild(readonly);
+    }
+    const boundary=document.createElement('p');boundary.className='note';boundary.textContent='행사 선택은 현재 연도의 이 행사 기록에만 저장합니다. 다른 행사의 품목·체크를 복사하지 않고 기존 택일·초하루 대체·완료를 자동 변경하지 않습니다.';
+    choiceCard.appendChild(boundary);reference.appendChild(choiceCard);
+  }
   const slot=items.length?prep:reference;
   const card=document.createElement('section');card.className='card ritual-guide-card';card.id='ritual-guide-card';
   const tag=document.createElement('p');tag.className='section-label';tag.textContent=plan.basis||'확인한 자료와 적용 범위';
@@ -1517,7 +1555,7 @@ function closeSheet(){
 function partLabelOf(pid){
   if(pid===BULSA_RICE_ID)return '불사단지 쌀 교체';
   for(const eventId of Object.keys(RITUAL_LIBRARY.events)){
-    const item=ritualCheckItems(eventId).concat(ritualCheckItems(eventId,'steps')).find(x=>x.id===pid);
+    const item=allRitualCheckItems(eventId).find(x=>x.id===pid);
     if(item)return item.name;
   }
   const jungyangItem=JUNGYANG_ANCESTOR.concat(JUNGYANG_OFFERINGS,JUNGYANG_PRAYERS).find(item=>item.id===pid);
@@ -1532,6 +1570,7 @@ function partLabelOf(pid){
 }
 function nameOfKey(k){
   const [f,id]=k.split('/');
+  if(f==='mode'&&id.startsWith('ritual-choice-'))return (RITUAL_LIBRARY.events[id.slice('ritual-choice-'.length)]?.choiceTitle||'행사 종류')+' · 선택';
   const it=ALL.find(x=>x.id===id);
   const nm=f==='part'?partLabelOf(id):(it?it.name:id);
   const what={bought:'담음',stock:'재고',mode:'마련',part:'재료',memo:'적바림',shop:'구입처',list:'품목',done:'상 올림'}[f]||f;

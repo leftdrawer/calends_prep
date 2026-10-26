@@ -80,3 +80,7 @@
 
 ## 삼재 자료준비안 확장 (2026-10-24)
 - RITUAL_LIBRARY.events.samjae는 partialChecklist대신 checklist10·steps1을 사용합니다. 신규muv1820출처가 개인당수량·음식·불참조건의 근거입니다. 기존렌더러/완료/예물기능을 재사용하며 old3항목id는 변경하지 않습니다.
+
+## 조건별 자료구조 (2026-10-26)
+- RITUAL_LIBRARY.events.dano의choices는단오/단군생신자료입니다. ritualChoiceKey/ritualOptionId/ritualPlan이선택을해석하고getRitualGuide/isPartialRitual/ritualCheckItems가현재조건의자료만반환합니다. allRitualCheckItems는숨겨진조건까지모아이력이름을보존합니다.
+- renderRitualGuidance는ritual-reference에ritual-choice-card(기존seg.plan컴포넌트재사용)를만들고단오선택시에만ritual-prep를보입니다. label/snapshot/nameOfKey는mode선택의사람이읽는이력표현을지원합니다. 새CSS/외부컴포넌트는없습니다.
