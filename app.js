@@ -1821,6 +1821,12 @@ function verifyFamilyCode(){
 }
 document.getElementById('lockverify').onclick=verifyFamilyCode;
 document.getElementById('familycode').addEventListener('keydown',e=>{if(e.key==='Enter')verifyFamilyCode();});
+/* 암호를 역할별 자릿수만큼 채우면 들어가기를 누르지 않아도 바로 확인합니다. */
+document.getElementById('familycode').addEventListener('input',e=>{
+  if(!lockRole)return;
+  const need=FAMILY_CODES[lockRole]?FAMILY_CODES[lockRole].length:0;
+  if(need&&e.target.value.length>=need)verifyFamilyCode();
+});
 document.getElementById('lockback').onclick=()=>showLock(false);
 document.querySelectorAll('.who button').forEach(b=>b.onclick=()=>showLock(b.dataset.name));
 document.getElementById('otherbtn').onclick=()=>setName(document.getElementById('othername').value);

@@ -2,51 +2,51 @@
 [hidden]{display:none!important}
 :root{
   color-scheme:light dark;
-  --ink:#17151C;
-  --ink-2:#45404F;
-  --ink-3:#716879;
-  --hanji:#F4F2F6;
-  --page:#E2DDE7;
-  --card:#F7F5FA;
-  --sunk:#E2DDE7;
-  --stone:#AAA2B3;
-  --brass:#6A5CA0;
-  --brass-deep:#564A82;
-  --brass-ink:#564A82;
-  --brass-veil:#D7D0E0;
-  --solid:#6A5CA0;
+  --ink:#111522;
+  --ink-2:#303D59;
+  --ink-3:#536684;
+  --hanji:#F1F4F9;
+  --page:#DCE3EF;
+  --card:#F6F8FC;
+  --sunk:#DCE3EF;
+  --stone:#98A9C4;
+  --brass:#3C4C6E;
+  --brass-deep:#303D59;
+  --brass-ink:#303D59;
+  --brass-veil:#CBD4E4;
+  --solid:#3C4C6E;
   --cinnabar:#D23A2E;
   --cinnabar-deep:#B22318;
   --cinnabar-veil:#F3E4E4;
-  --line:#AAA2B3;
-  --line-soft:#C9C3D1;
-  --fill:#E2DDE7;
-  --fill-2:#D3CDDA;
+  --line:#98A9C4;
+  --line-soft:#C2CCDC;
+  --fill:#DCE3EF;
+  --fill-2:#CBD4E4;
   --shadow:none;
   --shadow-up:none;
   --r:14px;
   --gut:44px;
 }
 @media(prefers-color-scheme:dark){:root{
-  --ink:#E2DDE7;
-  --ink-2:#AAA2B3;
-  --ink-3:#8E8699;
-  --page:#17151C;
-  --card:#292531;
-  --sunk:#292531;
-  --stone:#716879;
-  --brass:#B5A9D1;
-  --brass-deep:#C4BADD;
-  --brass-ink:#C4BADD;
-  --brass-veil:#2E2740;
-  --solid:#746699;
+  --ink:#DCE3EF;
+  --ink-2:#98A9C4;
+  --ink-3:#7F90AC;
+  --page:#111522;
+  --card:#1E263B;
+  --sunk:#1E263B;
+  --stone:#536684;
+  --brass:#AEBDD6;
+  --brass-deep:#C4D0E4;
+  --brass-ink:#C4D0E4;
+  --brass-veil:#28324A;
+  --solid:#4A5B7E;
   --cinnabar:#FF6B61;
   --cinnabar-deep:#FF867E;
   --cinnabar-veil:#3A2420;
-  --line:#45404F;
-  --line-soft:#332E3C;
-  --fill:#292531;
-  --fill-2:#45404F;
+  --line:#303D59;
+  --line-soft:#283347;
+  --fill:#1E263B;
+  --fill-2:#303D59;
 }}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
@@ -409,8 +409,8 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .ritual-source-list span{font-size:12px}
 
 
-/* Apple HIG 기반 (2026-10-27, 팔레트 갱신): 묶음 카드·알약 버튼·텍스트 스타일 단계·유리 막대.
-   색은 :root 토큰(보라빛 회색 6단계 + 회보라 파생 강조 하나)을 쓰며 이 구간은 모양만 덮어씁니다. */
+/* Apple HIG 기반 (2026-10-28, 팔레트 갱신): 묶음 카드·알약 버튼·텍스트 스타일 단계·유리 막대.
+   색은 :root 토큰(블루-그레이 6단계 + 블루 파생 강조 하나)을 쓰며 이 구간은 모양만 덮어씁니다. */
 body{
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Apple SD Gothic Neo","Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;
   font-size:17px;line-height:1.5;letter-spacing:-.01em;

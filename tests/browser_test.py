@@ -171,8 +171,8 @@ class BrowserRegression(unittest.TestCase):
         expect(page.locator("#gate")).to_be_visible()
         page.locator(f'button[data-name="{name}"]').click()
         expect(page.locator("#lockpane")).to_be_visible()
+        # 암호를 역할별 자릿수만큼 채우면 들어가기 버튼 없이 자동으로 입장한다.
         page.locator("#familycode").fill("102938" if name == "은호당" else "9394")
-        page.locator("#lockverify").click()
         expect(page.locator("#app")).to_be_visible()
         expect(page.locator("#mename")).to_have_text(name)
         page.wait_for_function("document.querySelector('#title').textContent !== '불러오는 중'")
