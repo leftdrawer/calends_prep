@@ -9,12 +9,15 @@
 
 ## 이 프로젝트의 디자인 기준
 
-@DESIGN.md
+기준은 **Apple 휴먼 인터페이스 가이드라인(HIG)** 이다 (2026-10-27 사용자 지시, `C:\AI Projects\AGENTS.md`의 "Web page design"). 이전 Mastercard 계열 `DESIGN.md`는 더 이상 불러오지 않으며 참고용으로만 남아 있다.
 
-- 먼저 따를 것은 `styles.css`의 `:root` 토큰(다섯 빛깔, 지면, 글자 색, `--shadow`, `--r`)과 이미 있는 컴포넌트다. 색, 글꼴(Pretendard + Gowun Batang), 모서리 둥글기, 그림자는 이미 정해져 있으니 DESIGN.md로 덮어쓰지 않는다.
-- DESIGN.md(Mastercard 분석본)에서 가져오는 것은 아직 정하지 않은 부분뿐이다. 지금 쓰는 것은 8장 Touch Targets(누르는 곳은 40px 아래로 줄이지 않음)와 7장의 "희미한 크림-회색 글자는 덜 중요한 내용에만" 원칙이다.
-- DESIGN.md의 "한 글꼴만 쓴다", "세리프 금지", 주황 계열 색, 원형 사진 같은 항목은 이 앱과 맞지 않으니 따르지 않는다.
-- 정보를 담은 글자에는 `--stone`을 쓰지 않는다. 안내문은 `--ink-2`, 덜 중요한 힌트는 `--ink-3`. 이전 토큰의 대비 1.7:1은 2026-10-10 기록의 값이며 현재 `styles.css` 토큰과 구분한다.
+- 색: `styles.css`의 `:root` 토큰 이름(`--ink`, `--page`, `--card`, `--brass-*`, `--cinnabar-*` 등)은 그대로 두고 값을 HIG 시스템 색으로 바꿨다. 강조색은 파랑 하나(`--brass-deep`은 글자·링크, `--solid`는 채운 버튼·선택 상태), 경고·구매 표시는 빨강 계열(`--cinnabar-*`). 라이트/다크는 `prefers-color-scheme`으로 자동 전환한다.
+- 모양: 회색 바탕 위의 흰 묶음 카드(반경 26, 모바일 22), 알약 버튼·칩, 동그란 체크, 시트 위 모서리 34, 위 막대만 유리 재질(`.top`).
+- 글자: 시스템 글꼴 우선(`-apple-system`, `Apple SD Gothic Neo`, Pretendard는 대체). 큰 제목 34, 제목 22, 본문 17, 각주 13, 12px 아래는 쓰지 않는다. 한글이 어절 중간에서 끊기지 않도록 `word-break: keep-all`을 유지한다.
+- 누르는 곳은 44px 이상, 포커스 링은 3px 파랑, `prefers-reduced-motion`·`prefers-reduced-transparency`를 따른다.
+- 이 변경은 `styles.css` 끝의 "Apple HIG 기반" 구간이 앞선 규칙을 덮어쓰는 방식이다. 새 컴포넌트는 그 구간의 규칙과 맞춘다.
+- 정보를 담은 글자에는 `--stone`을 쓰지 않는다. 안내문은 `--ink-2`, 덜 중요한 힌트는 `--ink-3`.
+- 축문·기도문의 Gowun Batang(세리프)과 한문 전용 글꼴 `Eunhodang Hanja`는 내용 글꼴이라 그대로 둔다. 붓글씨 서명 PNG는 다크 모드에서만 색을 뒤집어 보여준다.
 
 ## 프론트엔드 참고
 

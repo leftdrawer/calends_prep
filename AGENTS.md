@@ -2,7 +2,7 @@
 
 - 변경할 때마다 `docs/HISTORY.md`에 날짜·변경 내용·이유·검증·남은 사항을 기록하세요.
 - 기능·규칙이 달라지면 `docs/domain-sangbogi.md`, 구조·스택이 달라지면 `.kiro/steering/`와 `README.md`도 함께 갱신하세요. 사용자 최신 지시가 이전 문서 계획보다 우선합니다.
-- 디자인 변경 전 `CLAUDE.md`와 기존 `styles.css` 토큰을 확인하세요. `DESIGN.md`는 문서에 정한 참고 범위만 적용하고 Claude의 기존 기록을 보존하세요.
+- 디자인 변경 전 `CLAUDE.md`(Apple HIG 기준)와 `styles.css` 끝의 "Apple HIG 기반" 구간을 확인하세요. `DESIGN.md`(Mastercard 분석본)는 더 이상 기준이 아닌 참고 자료입니다.
 - 실데이터를 보존하세요. 기존 `sangbogi:cycle:` 키는 초하루입니다. 명절은 별도 `sangbogi:event:` 키를 사용합니다.
 - 사용자가 아직 정하지 않은 명절 품목과 절차를 만들거나 초하루 템플릿을 복사하지 마세요.
 - 은호당만 월별 대체를 승인합니다. 어머니는 준비를 함께 관리하고 손님은 예물·지난 기여 기록만 봅니다.

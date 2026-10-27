@@ -1,29 +1,53 @@
 @font-face{font-family:"Eunhodang Hanja";src:url("./assets/fonts/eunhodang-hanja.woff") format("woff");font-weight:400;font-style:normal;font-display:block;unicode-range:U+5802,U+6069,U+70AF,U+71A9,U+91D1,U+932B}
 [hidden]{display:none!important}
 :root{
-  --ink:#292F29;
-  --ink-2:#646C61;
-  --ink-3:#778071;
+  color-scheme:light dark;
+  --ink:#000;
+  --ink-2:#5c5c61;
+  --ink-3:#6e6e73;
   --hanji:#FAF9F5;
-  --page:#FAF9F5;
-  --card:#FAF9F5;
-  --sunk:#F0F1EA;
-  --stone:#A4AC9E;
-  --brass:#74816B;
-  --brass-deep:#40513E;
-  --brass-ink:#40513E;
-  --brass-veil:#EFF2EA;
-  --cinnabar:#8C5047;
-  --cinnabar-deep:#784239;
-  --cinnabar-veil:#F7EEEA;
-  --line:#DADFD3;
-  --line-soft:#E9ECE3;
-  --fill:#F0F2EA;
-  --fill-2:#E1E6DB;
+  --page:#F2F2F7;
+  --card:#FFF;
+  --sunk:#F2F2F7;
+  --stone:#AEAEB2;
+  --brass:#0071E3;
+  --brass-deep:#0066CC;
+  --brass-ink:#0066CC;
+  --brass-veil:#E8F1FB;
+  --solid:#0066CC;
+  --cinnabar:#FF3B30;
+  --cinnabar-deep:#C9170C;
+  --cinnabar-veil:#FFF1EF;
+  --line:#C6C6C8;
+  --line-soft:#E5E5EA;
+  --fill:#F2F2F7;
+  --fill-2:#E5E5EA;
   --shadow:none;
   --shadow-up:none;
-  --r:5px;
+  --r:14px;
+  --gut:44px;
 }
+@media(prefers-color-scheme:dark){:root{
+  --ink:#FFF;
+  --ink-2:#A1A1A6;
+  --ink-3:#8E8E93;
+  --page:#000;
+  --card:#1C1C1E;
+  --sunk:#1C1C1E;
+  --stone:#636366;
+  --brass:#0A84FF;
+  --brass-deep:#64A8FF;
+  --brass-ink:#64A8FF;
+  --brass-veil:#0F2A47;
+  --solid:#0A6FE8;
+  --cinnabar:#FF453A;
+  --cinnabar-deep:#FF6961;
+  --cinnabar-veil:#3A1F1D;
+  --line:#38383A;
+  --line-soft:#2C2C2E;
+  --fill:#2C2C2E;
+  --fill-2:#3A3A3C;
+}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
 body{
@@ -53,13 +77,13 @@ a{color:inherit}
 .gate h1,.gate h2{font-size:27px;line-height:1.4;letter-spacing:-.035em;font-weight:650;margin:0 0 12px}
 .gate-sub{margin:0 0 26px;font-size:14px;line-height:1.75;color:var(--ink-2)}
 .input-label{display:block;font-size:12px;font-weight:600;margin-bottom:7px;color:var(--ink-2)}
-.gate input{width:100%;border:1px solid var(--line);border-radius:var(--r);background:#FFF;color:var(--ink);font-size:16px;padding:13px 14px;margin:0 0 10px;min-height:50px}
+.gate input{width:100%;border:1px solid var(--line);border-radius:var(--r);background:var(--card);color:var(--ink);font-size:16px;padding:13px 14px;margin:0 0 10px;min-height:50px}
 .gate input::placeholder{color:var(--ink-3)}
 .gate .btn{min-height:48px;font-size:14px}
 .gate .btn.solid{display:flex;align-items:center;justify-content:space-between}
 .gate-or{display:flex;align-items:center;gap:12px;margin:28px 0 13px}
 .gate-or:before,.gate-or:after{content:"";height:1px;flex:1;background:var(--line)}
-.gate-or span{white-space:nowrap;font-size:11px;font-weight:500;color:var(--ink-2)}
+.gate-or span{white-space:nowrap;font-size:12px;font-weight:500;color:var(--ink-2)}
 .who{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .who button{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:47px;padding:11px 13px;background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:var(--r);font-size:14px;font-weight:500}
 .who button:hover{background:var(--fill)}
@@ -75,20 +99,20 @@ a{color:inherit}
 .top{display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line);min-height:105px;padding:20px 0}
 .brand-home{display:flex;flex-direction:column;align-items:flex-start;gap:7px;text-decoration:none;margin-right:auto}
 .sign-image{display:block;width:134px;height:auto;max-height:60px;object-fit:contain}
-.brand-home>span{font-size:10px;letter-spacing:.12em;color:var(--ink-2)}
+.brand-home>span{font-size:12px;letter-spacing:.12em;color:var(--ink-2)}
 .mepill{display:flex;align-items:center;gap:9px;background:transparent;border:0;border-radius:var(--r);padding:7px;min-height:44px;color:var(--ink);text-align:left}
 .mepill:hover{background:var(--fill)}
-.mepill .ini{width:30px;height:30px;border-radius:4px;background:var(--brass-veil);color:var(--brass-deep);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex:0 0 auto}
+.mepill .ini{width:30px;height:30px;border-radius:10px;background:var(--brass-veil);color:var(--brass-deep);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex:0 0 auto}
 .mepill .txt2{display:flex;flex-direction:column;line-height:1.4}
 .mepill .txt2 b{font-size:13px;font-weight:600}
-.mepill .txt2 em{font-style:normal;font-size:10px;color:var(--ink-2)}
-#guestbadge{white-space:nowrap;font-size:11px;color:var(--ink-2);border-left:1px solid var(--line);padding-left:14px}
+.mepill .txt2 em{font-style:normal;font-size:12px;color:var(--ink-2)}
+#guestbadge{white-space:nowrap;font-size:12px;color:var(--ink-2);border-left:1px solid var(--line);padding-left:14px}
 .monthnav{display:flex;align-items:center;justify-content:center;gap:12px;margin:30px 0 36px}
 .monthnav button{width:44px;height:44px;border:1px solid var(--line);border-radius:var(--r);color:var(--ink-2);background:transparent;font-size:24px;line-height:1}
 .monthnav button:hover:not(:disabled){background:var(--fill)}
 .monthnav span{min-width:140px;font-size:14px;color:var(--ink-2);text-align:center}
 .page-heading{margin-bottom:24px}
-.eyebrow,.section-label{font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--brass-deep);margin:0 0 10px}
+.eyebrow,.section-label{font-size:12px;font-weight:600;letter-spacing:.1em;color:var(--brass-deep);margin:0 0 10px}
 h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:0 0 16px}
 .chips{display:flex;gap:0;flex-wrap:wrap;align-items:center}
 .chip{font-size:13px;color:var(--ink-2);padding:0 14px;border-left:1px solid var(--line);line-height:1.3;margin-bottom:7px}
@@ -96,7 +120,7 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .chip.now,.chip.soon{color:var(--brass-deep);font-weight:600}
 .event-nav{display:flex;flex-wrap:wrap;gap:0;border-bottom:1px solid var(--line);margin-bottom:16px}
 .event-tab{display:flex;align-items:baseline;gap:10px;min-height:48px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--ink-2);padding:11px 18px 11px 0;margin-right:24px;font-size:15px;font-weight:500;border-radius:0}
-.event-tab small{font-size:11px;font-weight:400;color:var(--ink-2)}
+.event-tab small{font-size:12px;font-weight:400;color:var(--ink-2)}
 .event-tab[aria-selected="true"],.event-tab[aria-pressed="true"]{border-bottom-color:var(--brass-deep);color:var(--brass-deep);font-weight:650}
 .calendar-note{font-size:13px;line-height:1.7;color:var(--ink-2);margin:0 0 28px}
 
@@ -110,14 +134,14 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .event-plan{padding:18px 20px;margin:0 0 24px;background:var(--brass-veil);border:1px solid var(--line);border-radius:var(--r)}
 .event-plan h2{font-size:17px}
 .event-plan .btn{width:auto;min-height:44px;margin:8px 0 0;padding:10px 14px;font-size:13px;background:var(--page);border:1px solid var(--line)}
-.event-plan .btn.solid{background:var(--brass-deep);color:var(--hanji);border-color:var(--brass-deep)}
+.event-plan .btn.solid{background:var(--solid);color:#fff;border-color:var(--solid)}
 .plan-status{font-size:13px;color:var(--ink-2);margin:8px 0 0;line-height:1.75}
 .date-pick-label{display:flex;align-items:center;flex-wrap:wrap;gap:12px;font-size:13px;margin:14px 0 10px}
 .npick{border:1px solid var(--line);background:var(--page);border-radius:var(--r);padding:9px 12px;font-size:14px;color:var(--ink);min-height:44px}
 .replacement-confirm{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
 .replacement-confirm p{font-size:14px;margin:0 0 5px;line-height:1.7}
 .replacement-confirm .btn{margin-right:8px}
-.notice{padding:16px 18px;display:flex;gap:12px;align-items:flex-start;background:var(--cinnabar-veil);border:1px solid #E7D6CE;border-radius:var(--r);margin-bottom:20px}
+.notice{padding:16px 18px;display:flex;gap:12px;align-items:flex-start;background:var(--cinnabar-veil);border:1px solid var(--line);border-radius:var(--r);margin-bottom:20px}
 .notice .dot{flex:0 0 auto;width:6px;height:6px;border-radius:50%;background:var(--cinnabar);margin-top:9px}
 .notice p{margin:0;font-size:14px;line-height:1.65}
 .notice b{color:var(--cinnabar-deep);font-weight:600}
@@ -132,10 +156,10 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .prog .num s{text-decoration:none;font-size:19px;color:var(--ink-2);font-weight:400;margin-left:2px}
 .prog .lab{font-size:12px;color:var(--ink-2);margin:0 0 8px}
 .bar{height:4px;background:var(--fill-2);overflow:hidden;max-width:500px}
-.bar i{display:block;height:100%;width:0;background:var(--brass-deep);transition:width .25s ease}
+.bar i{display:block;height:100%;width:0;background:var(--solid);transition:width .25s ease}
 .divider{display:flex;align-items:center;gap:16px;margin:14px 0 24px}
 .divider:before,.divider:after{content:"";flex:1;height:1px;background:var(--line)}
-.divider span{white-space:nowrap;font-size:11px;letter-spacing:.04em;color:var(--ink-2)}
+.divider span{white-space:nowrap;font-size:12px;letter-spacing:.04em;color:var(--ink-2)}
 
 /* 준비 항목 */
 .rows{margin-top:16px}
@@ -145,56 +169,56 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .row .nm{font-size:16px;font-weight:550;line-height:1.55;letter-spacing:-.025em}
 .row .wh{font-size:12px;color:var(--ink-2);margin-top:4px;line-height:1.6}
 .row .sec{font-size:13px;color:var(--ink-2);font-weight:400}
-.row .by{font-size:11px;font-weight:500;color:var(--brass-deep);margin-top:7px}
+.row .by{font-size:12px;font-weight:500;color:var(--brass-deep);margin-top:7px}
 .row.done .nm{color:var(--ink-2);text-decoration:line-through;text-decoration-color:var(--stone)}
-.tick{flex:0 0 auto;width:22px;height:22px;margin-top:3px;border-radius:4px;border:1px solid var(--brass);background:transparent;position:relative;transition:background .15s,border-color .15s}
+.tick{flex:0 0 auto;width:22px;height:22px;margin-top:3px;border-radius:10px;border:1px solid var(--brass);background:transparent;position:relative;transition:background .15s,border-color .15s}
 .tick:after{content:"";position:absolute;left:7px;top:3px;width:5px;height:10px;border:solid var(--hanji);border-width:0 2px 2px 0;transform:rotate(43deg);opacity:0}
-.row.done .tick{background:var(--brass-deep);border-color:var(--brass-deep)}
+.row.done .tick{background:var(--solid);border-color:var(--solid)}
 .row.done .tick:after{opacity:1}
 .ritual-prep-card button.tick{width:40px;height:40px;border:0;padding:0;margin-top:-6px;background:transparent}
-.ritual-prep-card button.tick:before{content:"";box-sizing:border-box;position:absolute;left:9px;top:9px;width:22px;height:22px;border:1px solid var(--brass);border-radius:4px;background:transparent}
+.ritual-prep-card button.tick:before{content:"";box-sizing:border-box;position:absolute;left:9px;top:9px;width:22px;height:22px;border:1px solid var(--brass);border-radius:10px;background:transparent}
 .ritual-prep-card button.tick:after{left:17px;top:13px}
 .ritual-prep-card .row.done button.tick{background:transparent}
-.ritual-prep-card .row.done button.tick:before{background:var(--brass-deep);border-color:var(--brass-deep)}
-.note{margin:16px 0 0;padding-top:13px;border-top:1px solid var(--line-soft);font-size:11px;line-height:1.8;color:var(--ink-2)}
+.ritual-prep-card .row.done button.tick:before{background:var(--solid);border-color:var(--solid)}
+.note{margin:16px 0 0;padding-top:13px;border-top:1px solid var(--line-soft);font-size:12px;line-height:1.8;color:var(--ink-2)}
 .note:before{content:"※ ";color:var(--ink-3)}
 .seg{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
-.seg button{min-height:40px;padding:7px 12px;border:1px solid var(--line);border-radius:4px;background:transparent;color:var(--ink-2);font-size:12px;font-weight:500}
-.seg button.have[aria-pressed="true"],.seg.plan button[aria-pressed="true"]{background:var(--brass-deep);border-color:var(--brass-deep);color:var(--hanji)}
-.seg button.buy[aria-pressed="true"]{background:var(--cinnabar-veil);border-color:#DFCBC2;color:var(--cinnabar-deep)}
+.seg button{min-height:44px;padding:7px 12px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink-2);font-size:12px;font-weight:500}
+.seg button.have[aria-pressed="true"],.seg.plan button[aria-pressed="true"]{background:var(--solid);border-color:var(--solid);color:#fff}
+.seg button.buy[aria-pressed="true"]{background:var(--cinnabar-veil);border-color:var(--line);color:var(--cinnabar-deep)}
 .parts,.shops,.ilist{margin-top:12px;padding:12px 13px;background:var(--fill);border-radius:var(--r)}
-.part{display:flex;align-items:center;gap:9px;padding:8px 0;min-height:40px;cursor:pointer}
-.ptick{width:16px;height:16px;position:relative;flex:0 0 auto;border:1px solid var(--brass);border-radius:3px}
+.part{display:flex;align-items:center;gap:9px;padding:8px 0;min-height:44px;cursor:pointer}
+.ptick{width:16px;height:16px;position:relative;flex:0 0 auto;border:1px solid var(--brass);border-radius:8px}
 .ptick:after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid var(--hanji);border-width:0 1.5px 1.5px 0;transform:rotate(43deg);opacity:0}
-.part.done .ptick{background:var(--brass-deep);border-color:var(--brass-deep)}
+.part.done .ptick{background:var(--solid);border-color:var(--solid)}
 .part.done .ptick:after{opacity:1}
 .pnm{font-size:13px}
 .part.done .pnm{color:var(--ink-2);text-decoration:line-through;text-decoration-color:var(--stone)}
-.pby{margin-left:auto;font-size:10px;color:var(--brass-deep)}
-.pnote{margin:7px 0 0;font-size:10px;color:var(--ink-2);line-height:1.7}
+.pby{margin-left:auto;font-size:12px;color:var(--brass-deep)}
+.pnote{margin:7px 0 0;font-size:12px;color:var(--ink-2);line-height:1.7}
 .memo{display:flex;align-items:center;gap:8px;margin-top:11px}
-.memo input,.etcline input{flex:1;min-width:0;border:1px solid var(--line);border-radius:4px;background:var(--page);padding:10px;font-size:13px;color:var(--ink)}
+.memo input,.etcline input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;background:var(--page);padding:10px;font-size:13px;color:var(--ink)}
 .memo input::placeholder,.etcline input::placeholder,.iline input::placeholder,.newname input::placeholder{color:var(--ink-3)}
-.memoby{flex:0 0 auto;font-size:10px;color:var(--brass-deep)}
-.shopcap,.icap{margin:0 0 9px;font-size:11px;font-weight:500;color:var(--ink-2)}
+.memoby{flex:0 0 auto;font-size:12px;color:var(--brass-deep)}
+.shopcap,.icap{margin:0 0 9px;font-size:12px;font-weight:500;color:var(--ink-2)}
 .shoprow,.isrcpick{display:flex;flex-wrap:wrap;gap:6px}
-.shoprow button,.isrcpick button{border:1px solid var(--line);border-radius:4px;background:var(--page);color:var(--ink-2);font-size:12px;font-weight:500;padding:7px 10px;min-height:40px}
-.shoprow button[aria-pressed="true"],.isrcpick button[aria-pressed="true"]{background:var(--brass-deep);border-color:var(--brass-deep);color:var(--hanji)}
+.shoprow button,.isrcpick button{border:1px solid var(--line);border-radius:10px;background:var(--page);color:var(--ink-2);font-size:12px;font-weight:500;padding:7px 10px;min-height:44px}
+.shoprow button[aria-pressed="true"],.isrcpick button[aria-pressed="true"]{background:var(--solid);border-color:var(--solid);color:#fff}
 .icap{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
-.icap em{font-style:normal;font-size:10px}
+.icap em{font-style:normal;font-size:12px}
 .icap em.ok{color:var(--brass-deep)}
 .icap em.no{color:var(--cinnabar-deep)}
 .iline{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.ino{flex:0 0 auto;width:18px;text-align:center;color:var(--ink-2);font-size:11px}
-.iline input{flex:1;min-width:0;background:transparent;color:var(--ink);border:0;border-bottom:1px solid var(--line);border-radius:0;padding:8px 2px;font-size:13px;min-height:40px}
-.isrc{flex:0 0 auto;max-width:44%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px dashed var(--stone);border-radius:4px;background:transparent;color:var(--ink-2);font-size:11px;font-weight:500;padding:7px 8px;min-height:40px}
+.ino{flex:0 0 auto;width:18px;text-align:center;color:var(--ink-2);font-size:12px}
+.iline input{flex:1;min-width:0;background:transparent;color:var(--ink);border:0;border-bottom:1px solid var(--line);border-radius:0;padding:8px 2px;font-size:13px;min-height:44px}
+.isrc{flex:0 0 auto;max-width:44%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px dashed var(--stone);border-radius:10px;background:transparent;color:var(--ink-2);font-size:12px;font-weight:500;padding:7px 8px;min-height:44px}
 .isrc.set{border-style:solid;border-color:var(--brass);background:var(--brass-veil);color:var(--brass-deep)}
 .isrcpick{margin:3px 0 12px 26px}
-.ilab{margin:12px 0 6px 26px;font-size:10px;font-weight:500;color:var(--ink-2)}
-.imore{margin-top:5px;min-height:40px;padding:7px 11px;font-size:11px;font-weight:500;border:1px dashed var(--stone);border-radius:4px;background:transparent;color:var(--ink-2)}
+.ilab{margin:12px 0 6px 26px;font-size:12px;font-weight:500;color:var(--ink-2)}
+.imore{margin-top:5px;min-height:44px;padding:7px 11px;font-size:12px;font-weight:500;border:1px dashed var(--stone);border-radius:10px;background:transparent;color:var(--ink-2)}
 .etcline{display:flex;gap:7px;margin-bottom:8px}
 .etcline .etcwho{flex:0 0 34%;background:var(--brass-veil)}
-.adm{flex:0 0 auto;border:1px solid var(--line);border-radius:4px;background:transparent;color:var(--ink-2);font-size:10px;padding:5px 7px;min-height:40px;margin-top:0}
+.adm{flex:0 0 auto;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink-2);font-size:12px;padding:5px 7px;min-height:44px;margin-top:0}
 
 /* 보내주신 정성과 지난 기록 */
 .guest-gift{display:flex;justify-content:space-between;align-items:baseline;gap:18px;padding:15px 0;border-top:1px solid var(--line-soft)}
@@ -204,7 +228,7 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .gift-empty{font-size:14px;color:var(--ink-2);padding:10px 0 20px;line-height:1.8;margin:0}
 .thankrow{padding:18px 0;border-top:1px solid var(--line-soft)}
 .thankrow:first-child{border-top:0;padding-top:8px}
-.thankmon{font-size:11px;color:var(--brass-deep);font-weight:500;margin-bottom:10px}
+.thankmon{font-size:12px;color:var(--brass-deep);font-weight:500;margin-bottom:10px}
 .thankline{display:flex;align-items:baseline;gap:12px;padding:4px 0;font-size:14px}
 .thankline b{flex:0 0 auto;font-weight:550}
 .thankline span{color:var(--ink-2);font-size:12px;line-height:1.7}
@@ -217,18 +241,18 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .tier{display:grid;grid-template-columns:155px 1fr;gap:18px;padding:20px 0;border-top:1px solid var(--line-soft)}
 .tier:first-of-type{border-top:0}
 .tier .tn{font-size:15px;font-weight:600;line-height:1.5;margin:0}
-.tier .tn small{display:block;font-size:11px;font-weight:400;color:var(--ink-2);margin-top:3px}
+.tier .tn small{display:block;font-size:12px;font-weight:400;color:var(--ink-2);margin-top:3px}
 .pills{display:flex;flex-wrap:wrap;align-items:flex-start;gap:7px}
-.pill{display:inline-block;padding:5px 9px;white-space:nowrap;font-size:12px;color:var(--ink-2);background:var(--fill);border:1px solid transparent;border-radius:3px}
-.pill.on{color:var(--brass-deep);border-color:#C6D1BD;background:var(--brass-veil)}
-.pill.on.warn{color:var(--cinnabar-deep);border-color:#DFCBC2;background:var(--cinnabar-veil)}
+.pill{display:inline-block;padding:5px 9px;white-space:nowrap;font-size:12px;color:var(--ink-2);background:var(--fill);border:1px solid transparent;border-radius:8px}
+.pill.on{color:var(--brass-deep);border-color:var(--line);background:var(--brass-veil)}
+.pill.on.warn{color:var(--cinnabar-deep);border-color:var(--line);background:var(--cinnabar-veil)}
 .step{display:flex;align-items:center;gap:13px;padding:16px 0;min-height:52px;border-top:1px solid var(--line-soft);cursor:pointer}
 .step:first-child{border-top:0}
-.sno{flex:0 0 auto;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:4px;font-size:11px;color:var(--ink-2)}
-.step.done .sno{background:var(--brass-deep);border-color:var(--brass-deep);color:var(--hanji)}
+.sno{flex:0 0 auto;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:10px;font-size:12px;color:var(--ink-2)}
+.step.done .sno{background:var(--solid);border-color:var(--solid);color:#fff}
 .stx{flex:1;font-size:14px;line-height:1.6}
 .step.done .stx{color:var(--ink-2);text-decoration:line-through;text-decoration-color:var(--stone)}
-.sby{flex:0 0 auto;font-size:11px;color:var(--brass-deep)}
+.sby{flex:0 0 auto;font-size:12px;color:var(--brass-deep)}
 #donecard .btn{max-width:360px}
 
 /* 담당과 기록 */
@@ -238,31 +262,31 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .grab{width:34px;height:3px;border-radius:2px;background:var(--stone);margin:0 auto 23px}
 .sheet-in h3{font-size:23px;font-weight:600;letter-spacing:-.03em;margin:0 0 5px;line-height:1.4}
 .sheet-now{font-size:13px;color:var(--ink-2);margin:0 0 25px}
-.sheet-lab{font-size:11px;font-weight:600;color:var(--brass-deep);letter-spacing:.07em;margin:0 0 10px}
+.sheet-lab{font-size:12px;font-weight:600;color:var(--brass-deep);letter-spacing:.07em;margin:0 0 10px}
 .sheet-pick{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:25px}
-.sheet-pick button{border:1px solid var(--line);border-radius:4px;background:transparent;color:var(--ink-2);padding:9px 13px;min-height:44px;font-size:13px}
-.sheet-pick button[aria-pressed="true"]{background:var(--brass-deep);border-color:var(--brass-deep);color:var(--hanji)}
+.sheet-pick button{border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink-2);padding:9px 13px;min-height:44px;font-size:13px}
+.sheet-pick button[aria-pressed="true"]{background:var(--solid);border-color:var(--solid);color:#fff}
 .sheet-log{margin-bottom:22px}
 .hrow{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-top:1px solid var(--line-soft);font-size:13px;line-height:1.7}
 .hrow:first-child{border-top:0}
 .hrow b{font-weight:600}
-.hrow em{display:block;font-style:normal;color:var(--ink-2);font-size:11px;margin-top:3px}
-.hat{flex:0 0 auto;font-size:10px;color:var(--ink-2)}
+.hrow em{display:block;font-style:normal;color:var(--ink-2);font-size:12px;margin-top:3px}
+.hat{flex:0 0 auto;font-size:12px;color:var(--ink-2)}
 .addname{background:transparent!important;border:1px dashed var(--stone)!important;color:var(--ink-2)!important}
 .newname{display:flex;gap:8px;margin:-10px 0 24px}
-.newname input{flex:1;min-width:0;border:1px solid var(--line);border-radius:4px;background:var(--page);color:var(--ink);font-size:14px;padding:9px 11px;min-height:44px}
-.newname button{border:0;border-radius:4px;background:var(--brass-deep);color:var(--hanji);padding:9px 14px;font-size:13px;font-weight:500}
+.newname input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;background:var(--page);color:var(--ink);font-size:14px;padding:9px 11px;min-height:44px}
+.newname button{border:0;border-radius:10px;background:var(--solid);color:#fff;padding:9px 14px;font-size:13px;font-weight:500}
 
 /* 공통 단추와 바닥 */
 .btn{width:100%;min-height:46px;padding:12px 16px;border:1px solid var(--line);border-radius:var(--r);background:var(--fill);color:var(--ink-2);font-size:14px;font-weight:550;line-height:1.5}
 .btn:hover:not(:disabled){filter:brightness(.98)}
-.btn.solid{background:var(--brass-deep);border-color:var(--brass-deep);color:var(--hanji)}
-.btn.danger{background:transparent;border-color:#DFCBC2;color:var(--cinnabar-deep)}
+.btn.solid{background:var(--solid);border-color:var(--solid);color:#fff}
+.btn.danger{background:transparent;border-color:var(--line);color:var(--cinnabar-deep)}
 .btn.ghost{background:transparent;border-color:transparent;font-size:12px;font-weight:400;margin-top:8px}
 .foot{padding-top:20px;border-top:1px solid var(--line);margin-top:12px}
 .foot>.btn{max-width:360px;display:block;margin:0 auto}
 .status{min-height:20px;font-size:12px;color:var(--ink-2);text-align:center;margin:14px 0 0;line-height:1.7}
-.foothint{font-size:11px;text-align:center;color:var(--ink-2);margin:12px 0 0;line-height:1.7}
+.foothint{font-size:12px;text-align:center;color:var(--ink-2);margin:12px 0 0;line-height:1.7}
 
 @media(max-width:760px){
   .phone{max-width:580px;padding:0 24px calc(34px + env(safe-area-inset-bottom))}
@@ -278,17 +302,17 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
   .gate-or{margin-top:24px}
   .top{min-height:94px;padding:18px 0;gap:10px}
   .sign-image{width:112px;max-height:48px}
-  .brand-home>span{font-size:9px}
+  .brand-home>span{font-size:12px}
   .mepill{padding:4px;gap:7px}
   .mepill .ini{width:27px;height:27px;font-size:12px}
   .mepill .txt2 b{font-size:12px}
-  .mepill .txt2 em{font-size:9px}
-  #guestbadge{font-size:9px;padding-left:10px}
+  .mepill .txt2 em{font-size:12px}
+  #guestbadge{font-size:12px;padding-left:10px}
   .monthnav{margin:20px 0 29px;gap:10px}
   .monthnav span{font-size:13px;min-width:130px}
   h1{font-size:33px;margin-bottom:14px}
   .page-heading{margin-bottom:18px}
-  .eyebrow,.section-label{font-size:10px}
+  .eyebrow,.section-label{font-size:12px}
   .chip{font-size:12px;padding:0 10px}
   .event-tab{font-size:14px;margin-right:20px;padding-right:6px;gap:8px}
   .calendar-note{font-size:12px;margin-bottom:23px}
@@ -299,13 +323,13 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
   .row{padding:19px 0}
   .tier{grid-template-columns:95px 1fr;gap:13px}
   .tier .tn{font-size:14px}
-  .tier .tn small{font-size:10px}
+  .tier .tn small{font-size:12px}
   .pills{gap:6px}
-  .pill{font-size:11px;padding:5px 7px}
+  .pill{font-size:12px;padding:5px 7px}
   .prog{padding:18px 0;column-gap:20px}
   .prog .num{font-size:32px}
   .divider{margin:8px 0 18px;gap:12px}
-  .divider span{font-size:10px}
+  .divider span{font-size:12px}
   .event-plan{padding:17px 15px;margin-bottom:22px}
   .event-plan h2{font-size:16px}
   .event-plan .btn{font-size:12px;max-width:100%}
@@ -324,12 +348,12 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
   .mepill .txt2 em{display:none}
   .mepill .ini{display:none}
   h1{font-size:30px}
-  .chip{font-size:11px;padding:0 8px}
+  .chip{font-size:12px;padding:0 8px}
   .tier{display:block}
   .tier .tn{margin-bottom:10px}
   .tier .tn small{display:inline;margin-left:8px}
   .stx{font-size:13px}
-  .sby{font-size:10px}
+  .sby{font-size:12px}
 }
 @media(max-height:700px) and (max-width:760px){
   .gate{align-items:flex-start;padding-top:30px;padding-bottom:30px}
@@ -353,7 +377,7 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .jungyang-guide-card p,.jungyang-guide-card li{font-size:14px;line-height:1.85;color:var(--ink-2)}
 .jungyang-guide-card ul{padding-left:20px;margin:14px 0 0}
 .jungyang-guide-card li+li{margin-top:12px}
-.jungyang-guide-card a{display:inline-block;min-height:40px;padding:6px 0;color:var(--brass-deep);text-underline-offset:4px}
+.jungyang-guide-card a{display:inline-block;min-height:44px;padding:6px 0;color:var(--brass-deep);text-underline-offset:4px}
 .jungyang-prayer{margin:18px 0 0;padding:16px 18px;border-left:2px solid var(--brass);background:var(--brass-veil);font-family:"Gowun Batang",serif;font-size:16px;line-height:1.9;white-space:pre-line}
 .jungyang-chukmun-hanmun{font-family:"Eunhodang Hanja","Noto Serif CJK KR","Noto Serif KR","Gowun Batang",serif;font-size:19px;line-height:2;letter-spacing:.04em;word-break:normal;overflow-wrap:anywhere;white-space:normal}
 .chukmun-line+.chukmun-line{margin-top:16px}
@@ -378,5 +402,127 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .ritual-source-details h3{font-size:14px;color:var(--ink);margin:18px 0 8px}
 .ritual-source-details ul{padding-left:20px;margin:12px 0}
 .ritual-source-details li+li{margin-top:10px}
-.ritual-source-list a{display:inline-block;min-height:40px;padding:6px 0;text-underline-offset:4px;color:var(--brass-deep)}
+.ritual-source-list a{display:inline-block;min-height:44px;padding:6px 0;text-underline-offset:4px;color:var(--brass-deep)}
 .ritual-source-list span{font-size:12px}
+
+
+/* Apple HIG 기반 (2026-10-27): 묶음 카드·알약 버튼·텍스트 스타일 단계·유리 막대. 위 규칙 뒤에서 덮어씁니다. */
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Apple SD Gothic Neo","Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;
+  font-size:17px;line-height:1.5;letter-spacing:-.01em;
+}
+button:focus-visible,input:focus-visible,a:focus-visible,[tabindex]:focus-visible,.ritual-source-details summary:focus-visible{outline:3px solid var(--brass);outline-offset:2px}
+button,.btn,.row,.step,.part{transition:transform .2s cubic-bezier(.3,1,.4,1),background .2s,border-color .2s}
+button:active:not(:disabled){transform:scale(.97)}
+.phone{padding:0 var(--gut) calc(48px + env(safe-area-inset-bottom))}
+
+/* 위 막대: 스크롤해도 따라오는 유리 */
+.top{position:sticky;top:0;z-index:30;margin:0 calc(var(--gut) * -1);padding:12px var(--gut);min-height:72px;border-bottom:.5px solid var(--line);
+  background:color-mix(in srgb,var(--page) 72%,transparent);-webkit-backdrop-filter:saturate(180%) blur(30px);backdrop-filter:saturate(180%) blur(30px)}
+.sign-image{max-height:44px}
+.mepill{border-radius:999px;padding:6px 12px 6px 6px}
+.mepill .ini{width:32px;height:32px;border-radius:50%}
+.mepill .txt2 b{font-size:15px}
+.mepill .txt2 em{font-size:12px}
+#guestbadge{font-size:13px}
+.monthnav{margin:24px 0 28px}
+.monthnav button{border:0;border-radius:50%;background:var(--card);color:var(--brass-deep)}
+.monthnav button:hover:not(:disabled){background:var(--fill-2)}
+.monthnav span{font-size:17px;font-weight:600;color:var(--ink)}
+
+/* 글자: 큰 제목 34/41, 제목2 22/28, 머리말 17, 본문 17, 각주 13, 캡션 12 */
+h1{font-size:34px;line-height:1.25;font-weight:700;letter-spacing:-.03em}
+.gate h1,.gate h2{font-size:28px;font-weight:700}
+.card h2{font-size:22px;line-height:1.3;font-weight:700;letter-spacing:-.025em}
+.card .sub,.sheet-now,.calendar-note,.gate-sub{font-size:15px;line-height:1.5;color:var(--ink-2)}
+.eyebrow,.section-label,.sheet-lab{font-size:13px;font-weight:600;letter-spacing:0;color:var(--ink-2)}
+.input-label{font-size:13px}
+.row .nm{font-size:17px;font-weight:600}
+.row .wh,.note,.pnote,.status,.foothint{font-size:13px}
+.pnm,.stx,.thankline,.logrow,.hrow,.replacement-confirm p,.notice p{font-size:15px}
+.chip{font-size:14px}
+.event-tab{font-size:16px}
+
+/* 묶음 카드: 회색 바탕 위의 흰 카드, 반경 26 */
+.card{background:var(--card);border:0;border-radius:26px;padding:24px 24px 26px;margin:0 0 20px}
+.public-grid,.shopping-grid{gap:0 20px}
+.public-grid{margin:14px 0 8px}
+.event-plan{background:var(--brass-veil);border:0;border-radius:22px}
+.notice{border:0;border-radius:22px}
+.prog{padding:22px 24px}
+.bar{height:6px;border-radius:3px}
+.bar i{border-radius:3px}
+.parts,.shops,.ilist{border-radius:16px}
+.divider{margin:20px 0 20px}
+
+/* 버튼·입력: 알약, 44px 이상 */
+.btn{min-height:50px;border:0;border-radius:999px;background:var(--fill-2);color:var(--brass-deep);font-size:17px;font-weight:600}
+.btn.solid{background:var(--solid);color:#fff}
+.btn.danger{background:transparent;color:var(--cinnabar-deep);border:1px solid var(--line)}
+.btn.ghost{background:transparent;color:var(--brass-deep);font-size:15px;font-weight:500}
+.event-plan .btn{background:var(--card);border:0;font-size:15px}
+.event-plan .btn.solid{background:var(--solid);color:#fff}
+.gate .btn{font-size:17px}
+.gate input,.npick,.memo input,.etcline input,.newname input{border:0;border-radius:12px;background:var(--fill);font-size:17px}
+.gate input{background:var(--card);padding:13px 16px}
+.memo input,.etcline input,.iline input{font-size:15px}
+.who button,.seg button,.shoprow button,.isrcpick button,.sheet-pick button,.adm,.imore,.isrc,.pill{border-radius:999px}
+.who button{border:0;background:var(--card);font-size:17px;font-weight:600}
+.who button:hover{background:var(--fill-2)}
+.seg button,.shoprow button,.isrcpick button,.sheet-pick button{border:0;background:var(--fill-2);color:var(--ink);font-size:15px}
+.seg button.have[aria-pressed="true"],.seg.plan button[aria-pressed="true"],.shoprow button[aria-pressed="true"],.isrcpick button[aria-pressed="true"],.sheet-pick button[aria-pressed="true"]{background:var(--solid);color:#fff}
+.seg button.buy[aria-pressed="true"]{background:var(--cinnabar-veil);color:var(--cinnabar-deep)}
+.pill{font-size:14px;padding:6px 12px}
+.pill.on,.pill.on.warn{border-color:transparent}
+.newname button{border-radius:999px;font-size:15px}
+
+/* 체크: 미리 알림처럼 동그란 표시 */
+.tick{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--stone);margin-top:2px}
+.tick:after{left:8px;top:3px;width:6px;height:11px}
+.row.done .tick{border-color:var(--solid)}
+.ritual-prep-card button.tick{width:44px;height:44px;margin-top:-8px;border:0}
+.ritual-prep-card button.tick:before{left:10px;top:10px;width:24px;height:24px;border:1.5px solid var(--stone);border-radius:50%}
+.ritual-prep-card button.tick:after{left:18px;top:13px}
+.ritual-prep-card .row.done button.tick:before{border-color:var(--solid)}
+.ptick{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--stone)}
+.ptick:after{left:6px;top:2px;width:5px;height:9px}
+.part.done .ptick{border-color:var(--solid)}
+.sno{width:28px;height:28px;border-radius:50%;font-size:13px}
+
+/* 시트: 위 모서리 34, 뒤는 흐리게 */
+.sheet-bg{background:rgba(0,0,0,.4);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.sheet-in{background:var(--card);border-radius:34px 34px 0 0}
+.grab{width:36px;height:5px;border-radius:3px;background:var(--line);margin-bottom:20px}
+.sheet-in h3{font-size:22px;font-weight:700}
+.jungyang-count{border:0;border-radius:999px}
+.jungyang-prayer,.jungyang-guide-card .jungyang-jibang-preview{border-radius:16px}
+.jungyang-prayer{border-left-width:3px}
+
+@media(max-width:760px){
+  :root{--gut:20px}
+  .top{min-height:64px;padding-top:10px;padding-bottom:10px}
+  .sign-image{width:auto;max-height:40px}
+  h1{font-size:30px}
+  .gate h1{font-size:26px}
+  .card{padding:20px 18px 22px;margin-bottom:16px;border-radius:22px}
+  .prog{padding:18px}
+  .public-grid{margin-top:10px}
+  .card h2{font-size:20px}
+  .event-tab{font-size:15px}
+  .pill{font-size:13px;padding:5px 10px}
+}
+@media(max-width:360px){
+  :root{--gut:16px}
+  h1{font-size:27px}
+  .top{gap:4px}
+  .brand-home{min-width:0}
+  .mepill{padding:4px}
+  .mepill .txt2 b{font-size:14px}
+  #guestbadge{font-size:12px;padding-left:8px}
+}
+/* 검은 붓글씨 서명이 다크 배경에 묻히지 않도록 */
+@media(prefers-color-scheme:dark){.sign-image,.brand-image{filter:invert(1)}}
+@media(prefers-reduced-transparency:reduce){
+  .top{background:var(--page);-webkit-backdrop-filter:none;backdrop-filter:none}
+  .sheet-bg{-webkit-backdrop-filter:none;backdrop-filter:none}
+}
