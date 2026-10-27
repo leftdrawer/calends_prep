@@ -1,5 +1,23 @@
 # 작업 이력 (HISTORY)
 
+## 2026-10-27 · 보라빛 회색 6단계 팔레트 적용 + HIG 정렬 다듬기
+
+- 사용자 지시: Apple HIG(developer.apple.com/kr/design) 기준으로 전수 점검하고, 첨부 이미지의 보라빛 회색 6단계(`#17151C`·`#292531`·`#45404F`·`#716879`·`#AAA2B3`·`#E2DDE7`)를 조합해 적용. 특히 첫 화면 '은호당/어머니' 왼쪽 쏠림을 고칠 것. 기능·저장 로직은 불변.
+- 계획: `docs/design-audit.md`의 화면별 HIG 문제 목록과 (B) 팔레트→토큰 매핑을 따름.
+- 변경(디자인만): `styles.css`의 `:root`·다크 미디어쿼리 토큰 **값**을 6색 매핑대로 교체(이름 유지), 강조는 6색과 어울리는 회보라 파생 하나(라이트 `--brass #6A5CA0`/`--solid #6A5CA0`, 다크 `--brass #B5A9D1`). `.who button`·`.gate .btn.solid`를 중앙 정렬(A1·A2)로 바꿔 '은호당/어머니' 쏠림 해소. 넓은 파란 면이던 `.jungyang-prayer`·`.jungyang-count`를 중립 표면으로 낮춤(D1·D4). 포커스 링 3px 강조색 통일. `index.html` `theme-color` 라이트/다크 2개를 새 `--page`로 갱신. `jibang.html`은 녹색 테마를 앱 강조색·알약·포커스 링으로 교체하되 닥종이 바탕 `#eee5d1`과 `object-fit:contain`·전체화면·PNG 저장 동작은 유지(E1·E2).
+- 팔레트→토큰 매핑: 6색을 어느 토큰/역할에 썼는지는 `CLAUDE.md`의 "팔레트 → 토큰 매핑" 표와 `docs/design-audit.md` (B)표에 기록(세 문서 일치). 요약: 바탕/표면/텍스트/구분선은 6색 분배, 강조는 회보라 파생 하나(라이트 `--brass`/`--solid #6A5CA0`·`--brass-deep #564A82`, 다크 `--brass #B5A9D1`/`--solid #746699`·`--brass-deep #C4BADD`), 빨강(`--cinnabar-*`)은 경고·구매로만.
+- 발견한 HIG 문제와 수정(상세는 `docs/design-audit.md` (A), 리뷰는 `docs/design-review.md`):
+  - A1(사용자 지적) '은호당/어머니' 버튼 글자 왼쪽 쏠림 → `.who button`을 `justify-content:space-between`에서 `center`로 바꿔 레이블+화살표를 한 덩어리로 중앙 배치. 높이 47px(≥44px) 유지.
+  - A2 게이트 솔리드 CTA('기록 보기'·'들어가기') 양끝 벌어짐 → `.gate .btn.solid`를 `center`+`gap:10px`로 중앙 정렬.
+  - D1 축문 한문 블록의 넓은 파란 면 → `.jungyang-prayer` 배경을 `--brass-veil`에서 중립 `--hanji`로 낮춤. D4 카운트 칩 `.jungyang-count` 배경 `--brass-veil`→`--fill`, 글자 `--brass-deep`→`--ink-2`로 낮춰 "강조색 하나" 보강.
+  - B4 모바일에서 '기타' 직접 입력 줄 비대칭 → 760px 이하 `.etcline`을 세로 스택으로. B5 완료 버튼 `#donecard .btn`에 `display:block;margin:0 auto`로 중앙 정렬. D2 `#jungyang-cups-card h3` 14→17px로 소제목 위계 보강. D3 `.jungyang-jibang-layout`을 `align-items:flex-start`로.
+  - E1/E2 `jibang.html`의 독립 녹색 테마 → 앱과 같은 회보라 강조·알약·3px 포커스 링으로 통일(닥종이 바탕 `#eee5d1`·`object-fit:contain`·전체화면·PNG 저장은 유지).
+- 리뷰 반영(2·3차 패스 지적): 다크 `--solid`와 `jibang.html` 다크 `--accent`를 `#7E6FB8`(흰 글자 4.33:1, 텍스트 기준 미달)에서 `#746699`로 명도만 낮춰 흰 글자 대비 **5.12:1**(≥4.5:1) 확보. 보라 hue·선택 상태·라이트 solid(5.75:1)·3px 포커스 링은 유지. `docs/design-review.json` 최종 판정 **APPROVED**(findings 없음).
+- 바꾸지 않은 것: `app.js`·`rituals.js`의 `REMOTE`/`store`/저장 키(`sangbogi:cycle:*`, `sangbogi:event:*`), 기능 로직(명절·초하루 대체·택일·완료·12초 폴링·PIN 검증), 가족 PIN 로그인 방식(이메일 OTP 복원 없음), 클래스 이름·DOM 구조, 예스러운 한국어 문구, 축문/한문 글꼴(`Gowun Batang`, `Eunhodang Hanja`), 붓글씨 로고·서명·지방 PNG 자산. `git status`상 변경 파일은 디자인 4종(`styles.css`·`index.html`·`jibang.html`)과 문서뿐.
+- 검증: `python tests/browser_test.py`(합성 Supabase, 외부 요청 차단) **50개 전체 통과(86.226초)**. 합성 라우팅 임시 하네스로 라이트/다크 1440px 게이트·가족 화면을 실제 렌더링해 확인 — '은호당/어머니' 버튼 `justify-content:center`, 높이 48px(≥44px), 레이블+화살표가 한 덩어리로 중앙 배치(왼쪽 쏠림 해소). 다크 `.btn.solid` 계산 배경 `rgb(116,102,153)`=`#746699`, 흰 글자 **5.118:1**. 라이트 `.btn.solid` **5.751:1**. 두 모드 모두 JS 오류 없음. 임시 하네스·캡처 PNG는 점검 후 삭제. 실데이터 미사용.
+- 확인 못 함: 실제 기기(S25 등)·iOS Safari 유리 재질 실렌더, 합동지방 PNG 실제 그림 위 톤(합성 테스트라 미리보기는 빈 상자), 중양 택일·대체 승인 패널의 승인 후 일부 상태.
+- 남은 사항: 디자인 4종(`styles.css`·`index.html`·`jibang.html`)+문서를 한 커밋으로 로컬 커밋(push는 사용자 검토 후 결정으로 보류). B5(CTA `max-width:360px` 공존)·B1/C1(열 높이 균형)은 계획상 선택 항목으로 비차단, 추후 다듬기 여지. 실기기(S25)·iOS Safari 유리 재질과 합동지방 PNG 실제 그림 위 톤은 합성 테스트 특성상 후속 실기기 확인 권장.
+
 ## 2026-10-27 · 화면을 Apple HIG 기준으로 전환
 
 - 사용자 지시: 웹페이지를 Apple 디자인 가이드라인(developer.apple.com/kr/design) 기반으로 다시 다듬을 것. calends_prep은 기존 색을 HIG 시스템 색으로 바꿔도 됨.

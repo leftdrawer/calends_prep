@@ -2,51 +2,51 @@
 [hidden]{display:none!important}
 :root{
   color-scheme:light dark;
-  --ink:#000;
-  --ink-2:#5c5c61;
-  --ink-3:#6e6e73;
-  --hanji:#FAF9F5;
-  --page:#F2F2F7;
-  --card:#FFF;
-  --sunk:#F2F2F7;
-  --stone:#AEAEB2;
-  --brass:#0071E3;
-  --brass-deep:#0066CC;
-  --brass-ink:#0066CC;
-  --brass-veil:#E8F1FB;
-  --solid:#0066CC;
-  --cinnabar:#FF3B30;
-  --cinnabar-deep:#C9170C;
-  --cinnabar-veil:#FFF1EF;
-  --line:#C6C6C8;
-  --line-soft:#E5E5EA;
-  --fill:#F2F2F7;
-  --fill-2:#E5E5EA;
+  --ink:#17151C;
+  --ink-2:#45404F;
+  --ink-3:#716879;
+  --hanji:#F4F2F6;
+  --page:#E2DDE7;
+  --card:#F7F5FA;
+  --sunk:#E2DDE7;
+  --stone:#AAA2B3;
+  --brass:#6A5CA0;
+  --brass-deep:#564A82;
+  --brass-ink:#564A82;
+  --brass-veil:#D7D0E0;
+  --solid:#6A5CA0;
+  --cinnabar:#D23A2E;
+  --cinnabar-deep:#B22318;
+  --cinnabar-veil:#F3E4E4;
+  --line:#AAA2B3;
+  --line-soft:#C9C3D1;
+  --fill:#E2DDE7;
+  --fill-2:#D3CDDA;
   --shadow:none;
   --shadow-up:none;
   --r:14px;
   --gut:44px;
 }
 @media(prefers-color-scheme:dark){:root{
-  --ink:#FFF;
-  --ink-2:#A1A1A6;
-  --ink-3:#8E8E93;
-  --page:#000;
-  --card:#1C1C1E;
-  --sunk:#1C1C1E;
-  --stone:#636366;
-  --brass:#0A84FF;
-  --brass-deep:#64A8FF;
-  --brass-ink:#64A8FF;
-  --brass-veil:#0F2A47;
-  --solid:#0A6FE8;
-  --cinnabar:#FF453A;
-  --cinnabar-deep:#FF6961;
-  --cinnabar-veil:#3A1F1D;
-  --line:#38383A;
-  --line-soft:#2C2C2E;
-  --fill:#2C2C2E;
-  --fill-2:#3A3A3C;
+  --ink:#E2DDE7;
+  --ink-2:#AAA2B3;
+  --ink-3:#8E8699;
+  --page:#17151C;
+  --card:#292531;
+  --sunk:#292531;
+  --stone:#716879;
+  --brass:#B5A9D1;
+  --brass-deep:#C4BADD;
+  --brass-ink:#C4BADD;
+  --brass-veil:#2E2740;
+  --solid:#746699;
+  --cinnabar:#FF6B61;
+  --cinnabar-deep:#FF867E;
+  --cinnabar-veil:#3A2420;
+  --line:#45404F;
+  --line-soft:#332E3C;
+  --fill:#292531;
+  --fill-2:#45404F;
 }}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
@@ -80,12 +80,12 @@ a{color:inherit}
 .gate input{width:100%;border:1px solid var(--line);border-radius:var(--r);background:var(--card);color:var(--ink);font-size:16px;padding:13px 14px;margin:0 0 10px;min-height:50px}
 .gate input::placeholder{color:var(--ink-3)}
 .gate .btn{min-height:48px;font-size:14px}
-.gate .btn.solid{display:flex;align-items:center;justify-content:space-between}
+.gate .btn.solid{display:flex;align-items:center;justify-content:center;gap:10px}
 .gate-or{display:flex;align-items:center;gap:12px;margin:28px 0 13px}
 .gate-or:before,.gate-or:after{content:"";height:1px;flex:1;background:var(--line)}
 .gate-or span{white-space:nowrap;font-size:12px;font-weight:500;color:var(--ink-2)}
 .who{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.who button{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:47px;padding:11px 13px;background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:var(--r);font-size:14px;font-weight:500}
+.who button{display:flex;align-items:center;justify-content:center;gap:8px;min-height:47px;padding:11px 13px;background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:var(--r);font-size:14px;font-weight:500}
 .who button:hover{background:var(--fill)}
 .who button i{font-style:normal;color:var(--ink-3)}
 #lockpane .brand-image{width:210px;margin:0 auto}
@@ -253,7 +253,7 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .stx{flex:1;font-size:14px;line-height:1.6}
 .step.done .stx{color:var(--ink-2);text-decoration:line-through;text-decoration-color:var(--stone)}
 .sby{flex:0 0 auto;font-size:12px;color:var(--brass-deep)}
-#donecard .btn{max-width:360px}
+#donecard .btn{max-width:360px;display:block;margin:0 auto}
 
 /* 담당과 기록 */
 .sheet{position:fixed;inset:0;z-index:70;display:flex;align-items:flex-end;justify-content:center}
@@ -335,6 +335,9 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
   .event-plan .btn{font-size:12px;max-width:100%}
   .replacement-confirm .btn{width:100%;margin-right:0}
   .sheet-in{padding-left:22px;padding-right:22px}
+  .etcline{flex-wrap:wrap}
+  .etcline .etcwho{flex:1 1 100%}
+  .etcline input{flex:1 1 100%}
 }
 @media(max-width:360px){
   .phone{padding-left:18px;padding-right:18px}
@@ -373,21 +376,21 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;scroll-behavior:auto!important}}
 
 /* 중양 전용: 기본 차림과 선택 안내를 분리합니다. */
-.jungyang-count{display:inline-block;margin:12px 0 16px;padding:7px 12px;border:1px solid var(--line);border-radius:var(--r);background:var(--brass-veil);color:var(--brass-deep);font-size:14px;font-weight:600}
+.jungyang-count{display:inline-block;margin:12px 0 16px;padding:7px 12px;border:1px solid var(--line);border-radius:var(--r);background:var(--fill);color:var(--ink-2);font-size:14px;font-weight:600}
 .jungyang-guide-card p,.jungyang-guide-card li{font-size:14px;line-height:1.85;color:var(--ink-2)}
 .jungyang-guide-card ul{padding-left:20px;margin:14px 0 0}
 .jungyang-guide-card li+li{margin-top:12px}
 .jungyang-guide-card a{display:inline-block;min-height:44px;padding:6px 0;color:var(--brass-deep);text-underline-offset:4px}
-.jungyang-prayer{margin:18px 0 0;padding:16px 18px;border-left:2px solid var(--brass);background:var(--brass-veil);font-family:"Gowun Batang",serif;font-size:16px;line-height:1.9;white-space:pre-line}
+.jungyang-prayer{margin:18px 0 0;padding:16px 18px;border-left:2px solid var(--brass);background:var(--hanji);font-family:"Gowun Batang",serif;font-size:16px;line-height:1.9;white-space:pre-line}
 .jungyang-chukmun-hanmun{font-family:"Eunhodang Hanja","Noto Serif CJK KR","Noto Serif KR","Gowun Batang",serif;font-size:19px;line-height:2;letter-spacing:.04em;word-break:normal;overflow-wrap:anywhere;white-space:normal}
 .chukmun-line+.chukmun-line{margin-top:16px}
 .chukmun-line.chukmun-stanza{margin-top:30px}
 .jungyang-guide-card .chukmun-original{margin:0;font:inherit;color:var(--ink)}
 .jungyang-guide-card .chukmun-reading,.jungyang-guide-card .chukmun-meaning{margin:2px 0 0;font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;font-size:13px;line-height:1.7;letter-spacing:0;color:var(--ink-2);word-break:keep-all}
 .jungyang-guide-card .chukmun-meaning{margin-top:5px}
-#jungyang-cups-card h3{margin:18px 0 4px;font-size:14px;font-weight:600;color:var(--ink)}
+#jungyang-cups-card h3{margin:18px 0 6px;font-size:17px;font-weight:600;color:var(--ink)}
 #jungyang-cups-card h3+p{margin:0}
-.jungyang-jibang-layout{display:flex;align-items:center;flex-wrap:wrap;gap:24px;margin-top:18px}
+.jungyang-jibang-layout{display:flex;align-items:flex-start;flex-wrap:wrap;gap:24px;margin-top:18px}
 .jungyang-guide-card .jungyang-jibang-preview{display:block;flex:0 0 144px;width:144px;padding:0;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--hanji)}
 .jungyang-jibang-preview img{display:block;width:100%;height:auto}
 .jungyang-jibang-copy{flex:1 1 180px;min-width:0}
@@ -406,7 +409,8 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .ritual-source-list span{font-size:12px}
 
 
-/* Apple HIG 기반 (2026-10-27): 묶음 카드·알약 버튼·텍스트 스타일 단계·유리 막대. 위 규칙 뒤에서 덮어씁니다. */
+/* Apple HIG 기반 (2026-10-27, 팔레트 갱신): 묶음 카드·알약 버튼·텍스트 스타일 단계·유리 막대.
+   색은 :root 토큰(보라빛 회색 6단계 + 회보라 파생 강조 하나)을 쓰며 이 구간은 모양만 덮어씁니다. */
 body{
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Apple SD Gothic Neo","Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;
   font-size:17px;line-height:1.5;letter-spacing:-.01em;
