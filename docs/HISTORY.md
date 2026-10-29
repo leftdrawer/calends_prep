@@ -1,5 +1,16 @@
 # 작업 이력 (HISTORY)
 
+## 2026-10-28 · 앱 아이콘 교체 (놋그릇·초승달)
+
+- 사용자 지시: 새로 만든 이미지(놋그릇에 초승달이 비친 정수, 남색 비단 바탕)의 흰 배경을 제거하고 앱 아이콘으로 교체.
+- 원본: `C:\Users\phlog\OneDrive\바탕 화면\Gemini_Generated_Image_vh9d2nvh9d2nvh9d.png` (2048×2048, 흰 배경 위 둥근 사각형 그림).
+- 처리(Pillow): 흰 여백(콘텐츠 bbox 약 88~1956px)을 잘라 정사각형으로 크롭 → 둥근 사각형 마스크(반경 22%, 4배 슈퍼샘플링 안티앨리어싱)로 흰 배경 제거·모서리 투명 처리 → `assets/icon-512.png`(512), `assets/icon-192.png`(192)로 저장. 모서리 alpha=0, 중앙 alpha=255 확인.
+- 함께 정리: `app.js`의 동적 manifest에서 `background_color`/`theme_color`를 옛 크림색 `#FAF9F5` → 현재 팔레트 밝은 바탕 `#DCE3EF`로 교체. 투명 모서리 아이콘이 `maskable`로 쓰이면 OS가 더 크롭해 놋그릇 테두리가 잘릴 수 있어 `maskable` 항목 제거(`any`만 유지).
+- 참조: `index.html`의 `apple-touch-icon`·`icon`은 `assets/icon-192.png`를 그대로 가리키므로 수정 불필요. app.js manifest는 192·512 둘 다 참조.
+- 백업: 교체 전 아이콘을 `assets/_icon_backup/`에 보관하고 `.gitignore`에 추가(저장소에는 올리지 않음).
+- 검증: `node --check app.js` 통과. `python tests/browser_test.py` **50개 전체 통과(88.017초)**. 생성 아이콘 투명도 확인(모서리 alpha=0, 중앙 alpha=255). 512 결과를 눈으로 확인 — 흰 배경 제거, 둥근 사각형 모서리 투명.
+- 바꾸지 않은 것: 저장/기능/PIN 로직, 팔레트 토큰, 글꼴, 붓글씨 로고·서명·지방 PNG, wordmark 자산.
+
 ## 2026-10-28 · 추석 대체 불가 원칙 재확인 (코드 변경 없음)
 
 - 사용자 지시: "추석은 절대적으로 초하루·추석 두 날을 모두 챙기고, 나머지 명절은 대체될 수 있다"는 로직으로 갈 것.

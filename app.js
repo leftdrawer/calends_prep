@@ -31,11 +31,10 @@
     const m={name:'은호당 초하루 준비', short_name:'초하루',
       description:'초하루와 절기 상차림 장보기',
       start_url:new URL('.',document.baseURI).href, scope:new URL('.',document.baseURI).href, display:'standalone',
-      background_color:'#FAF9F5', theme_color:'#FAF9F5',
+      background_color:'#DCE3EF', theme_color:'#DCE3EF',
       icons:[
         {src:png192, sizes:'192x192', type:'image/png', purpose:'any'},
-        {src:png512, sizes:'512x512', type:'image/png', purpose:'any'},
-        {src:png512, sizes:'512x512', type:'image/png', purpose:'maskable'}
+        {src:png512, sizes:'512x512', type:'image/png', purpose:'any'}
       ]};
     const url=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}));
     const l=document.createElement('link'); l.rel='manifest'; l.href=url;

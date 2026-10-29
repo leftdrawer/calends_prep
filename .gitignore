@@ -14,3 +14,6 @@ _downloaded/
 # Python 테스트 산출물
 __pycache__/
 *.pyc
+
+# 아이콘 교체 전 로컬 백업 (저장소에 올리지 않음)
+assets/_icon_backup/
