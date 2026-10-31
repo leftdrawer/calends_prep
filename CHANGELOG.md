@@ -2,6 +2,13 @@
 
 > 규칙: 상위 `C:\AI Projects\AGENTS.md`. 최신 항목이 위. 이 파일은 요약이고, 자세한 기록(지시·변경·검증·남은 사항)은 이 폴더 `AGENTS.md` 규칙대로 `docs/HISTORY.md`에 있다. 작업할 때 둘 다 갱신한다.
 
+## 2026-11-01 — 코드 위생: 아이콘 투명도·팔레트 대비 회귀 테스트 추가
+
+- 무엇: `tests/browser_test.py`에만 회귀 테스트 3개(아이콘 투명도·크기 Pillow 검사, 라이트/다크 팔레트 WCAG 대비, manifest 아이콘·색 sanity)와 WCAG 대비 헬퍼를 추가. 제품 코드(HTML/CSS/JS/아이콘/글꼴)는 전부 그대로.
+- 왜: 아이콘 흰 배경 재유입·크기 변형, 팔레트 변경에 따른 대비 저하를 자동으로 잡기 위함.
+- 검증: `python tests/browser_test.py` 53개 전체 통과(기존 50 + 신규 3). 자세한 내용은 `docs/HISTORY.md`.
+- 작업자: Kiro / Claude Opus 5.5
+
 ## 2026-10-31 — 빠진 요약 보충 (10-27 밤 ~ 10-30 새벽, `docs/HISTORY.md`에만 있던 것)
 
 - 무엇: 아래 작업은 `docs/HISTORY.md`와 커밋에는 있지만 이 파일에 요약이 없어 옮겨 적음. 코드는 바꾸지 않음.

@@ -17,6 +17,7 @@ from threading import Thread
 import unittest
 from urllib.parse import parse_qs, urlparse
 
+from PIL import Image
 from playwright.sync_api import sync_playwright, expect
 
 
@@ -51,6 +52,31 @@ def legacy_cycle():
              "by": "은호당", "at": "2026-10-01T03:00:00.000Z"},
         ],
     }
+
+
+def parse_rgb(value):
+    """Return (r, g, b) from a computed-style color like 'rgb(60, 76, 110)'."""
+    numbers = [float(n) for n in value.replace("rgba", "").replace("rgb", "").strip("() ").split(",")[:3]]
+    return tuple(numbers)
+
+
+def relative_luminance(rgb):
+    """WCAG 2.x relative luminance for an sRGB 0-255 triple."""
+    channels = []
+    for component in rgb:
+        c = component / 255.0
+        channels.append(c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4)
+    r, g, b = channels
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def contrast_ratio(color_a, color_b):
+    """WCAG contrast ratio between two sRGB 0-255 triples."""
+    lighter = relative_luminance(color_a)
+    darker = relative_luminance(color_b)
+    if lighter < darker:
+        lighter, darker = darker, lighter
+    return (lighter + 0.05) / (darker + 0.05)
 
 
 class QuietHandler(SimpleHTTPRequestHandler):
@@ -1659,6 +1685,90 @@ class BrowserRegression(unittest.TestCase):
                         bounds = target.bounding_box()
                         self.assertGreaterEqual(bounds["width"], 40)
                         self.assertGreaterEqual(bounds["height"], 40)
+
+
+    def test_palette_contrast_stays_accessible_in_light_and_dark(self):
+        # Rendered computed styles catch palette-token regressions that drop
+        # filled-button or body-text contrast below WCAG thresholds. The gate
+        # screen shows #otherbtn (.btn.solid) and body text before any login.
+        page, fixture = self.open_page()
+        expect(page.locator("#gate")).to_be_visible()
+        expect(page.locator("#otherbtn")).to_be_visible()
+        for scheme in ("light", "dark"):
+            with self.subTest(scheme=scheme):
+                page.emulate_media(color_scheme=scheme)
+                measured = page.evaluate("""() => {
+                  const button = document.querySelector('#otherbtn');
+                  const bodyStyle = getComputedStyle(document.body);
+                  const buttonStyle = getComputedStyle(button);
+                  return {
+                    buttonBg: buttonStyle.backgroundColor,
+                    buttonFg: buttonStyle.color,
+                    bodyBg: bodyStyle.backgroundColor,
+                    bodyFg: bodyStyle.color,
+                  };
+                }""")
+                button_ratio = contrast_ratio(parse_rgb(measured["buttonBg"]), parse_rgb(measured["buttonFg"]))
+                body_ratio = contrast_ratio(parse_rgb(measured["bodyBg"]), parse_rgb(measured["bodyFg"]))
+                # Filled CTA against its white label: WCAG AA for large text and
+                # normal text alike. Current palette clears this with margin
+                # (CLAUDE.md records ~8.57:1 light, ~6.80:1 dark).
+                self.assertGreaterEqual(
+                    button_ratio, 4.5,
+                    f"{scheme} filled-button contrast {button_ratio:.2f}:1 below 4.5:1",
+                )
+                # Body ink on page: records note a high-contrast reading surface.
+                self.assertGreaterEqual(
+                    body_ratio, 7.0,
+                    f"{scheme} body-text contrast {body_ratio:.2f}:1 below 7:1",
+                )
+        self.assertEqual(fixture.writes, [])
+
+    def test_manifest_references_current_icons_and_palette_colors(self):
+        page, fixture = self.open_page()
+        manifest = page.evaluate("""async () => {
+          const link = document.querySelector('link[rel="manifest"]');
+          if (!link) return null;
+          const text = await (await fetch(link.href)).text();
+          return JSON.parse(text);
+        }""")
+        self.assertIsNotNone(manifest, "A manifest link must be generated")
+        self.assertEqual(manifest["background_color"], "#DCE3EF")
+        self.assertEqual(manifest["theme_color"], "#DCE3EF")
+        sizes = {icon["sizes"]: icon for icon in manifest["icons"]}
+        self.assertIn("192x192", sizes)
+        self.assertIn("512x512", sizes)
+        self.assertTrue(sizes["192x192"]["src"].endswith("assets/icon-192.png"))
+        self.assertTrue(sizes["512x512"]["src"].endswith("assets/icon-512.png"))
+        self.assertEqual(fixture.writes, [])
+
+
+class AppIconFiles(unittest.TestCase):
+    """Lightweight file-level checks (no browser) guarding the app icons'
+    pixel size and transparent rounded-square shape. These fail if a square
+    white-background icon or a wrong-sized export returns."""
+
+    ICONS = {"assets/icon-192.png": 192, "assets/icon-512.png": 512}
+
+    def test_icons_have_expected_size_transparent_corners_and_opaque_center(self):
+        for relative, expected in self.ICONS.items():
+            with self.subTest(icon=relative):
+                image = Image.open(ROOT / relative).convert("RGBA")
+                width, height = image.size
+                self.assertEqual((width, height), (expected, expected))
+                pixels = image.load()
+                corners = [
+                    pixels[0, 0],
+                    pixels[width - 1, 0],
+                    pixels[0, height - 1],
+                    pixels[width - 1, height - 1],
+                ]
+                for corner in corners:
+                    self.assertEqual(corner[3], 0, f"{relative} corner must be transparent")
+                self.assertGreater(
+                    pixels[width // 2, height // 2][3], 0,
+                    f"{relative} center must be opaque",
+                )
 
 
 if __name__ == "__main__":

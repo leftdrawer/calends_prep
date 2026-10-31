@@ -8,7 +8,7 @@
 - `jibang.html`: 합동지방의 세로 이미지 보기, 전체 화면과 설정 숨기기·PNG 저장
 - `assets/`: PNG 로고·기존 홈 아이콘·`jungyang-jibang-s25-ultra.png` 합동지방
 - `assets/fonts/`: 봉행자 여섯 한자의 `eunhodang-hanja.woff`, 원본·파생 정보 `SOURCE.md`, 라이선스 `OFL.txt`
-- `tests/browser_test.py`: 실제 외부 요청을 차단한 브라우저 회귀 검사
+- `tests/browser_test.py`: 실제 외부 요청을 차단한 브라우저 회귀 검사. Playwright `BrowserRegression` 외에 Pillow로 아이콘 파일을 직접 검사하는 `AppIconFiles`와 WCAG 대비 헬퍼(`parse_rgb`/`relative_luminance`/`contrast_ratio`)를 포함(아이콘 투명도·팔레트 대비·manifest 회귀 방지)
 - `docs/HISTORY.md`: 변경 이력
 - `docs/domain-sangbogi.md`: 명절·대체·자료 호환 규칙
 - `CLAUDE.md`, `DESIGN.md`: 기존 디자인 기준과 외부 참고 자료

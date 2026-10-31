@@ -1,5 +1,19 @@
 # 작업 이력 (HISTORY)
 
+## 2026-11-01 · 코드 위생: 아이콘 투명도·팔레트 대비 회귀 테스트 추가 (제품 코드 불변)
+
+- 사용자 지시: "위생 작업들만 다 해". 기능·디자인·콘텐츠 변경 없이 회귀 방지 테스트만 추가.
+- 무엇을: `tests/browser_test.py`에만 테스트 3개와 모듈 수준 헬퍼를 추가(제품 코드 `index.html`·`styles.css`·`app.js`·`rituals.js`·아이콘·글꼴 모두 그대로).
+  - 앱 아이콘 파일 회귀(`AppIconFiles`, Playwright 없이 Pillow로 직접 파일 검사): `assets/icon-192.png`·`assets/icon-512.png`가 올바른 픽셀 크기(192·512)이고, 네 모서리 픽셀 alpha=0(투명), 중앙 픽셀 alpha>0(불투명)인지 확인. 흰 배경·잘못된 크기가 다시 들어오면 실패.
+  - 팔레트 대비(WCAG) 회귀(`BrowserRegression.test_palette_contrast_stays_accessible_in_light_and_dark`): `page.emulate_media(color_scheme=...)`로 라이트·다크를 각각 에뮬레이트하고, 게이트 화면의 채움 버튼 `#otherbtn`(.btn.solid) 배경 대 흰 글자 대비 ≥4.5:1, 본문 `--ink` on `--page` 대비 ≥7:1을 실제 computed style에서 측정. 측정 색이 바뀌어 기준 아래로 떨어지면 실패.
+  - manifest sanity(`BrowserRegression.test_manifest_references_current_icons_and_palette_colors`): app.js가 생성한 manifest를 fetch해 아이콘이 192·512를 가리키고 background/theme color가 `#DCE3EF`인지 확인.
+  - 헬퍼 `parse_rgb`/`relative_luminance`/`contrast_ratio`를 테스트 파일 상단에 추가(WCAG 2.x 상대휘도 공식).
+- 이유: 아이콘 흰 배경 재유입·크기 틀어짐, 팔레트 토큰 변경으로 인한 대비 저하를 자동으로 잡기 위함. 기존 테스트에는 색/대비/아이콘 투명도 검증이 없었음.
+- 검증: `python tests/browser_test.py` **53개 전체 통과(약 85초)** (기존 50 + 신규 3). 헬퍼 대비값이 CLAUDE.md 기록과 일치 확인(채움버튼 라이트 8.57:1·다크 6.80:1, 본문 ≈14:1). 회귀 포착력 확인: 저대비 색·흰 배경·오크기에 대해 테스트가 실패함을 수동 검증. 외부 요청 차단·합성 라우팅 원칙 유지, 실데이터 미사용, 임시 산출물 없음.
+- 바꾸지 않은 것: 제품 코드 전부(저장/기능/PIN/팔레트/글꼴/자산). 기존 50개 테스트의 동작·의미도 불변(추가만).
+- 남은 사항: 없음.
+- 작업자: Kiro / Claude Opus 5.5
+
 ## 2026-10-31 · CHANGELOG 요약 보충 (문서만)
 
 - 사용자 지시: 전체 진단에서 찾은 빠진 기록을 채울 것("응").
