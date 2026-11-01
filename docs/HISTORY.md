@@ -1,5 +1,13 @@
 # 작업 이력 (HISTORY)
 
+## 2026-11-02 — `.agents/` 작업 메타를 git에서 제외
+
+- 무엇: 11-01 hygiene-tests 작업의 AI 작업 메모(`.agents/tasks/hygiene-tests/`의 notes·review 3개)가 스테이징만 된 채 커밋되지 않고 남아 있었다. 제품 코드가 아닌 작업 메타라 `.gitignore`에 `.agents/`를 더하고 스테이징을 풀었다. 파일은 디스크에 그대로 둔다.
+- 왜: 은호당님이 점검 보고서의 저장소 정리 항목을 승인. fengshui_compass·pilgrimage도 `.agents/`를 ignore한다.
+- 관련 파일: `.gitignore`
+- 작업자: Grok Bot
+- 동기화: 이 항목과 함께 커밋·푸시.
+
 ## 2026-11-01 · 코드 위생: 아이콘 투명도·팔레트 대비 회귀 테스트 추가 (제품 코드 불변)
 
 - 사용자 지시: "위생 작업들만 다 해". 기능·디자인·콘텐츠 변경 없이 회귀 방지 테스트만 추가.
