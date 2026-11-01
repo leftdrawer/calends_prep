@@ -2,6 +2,14 @@
 
 > 규칙: 상위 `C:\AI Projects\AGENTS.md`. 최신 항목이 위. 이 파일은 요약이고, 자세한 기록(지시·변경·검증·남은 사항)은 이 폴더 `AGENTS.md` 규칙대로 `docs/HISTORY.md`에 있다. 작업할 때 둘 다 갱신한다.
 
+## 2026-11-02 — 초하루 팥시루 2개 진설 표기 (육당 외 건립 몫)
+
+- 무엇: `01 · 매번 준비`의 팥시루 항목(`app.js`)에 2개(육당 1·건립 1) 진설 및 "2개 쪄서 육당 외에 건립에도 놓습니다" 표기, `index.html` 카드 안내 노트 보강, `docs/domain-sangbogi.md` 대조표 반영.
+- 왜: 은호당님 지시("calends prep 페이지에서 매번 초하루마다 팥시루만큼은 2개 쪄서 육당 외에 건립에도 놓는다는 걸 표기하고 커밋").
+- 관련 파일: `app.js`, `index.html`, `docs/domain-sangbogi.md`, `docs/HISTORY.md`
+- 작업자: 피클 (Pickle AI 비서)
+- 동기화: 이 항목과 함께 커밋·푸시.
+
 ## 2026-11-02 — `.agents/` 작업 메타를 git에서 제외
 
 - 무엇: 11-01 hygiene-tests 작업의 AI 작업 메모(`.agents/tasks/hygiene-tests/`의 notes·review 3개)가 스테이징만 된 채 커밋되지 않고 남아 있었다. 제품 코드가 아닌 작업 메타라 `.gitignore`에 `.agents/`를 더하고 스테이징을 풀었다. 파일은 디스크에 그대로 둔다.
