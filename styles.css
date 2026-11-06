@@ -476,8 +476,13 @@ h1{font-size:34px;line-height:1.25;font-weight:700;letter-spacing:-.03em}
 .seg button,.shoprow button,.isrcpick button,.sheet-pick button{border:0;background:var(--fill-2);color:var(--ink);font-size:15px}
 .seg button.have[aria-pressed="true"],.seg.plan button[aria-pressed="true"],.shoprow button[aria-pressed="true"],.isrcpick button[aria-pressed="true"],.sheet-pick button[aria-pressed="true"]{background:var(--solid);color:#fff}
 .seg button.buy[aria-pressed="true"]{background:var(--cinnabar-veil);color:var(--cinnabar-deep)}
+/* 신도님 몫: 집(먹빛 채움)·구매(주칠)와 겹치지 않게 흰 바탕에 놋빛 테를 두릅니다 */
+.seg button.gift[aria-pressed="true"]{background:var(--card);color:var(--brass-deep);box-shadow:inset 0 0 0 2px var(--brass-deep);font-weight:600}
 .pill{font-size:14px;padding:6px 12px}
 .pill.on,.pill.on.warn{border-color:transparent}
+/* 진설 자리: 오른 것은 먹빛으로 채우고, 아직 빈 자리는 점선 테만 둡니다 */
+.pill:not(.on){background:transparent;border:1px dashed var(--line);color:var(--ink-2)}
+.pill.on:not(.warn){background:var(--brass);color:var(--card);font-weight:600}
 .newname button{border-radius:999px;font-size:15px}
 
 /* 체크: 미리 알림처럼 동그란 표시 */
@@ -506,6 +511,10 @@ h1{font-size:34px;line-height:1.25;font-weight:700;letter-spacing:-.03em}
   :root{--gut:20px}
   .top{min-height:64px;padding-top:10px;padding-bottom:10px}
   .sign-image{width:auto;max-height:40px}
+  /* 손님 화면은 '보기 전용'까지 한 줄에 서므로, 붓글씨 서명이 먼저 줄어들게 합니다 */
+  .brand-home{min-width:0}
+  .brand-picture,.sign-image{max-width:100%;height:auto}
+  .mepill,#guestbadge{flex:0 0 auto}
   h1{font-size:30px}
   .gate h1{font-size:26px}
   .card{padding:20px 18px 22px;margin-bottom:16px;border-radius:22px}

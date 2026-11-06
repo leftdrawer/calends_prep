@@ -1724,6 +1724,71 @@ class BrowserRegression(unittest.TestCase):
                 )
         self.assertEqual(fixture.writes, [])
 
+    def test_stock_gift_choice_shows_pressed_state_in_light_and_dark(self):
+        # 신도님 몫으로 표시한 재고는 '집에 있음'·'구매'처럼 눌린 색이 보여야 한다.
+        records = {"sangbogi:cycle:2026-10": {
+            "bought": {"ssal": stamp(on=True)}, "stock": {"ssal": stamp(state="gift")},
+            "mode": {}, "part": {}, "memo": {}, "list": {}, "done": {}, "hist": [],
+            "shop": {"ssal": stamp(name="김재이", gift=True)},
+        }}
+        page, fixture = self.open_page(records)
+        self.login(page)
+        self.select_month(page, 10)
+        row = page.locator("#var .row").filter(has_text="생쌀")
+        gift = row.locator(".seg button.gift")
+        expect(gift).to_have_attribute("aria-pressed", "true")
+        for scheme in ("light", "dark"):
+            with self.subTest(scheme=scheme):
+                # 단추 배경에는 0.2초 전환이 있어, 움직임 줄이기로 끄고 바뀐 뒤의 색을 잰다.
+                page.emulate_media(color_scheme=scheme, reduced_motion="reduce")
+                measured = row.evaluate("""row => {
+                  const style = selector => getComputedStyle(row.querySelector(selector));
+                  const on = style('.seg button.gift'), off = style('.seg button.buy');
+                  return {onBg: on.backgroundColor, onFg: on.color, offBg: off.backgroundColor,
+                          onRing: on.boxShadow, offRing: off.boxShadow};
+                }""")
+                self.assertNotEqual(
+                    (measured["onBg"], measured["onRing"]), (measured["offBg"], measured["offRing"]),
+                    f"{scheme}: pressed 신도님 looks the same as an unpressed choice",
+                )
+                ratio = contrast_ratio(parse_rgb(measured["onBg"]), parse_rgb(measured["onFg"]))
+                self.assertGreaterEqual(ratio, 4.5, f"{scheme} pressed 신도님 label contrast {ratio:.2f}:1")
+        self.assertEqual(fixture.writes, [])
+
+    def test_jinseol_placed_pills_stand_apart_from_empty_ones(self):
+        # 진설 자리에서 오른 것과 아직 안 오른 것은 한눈에 갈려야 한다.
+        # 두 칩의 바탕 대비가 WCAG 비텍스트 대비 기준(3:1) 이상이고 글자도 읽혀야 한다.
+        records = {"sangbogi:cycle:2026-10": {
+            "bought": {"ssal": stamp(on=True)}, "stock": {"ssal": stamp(state="have")},
+            "mode": {}, "part": {}, "memo": {}, "shop": {}, "list": {}, "done": {}, "hist": [],
+        }}
+        page, fixture = self.open_page(records, width=390, height=844)
+        self.login(page)
+        self.select_month(page, 10)
+        tiers = page.locator("#tiers")
+        expect(tiers.locator(".pill.on").first).to_be_visible()
+        for scheme in ("light", "dark"):
+            with self.subTest(scheme=scheme):
+                page.emulate_media(color_scheme=scheme, reduced_motion="reduce")
+                measured = tiers.evaluate("""root => {
+                  const solid = el => {
+                    for (let node = el; node; node = node.parentElement) {
+                      const bg = getComputedStyle(node).backgroundColor;
+                      if (bg && bg !== 'transparent' && !/rgba\\(.*, 0\\)$/.test(bg)) return bg;
+                    }
+                    return getComputedStyle(document.body).backgroundColor;
+                  };
+                  const on = root.querySelector('.pill.on:not(.warn)'), off = root.querySelector('.pill:not(.on)');
+                  return {onBg: solid(on), onFg: getComputedStyle(on).color,
+                          offBg: solid(off), offFg: getComputedStyle(off).color};
+                }""")
+                between = contrast_ratio(parse_rgb(measured["onBg"]), parse_rgb(measured["offBg"]))
+                self.assertGreaterEqual(between, 3.0, f"{scheme} placed vs empty pill {between:.2f}:1 ({measured})")
+                for state in ("on", "off"):
+                    text = contrast_ratio(parse_rgb(measured[state + "Bg"]), parse_rgb(measured[state + "Fg"]))
+                    self.assertGreaterEqual(text, 4.5, f"{scheme} {state} pill label {text:.2f}:1")
+        self.assertEqual(fixture.writes, [])
+
     def test_manifest_references_current_icons_and_palette_colors(self):
         page, fixture = self.open_page()
         manifest = page.evaluate("""async () => {
