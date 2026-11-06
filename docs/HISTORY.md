@@ -1,5 +1,21 @@
 # 작업 이력 (HISTORY)
 
+## 2026-11-06 · 신도님 재고 표시·진설 자리 색 구분, 손님 화면 위쪽 넘침 고침
+
+- 사용자 지시: "10월 1일 준비하는 페이지 보면 생쌀을 신도님 김재이님이 보낸 것으로 체크했는데 신도님 칸 색깔이 안변함", "진설 자리에 실제로 진설된 것들과 진설되지 않은 것들 색상 차이가 너무 미묘해서 잘 보이지 않아"
+- 변경 (`styles.css`만, 데이터·저장 키·로직 불변):
+  - 재고 단추 `.seg button.gift[aria-pressed="true"]`: 눌린 색 규칙이 아예 없어(`have`·`buy`에만 있었음) 눌러도 안 눌린 단추와 같은 `--fill-2` 바탕이었음. 카드 바탕(`--card`)에 2px 놋빛 테(`box-shadow:inset 0 0 0 2px var(--brass-deep)`), 글자 `--brass-deep` 굵게. 집(먹빛 채움)·구매(주칠 바탕)와 겹치지 않게 테 모양으로 구분함.
+  - 진설 자리 칩: 오른 것 `--brass-veil`(#CBD4E4) 대 빈 것 `--fill`(#DCE3EF)로 바탕 대비가 라이트 1.16:1, 다크 1.18:1이었음. 빈 자리 `.pill:not(.on)`은 바탕 없이 점선 테(`1px dashed var(--line)`), 오른 것 `.pill.on:not(.warn)`은 `--brass` 채움에 `--card` 글자로 바꿈. `--brass`는 라이트에서 #3C4C6E, 다크에서 #AEBDD6이라 두 모드 모두 대비가 섬. 바탕 대비 라이트 8.06:1, 다크 7.92:1, 글자 대비 오른 것 8.06/7.92, 빈 것 10.19/6.31.
+  - 폭 760px 이하 위쪽 막대: 손님 화면에서 붓글씨 서명(189px)이 줄지 않아 '보기 전용'이 390px 화면 밖으로 6px 밀려났음(11-01 이후 생긴 회귀로, `test_desktop_mobile_and_narrow_layout_gate_and_application`이 main에서 실패하고 있었음. CI는 도메인 테스트만 돌려 못 잡음). `.brand-home{min-width:0}`, `.brand-picture,.sign-image{max-width:100%;height:auto}`, `.mepill,#guestbadge{flex:0 0 auto}`로 서명이 먼저 줄게 함(390px에서 145px).
+- 테스트 (`tests/browser_test.py`에 2개 추가):
+  - `test_stock_gift_choice_shows_pressed_state_in_light_and_dark`: 신도님으로 표시한 생쌀의 눌린 단추가 안 눌린 단추와 다르게 보이는지, 글자 대비 4.5:1 이상인지 라이트·다크에서 잼.
+  - `test_jinseol_placed_pills_stand_apart_from_empty_ones`: 진설 자리에서 오른 칩과 빈 칩의 바탕 대비 3:1(WCAG 비텍스트 대비) 이상, 두 칩 글자 4.5:1 이상인지 잼.
+  - 단추 배경에 0.2초 전환이 있어 `emulate_media(reduced_motion="reduce")`로 끄고 잼(안 끄면 다크 전환 도중 색을 읽음).
+- 검증: 두 새 테스트는 고치기 전 CSS에서 라이트·다크 모두 실패, 고친 뒤 통과. `python tests/browser_test.py` 55개 전체 통과, `node tests/domain_test.cjs` 통과. 390px 화면을 라이트·다크로 찍어 눈으로 확인.
+- 바깥 자료: 쓰지 않음(작은 수정이라 기존 토큰만 씀).
+- 남은 사항: CI(`.github/workflows/test.yml`)가 브라우저 테스트를 돌리지 않아 화면 회귀를 자동으로 못 잡음.
+- 작업자: Claude Code
+
 ## 2026-11-02 · 초하루 팥시루 2개 진설 표기 (육당 외 건립 몫)
 
 - 사용자 지시: "calends prep 페이지에서 매번 초하루마다 팥시루만큼은 2개 쪄서 육당 외에 건립에도 놓는다는 걸 표기하고 커밋"
