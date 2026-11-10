@@ -169,6 +169,42 @@ class GlassPreview(unittest.TestCase):
         data=page.locator('[data-reduced-transparency=true] .lens').evaluate('e=>({blur:getComputedStyle(e).backdropFilter,bg:getComputedStyle(e).backgroundColor})')
         self.assertEqual(data['blur'],'none');self.assertNotEqual(data['bg'],'rgba(0, 0, 0, 0)')
 
+    def test_prismatic_layers_strengthen_only_between_exact_endpoints(self):
+        page=self.open()
+        button=page.locator('#main-switch .glass-switch')
+        self.assertEqual(button.locator('.aura').count(),1)
+        self.assertEqual(button.locator('.spectral-edge').count(),1)
+        self.assertEqual(button.locator('.specular').count(),1)
+        self.assertEqual(button.locator('.counter-fringe').count(),self.state(page)['particleCount'])
+        self.assertAlmostEqual(float(button.evaluate("e=>e.style.getPropertyValue('--kinetic')")),0)
+        r=button.bounding_box()
+        page.mouse.move(r['x']+192,r['y']+54);page.mouse.down()
+        page.mouse.move(r['x']+122,r['y']+54,steps=10)
+        values=button.evaluate("""e=>({
+          kinetic:parseFloat(e.style.getPropertyValue('--kinetic')),
+          fringe:parseFloat(e.style.getPropertyValue('--fringe-opacity')),
+          lamp:parseFloat(e.style.getPropertyValue('--lamp-alpha')),
+          box:e.querySelector('.particles').getBBox().width
+        })""")
+        self.assertGreater(values['kinetic'],.98)
+        self.assertGreater(values['fringe'],.3)
+        self.assertGreater(values['lamp'],.9)
+        self.assertLess(values['box'],72)
+        page.mouse.up();self.settle(page)
+        self.assertEqual(float(button.evaluate("e=>e.style.getPropertyValue('--kinetic')")),0)
+
+    def test_pointer_reflection_resets_and_reduced_motion_disables_follow(self):
+        page=self.open();button=page.locator('#main-switch .glass-switch');r=button.bounding_box()
+        page.mouse.move(r['x']+220,r['y']+72)
+        self.assertEqual(button.evaluate("e=>e.style.getPropertyValue('--hover')"),'1')
+        self.assertNotEqual(button.evaluate("e=>e.style.getPropertyValue('--shine-x')"),'18px')
+        page.mouse.move(5,5)
+        self.assertEqual(button.evaluate("e=>e.style.getPropertyValue('--hover')"),'0')
+        self.assertEqual(button.evaluate("e=>e.style.getPropertyValue('--shine-x')"),'18px')
+        reduced=self.open(reduced=True);r2=reduced.locator('#main-switch .glass-switch').bounding_box()
+        reduced.mouse.move(r2['x']+220,r2['y']+72)
+        self.assertEqual(reduced.locator('#main-switch .glass-switch').evaluate("e=>e.style.getPropertyValue('--hover')"),'')
+
     def test_comparison_panels_are_read_only_and_have_no_focusable_switch(self):
         page=self.open();page.locator('summary').click()
         self.assertEqual(page.locator('.samples button').count(),0)
