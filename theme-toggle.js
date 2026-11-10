@@ -58,114 +58,102 @@
   }
 
   var VERT='attribute vec2 a;void main(){gl_Position=vec4(a,0.0,1.0);}';
-  var FRAG=[
-    'precision mediump float;',
-    'uniform vec2 u_res;',
-    'uniform float u_t;',
-    'uniform vec3 u_page;',
-    'uniform vec3 u_card;',
-    'uniform vec3 u_ink;',
-    'float sdRound(vec2 p, vec2 b, float r){',
-    '  vec2 q=abs(p)-b+r;',
-    '  return length(max(q,0.0))+min(max(q.x,q.y),0.0)-r;',
-    '}',
-    'float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}',
-    'float moonOn(vec2 c){',
-    '  float d=length(c);',
-    '  float bite=length(c-vec2(0.78,0.08));',
-    '  return step(d,1.62)*step(1.05,bite);',
-    '}',
-    'float sunOn(vec2 c){',
-    '  float d=length(c);',
-    '  float disc=step(d,0.78);',
-    '  float ray=step(1.05,d)*step(d,1.62)*step(abs(sin(atan(c.y,c.x)*4.0)),0.42);',
-    '  return max(disc,ray);',
-    '}',
-    'void main(){',
-    '  vec2 frag=vec2(gl_FragCoord.x, u_res.y-gl_FragCoord.y);',
-    '  vec2 center=u_res*0.5;',
-    '  float trackHalfW=u_res.x*0.32;',
-    '  float trackHalfH=min(u_res.y*0.19, trackHalfW*0.30);',
-    '  vec2 track=frag-center;',
-    '  float trackSdf=sdRound(track, vec2(trackHalfW, trackHalfH), trackHalfH);',
-    '  float trackMask=smoothstep(1.2, -0.6, trackSdf);',
-    '  float knob=trackHalfH*0.84;',
-    '  float travel=max(trackHalfW-knob-1.5, 1.0);',
-    '  float slide=clamp(u_t, -0.06, 1.06);',
-    '  vec2 knobCenter=center+vec2(mix(-travel, travel, slide), 0.0);',
-    '  vec2 rel=frag-knobCenter;',
-    '  float glass=sdRound(rel, vec2(knob*0.92, knob*0.92), knob*0.46);',
-    '  float glassMask=smoothstep(1.1, -0.4, glass);',
-    '  float ang=mix(1.5708, 4.7124, clamp(u_t,0.0,1.0));',
-    '  float facing=atan(rel.y, rel.x);',
-    '  float delta=abs(atan(sin(facing-ang), cos(facing-ang)));',
-    '  float rim=smoothstep(knob*0.55, 0.0, abs(length(rel)-knob*0.78));',
-    '  float strip=rim*smoothstep(0.62, 0.0, delta);',
-    '  vec3 night=vec3(0.66,0.76,0.93);',
-    '  vec3 day=vec3(1.0,0.74,0.48);',
-    '  vec3 glow=mix(night, day, clamp(u_t,0.0,1.0));',
-    '  vec3 fringe=mix(vec3(0.55,0.70,0.96), vec3(0.93,0.38,0.32), clamp(u_t,0.0,1.0));',
-    '  float orbit=mix(1.0, -1.0, clamp(u_t,0.0,1.0));',
-    '  float side=smoothstep(-0.15, 0.85, orbit*(rel.y/max(knob,1.0)));',
-    '  float spill=exp(-max(length(rel)-knob*0.55, 0.0)/(knob*1.7))*(0.55+side*0.9+strip);',
-    '  float wash=trackMask*exp(-abs(frag.x-knobCenter.x)/(trackHalfW*0.72))*0.8;',
-    '  vec3 trackCol=mix(u_page, u_card, 0.72);',
-    '  trackCol=mix(trackCol, glow, wash*0.45);',
-    '  float nse=hash(floor(frag*0.5));',
-    '  vec3 frosted=mix(u_page, u_card, 0.55)+glow*(0.08+nse*0.05);',
-    '  float scatter=strip*smoothstep(2.0, -knob, glass);',
-    '  vec3 glassCol=mix(frosted, glow, 0.18+scatter*0.62);',
-    '  vec2 specP=rel/max(knob,1.0)-vec2(-0.34,-0.4);',
-    '  float spec=pow(max(0.0, 1.0-length(specP)), 7.0);',
-    '  glassCol+=vec3(1.0)*spec*0.55;',
-    '  float edge=smoothstep(1.8, 0.0, abs(glass));',
-    '  glassCol+=fringe*edge*0.85;',
-    '  float pix=0.0;',
-    '  float cell=knob*0.36;',
-    '  for(int i=0;i<25;i++){',
-    '    float fi=float(i);',
-    '    vec2 g=vec2(mod(fi,5.0), floor(fi/5.0))-2.0;',
-    '    float m=moonOn(g);',
-    '    float s=sunOn(g);',
-    '    float on=max(m,s);',
-    '    if(on>0.5){',
-    '      float a=atan(g.y, g.x);',
-    '      vec2 from=g;',
-    '      vec2 to=g;',
-    '      if(m>0.5 && s<0.5){to=vec2(cos(a), sin(a))*0.62;}',
-    '      if(s>0.5 && m<0.5){from=vec2(cos(a), sin(a))*1.35+vec2(0.42,0.05);}',
-    '      float delay=fract(a/6.28318+0.5)*0.42;',
-    '      float lt=clamp((clamp(u_t,0.0,1.0)-delay)/0.58, 0.0, 1.0);',
-    '      float spring=lt+sin(lt*3.14159)*0.22*(1.0-lt);',
-    '      vec2 dir=to-from;',
-    '      float dl=length(dir);',
-    '      vec2 nrm=dl>0.001?dir/dl:vec2(0.0,1.0);',
-    '      vec2 perp=vec2(-nrm.y, nrm.x);',
-    '      vec2 pos=mix(from, to, spring)+perp*sin(spring*3.14159)*0.45;',
-    '      vec2 world=knobCenter+pos*cell;',
-    '      vec2 d=abs(frag-world);',
-    '      float dotm=step(d.x, cell*0.42)*step(d.y, cell*0.42);',
-    '      float inside=step(length(world-knobCenter), knob*1.08);',
-    '      pix=max(pix, dotm*inside*on);',
-    '    }',
-    '  }',
-    '  vec3 pixCol=mix(vec3(0.93,0.95,0.98), u_ink, clamp(u_t,0.0,1.0));',
-    '  glassCol=mix(glassCol, pixCol, pix);',
-    '  float shadow=exp(-length(frag-(knobCenter+vec2(0.0, knob*0.35)))/(knob*0.9))*0.28*glassMask;',
-    '  vec3 col=vec3(0.0);',
-    '  float a=0.0;',
-    '  float glowA=clamp(spill*0.9, 0.0, 0.78)*(1.0-glassMask);',
-    '  col+=glow*glowA;',
-    '  a=max(a, glowA);',
-    '  float trackA=trackMask*0.92;',
-    '  col=mix(col, trackCol, trackA);',
-    '  a=max(a, trackA);',
-    '  col=mix(col, vec3(0.02,0.03,0.06), shadow*(1.0-glassMask));',
-    '  col=mix(col, glassCol, glassMask);',
-    '  a=max(a, glassMask);',
-    '  gl_FragColor=vec4(col, a);',
-    '}'
-  ].join('\n');
+  var FRAG=`
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+uniform vec2 u_res;
+uniform float u_t;
+uniform vec3 u_page;
+uniform vec3 u_card;
+uniform vec3 u_ink;
+// CSS 크기와 해상도를 분리: 216 x 96 안의 60px 렌즈, 약 40px 문양.
+float roundBox(vec2 p, vec2 b, float r){
+  vec2 q=abs(p)-b+r;
+  return length(max(q,0.0))+min(max(q.x,q.y),0.0)-r;
+}
+float fill(float d){return 1.0-smoothstep(-0.55,0.55,d);}
+float moon(vec2 c){
+  return step(length(c),3.05)*step(2.75,length(c-vec2(1.35,-0.75)));
+}
+float sun(vec2 c){
+  float disc=step(length(c),1.45);
+  float axis=step(abs(c.x),0.1)*step(2.9,abs(c.y))
+            +step(abs(c.y),0.1)*step(2.9,abs(c.x));
+  float diagonal=step(abs(abs(c.x)-2.0),0.1)*step(abs(abs(c.y)-2.0),0.1);
+  return min(1.0,disc+axis+diagonal);
+}
+void main(){
+  vec2 p=(vec2(gl_FragCoord.x,u_res.y-gl_FragCoord.y)/u_res-0.5)*vec2(216.0,96.0);
+  float phase=clamp(u_t,0.0,1.0);
+  float track=roundBox(p,vec2(92.0,34.0),34.0);
+  float trackMask=fill(track);
+  vec2 q=p-vec2(mix(-58.0,58.0,u_t),0.0);
+  float lens=roundBox(q,vec2(30.0),14.0);
+  float lensMask=fill(lens);
+  float angle=mix(1.570796,4.712389,phase);
+  vec2 lightDir=vec2(cos(angle),sin(angle));
+  vec3 light=mix(vec3(0.49,0.73,1.0),vec3(1.0,0.71,0.40),phase);
+  vec3 glassTint=mix(vec3(0.36,0.54,0.77),vec3(0.83,0.72,0.59),phase);
+  vec2 normal=normalize(vec2(
+    roundBox(q+vec2(0.3,0.0),vec2(30.0),14.0)-roundBox(q-vec2(0.3,0.0),vec2(30.0),14.0),
+    roundBox(q+vec2(0.0,0.3),vec2(30.0),14.0)-roundBox(q-vec2(0.0,0.3),vec2(30.0),14.0)
+  )+vec2(0.0001));
+  float rim=exp(-abs(lens+1.3)*0.62);
+  float bevel=exp(-max(-lens,0.0)*0.16);
+  float lit=max(dot(normal,lightDir),0.0);
+  float halo=exp(-max(lens,0.0)*0.12)*(0.16+0.32*lit)*(1.0-lensMask);
+  vec3 trackColor=mix(u_page,u_card,0.30);
+  trackColor=mix(trackColor,u_ink,0.035+0.055*(1.0-smoothstep(-34.0,34.0,p.y)));
+  trackColor+=light*exp(-length(q)/53.0)*0.10;
+  float trackRim=exp(-abs(track)*1.15);
+  trackColor=mix(trackColor,mix(u_ink,u_card,0.5),trackRim*0.34);
+  float shadow=exp(-max(roundBox(q-vec2(0.0,3.0),vec2(30.0),14.0),0.0)*0.40)*0.24*(1.0-lensMask);
+  trackColor=mix(trackColor,vec3(0.035,0.05,0.08),shadow);
+  vec3 lensColor=mix(u_card,glassTint,0.21);
+  lensColor+=vec3(0.12)*pow(max(0.0,1.0-length((q+vec2(9.0,13.0))/41.0)),3.0);
+  lensColor=mix(lensColor,light,bevel*(0.09+lit*0.23));
+  // 기울어진 렌즈 가장자리에서 문양이 살짝 굴절된다.
+  vec2 refracted=q+normal*pow(bevel,2.0)*1.5;
+  float pixels=0.0;
+  for(int i=0;i<49;i++){
+    float index=float(i);
+    vec2 cell=vec2(mod(index,7.0),floor(index/7.0))-3.0;
+    float m=moon(cell), s=sun(cell);
+    if(max(m,s)>0.5){
+      float a=atan(cell.y+0.001,cell.x+0.001);
+      float delay=fract(a/6.283185+0.5)*0.28;
+      float progress=clamp((phase-delay)/0.72,0.0,1.0);
+      float arc=sin(progress*3.141593);
+      float visible=mix(m,s,progress);
+      vec2 from=cell;
+      vec2 to=cell;
+      if(m<0.5)from=cell*0.5+vec2(-0.8,0.8);
+      if(s<0.5)to=cell*0.5+vec2(0.8,-0.8);
+      vec2 offset=mix(from,to,progress)+vec2(-sin(a),cos(a))*arc*0.65;
+      float dotShape=roundBox(refracted-offset*5.5,vec2(2.2),0.45);
+      pixels=max(pixels,fill(dotShape)*visible);
+    }
+  }
+  vec3 icon=mix(vec3(0.88,0.95,1.0),vec3(0.12,0.17,0.25),phase);
+  lensColor=mix(lensColor,icon,pixels);
+  // 얇은 빛 띠와 반대쪽 이중 굴절 테. 문양 위를 덮지 않는다.
+  lensColor+=light*rim*(0.13+lit*0.62);
+  lensColor+=vec3(0.70,0.85,1.0)*rim*max(-dot(normal,lightDir),0.0)*0.16;
+  float topLine=exp(-abs(q.y+28.0)*1.2)*(1.0-smoothstep(13.0,25.0,abs(q.x)));
+  lensColor+=vec3(0.25)*topLine;
+  // 투명 배경으로 광륜을 합성하고, 트랙과 렌즈는 또렷하게 유지한다.
+  vec3 rgb=light;
+  float alpha=halo;
+  rgb=mix(rgb,trackColor,trackMask);
+  alpha=max(alpha,trackMask*0.98);
+  rgb=mix(rgb,lensColor,lensMask);
+  alpha=max(alpha,lensMask);
+  gl_FragColor=vec4(rgb,alpha);
+}
+`;
 
   function compile(gl, type, src){
     var shader=gl.createShader(type);
@@ -202,8 +190,8 @@
     gl.useProgram(program);
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    // 한 장의 전체 화면 사각형이므로 재혼합하지 않는다. 광륜의 알파를 제곱해 흐리게 만드는 일을 피한다.
+    gl.disable(gl.BLEND);
     return {
       gl:gl,
       loc:{
@@ -266,7 +254,7 @@
     if(held || Math.abs(t-target)>0.004 || Math.abs(vel)>0.004){
       raf=requestAnimationFrame(frame);
     }else{
-      paintTheme(themeOf(target), true);
+      paintTheme(themeOf(target), false);
       views.forEach(draw);
     }
   }
