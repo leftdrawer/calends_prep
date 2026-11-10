@@ -1,239 +1,277 @@
-/* Preview-only glass switch. Native SVG particles under a transparent CSS lens.
-   No canvas, WebGL, network calls, application storage or production imports. */
+/* Preview-only WebGL glass toggle.
+   Same public structure as the reference: one fragment shader, rounded-square
+   glass, chromatic bevel, orbiting light, pixel moon/sun swarm.
+   This is not a copy of that shader file. */
 (function(global){
   'use strict';
-  const SVG='http://www.w3.org/2000/svg';
-  // Hand-defined, reviewable 11x11 glyphs. Endpoints never use a procedural blob.
-  const SUN=[
-    '.....#.....',
-    '.#...#...#.',
-    '..#.....#..',
-    '....###....',
-    '...#####...',
-    '##.#####.##',
-    '...#####...',
-    '....###....',
-    '..#.....#..',
-    '.#...#...#.',
-    '.....#.....'
-  ];
-  const MOON=[
-    '....####...',
-    '..####.....',
-    '.####......',
-    '.###.......',
-    '###........',
-    '###........',
-    '###........',
-    '.###.......',
-    '.####......',
-    '..#####....',
-    '....####...'
-  ];
-  const clamp=(n,min=0,max=1)=>Math.max(min,Math.min(max,n));
-  const lerp=(a,b,t)=>a+(b-a)*t;
-  const ease=t=>t*t*(3-2*t);
-  const rgb=(a,b,t)=>a.map((v,i)=>Math.round(lerp(v,b[i],t)));
-  function points(rows,pitch){
-    const cells=[];
-    rows.forEach((row,y)=>[...row].forEach((c,x)=>{if(c==='#')cells.push({x,y});}));
-    const minX=Math.min(...cells.map(p=>p.x)), maxX=Math.max(...cells.map(p=>p.x));
-    const minY=Math.min(...cells.map(p=>p.y)), maxY=Math.max(...cells.map(p=>p.y));
-    const center={x:(minX+maxX)/2,y:(minY+maxY)/2};
-    return cells.map(p=>({x:(p.x-center.x)*pitch,y:(p.y-center.y)*pitch}))
-      .sort((a,b)=>Math.atan2(a.y,a.x)-Math.atan2(b.y,b.x)||Math.hypot(a.x,a.y)-Math.hypot(b.x,b.y));
+  const VERT='attribute vec2 a;void main(){gl_Position=vec4(a,0.0,1.0);}';
+  const FRAG=`
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+uniform vec2 u_res;
+uniform float u_t;
+uniform vec3 u_page;
+uniform vec3 u_ink;
+float box(vec2 p, vec2 b, float r){
+  vec2 q=abs(p)-b+r;
+  return length(max(q,0.0))+min(max(q.x,q.y),0.0)-r;
+}
+float moon(vec2 c){
+  float d=length(c);
+  float bite=length(c-vec2(1.15,-0.35));
+  return step(d,2.35)*step(1.85,bite);
+}
+float sun(vec2 c){
+  float d=length(c);
+  float disc=step(d,1.15);
+  float ray=step(1.7,d)*step(d,2.45)*step(abs(sin(atan(c.y,c.x)*4.0)),0.42);
+  return max(disc,ray);
+}
+void main(){
+  vec2 frag=vec2(gl_FragCoord.x,u_res.y-gl_FragCoord.y);
+  vec2 p=(frag/u_res-0.5)*vec2(300.0,132.0);
+  float phase=clamp(u_t,-0.04,1.04);
+  float shown=clamp(phase,0.0,1.0);
+  float track=box(p,vec2(118.0,32.0),32.0);
+  float slide=mix(-82.0,82.0,phase);
+  vec2 q=p-vec2(slide,0.0);
+  float lens=box(q,vec2(30.0),12.0);
+  float ang=mix(1.5708,4.7124,shown);
+  vec2 lit=vec2(cos(ang),sin(ang));
+  vec3 glow=mix(vec3(0.45,0.74,1.0),vec3(1.0,0.58,0.22),shown);
+  vec3 cool=vec3(0.62,0.78,1.0);
+  vec4 acc=vec4(0.0);
+  float spill=exp(-max(length(q)-18.0,0.0)/26.0);
+  float toward=smoothstep(-0.15,0.85,dot(normalize(q+0.001),lit));
+  float spillA=spill*(0.22+0.62*toward)*(1.0-smoothstep(-1.0,8.0,lens));
+  acc+=vec4(glow*spillA,spillA);
+  float trackA=smoothstep(1.4,-0.6,track)*0.62;
+  vec3 trackCol=mix(u_page,vec3(1.0),0.04);
+  trackCol+=glow*exp(-abs(p.x-slide)/64.0)*0.55;
+  trackCol=mix(trackCol,glow,exp(-abs(track)*1.4)*0.35);
+  vec4 trackPx=vec4(trackCol*trackA,trackA);
+  acc=trackPx+acc*(1.0-trackPx.a);
+  float glassIn=smoothstep(1.0,-0.2,lens);
+  float frostA=glassIn*0.22;
+  vec3 frost=mix(u_page,glow,0.16);
+  float facing=atan(q.y,q.x);
+  float delta=abs(atan(sin(facing-ang),cos(facing-ang)));
+  float strip=exp(-abs(length(q)-27.0)*0.42)*smoothstep(0.85,0.05,delta);
+  float rimR=exp(-abs(lens-1.6)*0.85);
+  float rimG=exp(-abs(lens)*0.95);
+  float rimB=exp(-abs(lens+1.6)*0.85);
+  vec3 fringe=vec3(rimR,rimG*0.85,rimB)*mix(cool,glow,0.65);
+  float rimA=max(rimR,max(rimG,rimB))*smoothstep(4.0,0.2,abs(lens));
+  vec3 glassCol=frost+glow*strip*1.15+fringe;
+  float spec=pow(max(0.0,1.0-length((q+vec2(10.0,14.0))/34.0)),6.0);
+  glassCol+=vec3(1.0)*spec*0.55;
+  float gA=max(frostA,max(strip*0.92,rimA*0.8));
+  vec4 glassPx=vec4(glassCol*gA,gA);
+  acc=glassPx+acc*(1.0-glassPx.a);
+  float pix=0.0;
+  for(int i=0;i<49;i++){
+    float fi=float(i);
+    vec2 cell=vec2(mod(fi,7.0),floor(fi/7.0))-3.0;
+    float m=moon(cell);
+    float s=sun(cell);
+    if(max(m,s)>0.5){
+      float a=atan(cell.y+0.001,cell.x+0.001);
+      float delay=fract(a/6.28318+0.5)*0.34;
+      float lt=clamp((shown-delay)/0.66,0.0,1.0);
+      float spring=lt+sin(lt*3.14159)*0.22*(1.0-lt);
+      float arc=sin(spring*3.14159);
+      vec2 from=cell;
+      vec2 to=cell;
+      if(m>0.5 && s<0.5) to=vec2(cos(a),sin(a))*1.05;
+      if(s>0.5 && m<0.5) from=vec2(cos(a),sin(a))*2.05+vec2(0.7,-0.2);
+      vec2 pos=mix(from,to,spring)+vec2(-sin(a),cos(a))*arc*0.85;
+      vec2 world=q-pos*4.6;
+      float dotm=step(abs(world.x),1.55)*step(abs(world.y),1.55);
+      float on=max(m*(1.0-spring),s*spring);
+      if(m>0.5 && s>0.5) on=1.0;
+      pix=max(pix,dotm*on);
+    }
   }
-  const day=points(SUN,3.45),night=points(MOON,3.65);
-  const count=Math.max(day.length,night.length);
-  const pairs=Array.from({length:count},(_,i)=>({
-    from:night[Math.floor(i*night.length/count)],
-    to:day[Math.floor(i*day.length/count)],
-    delay:(i/count)*0.22,
-    bend:(i%2===0?1:-1)*(4.5+(i%5)*0.80)
-  }));
+  if(pix>0.4 && lens<2.0){
+    vec3 ink=mix(vec3(0.90,0.95,1.0),u_ink,shown);
+    acc=vec4(ink,1.0);
+  }
+  gl_FragColor=acc;
+}
+`;
 
-  function makeSvg(){
-    const svg=document.createElementNS(SVG,'svg');
-    svg.classList.add('particles');
-    svg.setAttribute('viewBox','0 0 244 108');
-    svg.setAttribute('aria-hidden','true');
-    const fragments=[];
-    pairs.forEach(()=>{
-      const group=document.createElementNS(SVG,'g');
-      const fringe=document.createElementNS(SVG,'rect');
-      const counterFringe=document.createElementNS(SVG,'rect');
-      const pixel=document.createElementNS(SVG,'rect');
-      [fringe,counterFringe,pixel].forEach(el=>{
-        el.setAttribute('width','2.35');el.setAttribute('height','2.35');
-        el.setAttribute('rx','.22');
-        group.appendChild(el);
-      });
-      fringe.classList.add('fringe');
-      counterFringe.classList.add('counter-fringe');
-      pixel.classList.add('pixel');
-      svg.appendChild(group);
-      fragments.push({group,fringe,counterFringe,pixel});
-    });
-    return{svg,fragments};
+  function compile(gl,type,src){
+    const shader=gl.createShader(type);
+    gl.shaderSource(shader,src);
+    gl.compileShader(shader);
+    if(!gl.getShaderParameter(shader,gl.COMPILE_STATUS)){
+      const log=gl.getShaderInfoLog(shader)||'shader';
+      gl.deleteShader(shader);
+      throw new Error(log);
+    }
+    return shader;
   }
 
   function create(mount,options={}){
     const interactive=options.interactive!==false;
     const motion=matchMedia('(prefers-reduced-motion: reduce)');
-    const transparency=matchMedia('(prefers-reduced-transparency: reduce)');
     const button=document.createElement(interactive?'button':'div');
     button.className='glass-switch';
-    if(interactive)button.type='button';else button.setAttribute('role','img');
-    button.innerHTML='<span class="aura" aria-hidden="true"></span><span class="rail" aria-hidden="true"></span><span class="bloom" aria-hidden="true"></span>';
-    const{svg,fragments}=makeSvg();button.appendChild(svg);
-    const lens=document.createElement('span');lens.className='lens';lens.setAttribute('aria-hidden','true');
-    const reflection=document.createElement('span');reflection.className='edge-reflection';lens.appendChild(reflection);
-    const spectral=document.createElement('span');spectral.className='spectral-edge';lens.appendChild(spectral);
-    const specular=document.createElement('span');specular.className='specular';lens.appendChild(specular);
-    button.appendChild(lens);mount.replaceChildren(button);
-    let position=options.initial==='dark'?0:1,target=position,velocity=0,frameId=0,lastTime=0;
-    let pointer=null,dragging=false,startX=0,startPhase=position,ignoreClick=false,destroyed=false;
-    let committed=position>=.5?'light':'dark';
-    const cleanups=[];
-    const blurSupported=CSS.supports('backdrop-filter','blur(1px)')||CSS.supports('-webkit-backdrop-filter','blur(1px)');
-    button.dataset.blurSupported=String(blurSupported);
-    button.dataset.reducedTransparency=String(transparency.matches||options.reducedTransparency===true);
-    button.dataset.implementation='svg-css';
-    button.dataset.effects='prismatic';
+    if(interactive) button.type='button';
+    else button.setAttribute('role','img');
+    const canvas=document.createElement('canvas');
+    canvas.width=600; canvas.height=264; canvas.setAttribute('aria-hidden','true');
+    button.appendChild(canvas);
+    mount.replaceChildren(button);
+    button.dataset.implementation='webgl-glass';
+    let gpu=null;
+    try{
+      const gl=canvas.getContext('webgl',{alpha:true,premultipliedAlpha:true,antialias:true,preserveDrawingBuffer:true});
+      if(!gl) throw new Error('no webgl');
+      const program=gl.createProgram();
+      const vs=compile(gl,gl.VERTEX_SHADER,VERT);
+      const fs=compile(gl,gl.FRAGMENT_SHADER,FRAG);
+      gl.attachShader(program,vs); gl.attachShader(program,fs);
+      gl.bindAttribLocation(program,0,'a');
+      gl.linkProgram(program);
+      if(!gl.getProgramParameter(program,gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program)||'link');
+      const buf=gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+      gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+      gl.useProgram(program);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+      gl.disable(gl.BLEND);
+      gpu={gl,res:gl.getUniformLocation(program,'u_res'),t:gl.getUniformLocation(program,'u_t'),page:gl.getUniformLocation(program,'u_page'),ink:gl.getUniformLocation(program,'u_ink')};
+    }catch(err){
+      button.dataset.shader='fallback';
+      canvas.dataset.shaderError=String(err&&err.message||err);
+    }
+    if(gpu) button.dataset.shader='webgl';
 
-    function render(){
-      const p=clamp(position);
-      const centerX=52+position*140;
-      const kinetic=motion.matches?0:Math.sin(Math.PI*p);
-      const icon=rgb([218,239,255],[31,49,73],p);
-      const lamp=rgb([88,181,255],[247,156,58],p);
-      const spectrum=rgb([163,125,255],[255,109,121],p);
-      button.style.setProperty('--progress',p.toFixed(5));
-      button.style.setProperty('--glass-x',(position*140).toFixed(3)+'px');
-      button.style.setProperty('--lamp-angle',(96-180*p).toFixed(3)+'deg');
-      button.style.setProperty('--lamp-rgb',lamp.join(' '));
-      button.style.setProperty('--spectrum-rgb',spectrum.join(' '));
-      button.style.setProperty('--kinetic',kinetic.toFixed(5));
-      button.style.setProperty('--lamp-alpha',(.92+.08*kinetic).toFixed(5));
-      button.style.setProperty('--fringe-opacity',(.28+.42*kinetic).toFixed(5));
-      button.style.setProperty('--spill-y',(78-56*p).toFixed(2)+'%');
-      button.style.setProperty('--shine-x',(28+44*Math.cos((96-180*p)*Math.PI/180)).toFixed(1)+'px');
-      button.style.setProperty('--shine-y',(24+30*Math.sin((96-180*p)*Math.PI/180)).toFixed(1)+'px');
-      button.style.setProperty('--icon-color','rgb('+icon.join(',')+')');
-      button.style.setProperty('--glass-stroke','rgba('+rgb([166,202,240],[255,255,255],p).join(',')+','+lerp(.27,.56,p).toFixed(3)+')');
-      button.style.setProperty('--track-edge','rgba('+rgb([159,188,228],[49,69,100],p).join(',')+','+lerp(.19,.14,p).toFixed(3)+')');
-      button.style.setProperty('--track-shade',p>.5?'rgba(34,51,80,.035)':'rgba(0,0,0,.15)');
-      button.style.setProperty('--solid-glass',p>.5?'#ced8e8':'#243752');
-      pairs.forEach((pair,i)=>{
-        const z=clamp((p-pair.delay)/.78),s=ease(z),arc=Math.sin(Math.PI*z);
-        const baseX=lerp(pair.from.x,pair.to.x,s),baseY=lerp(pair.from.y,pair.to.y,s);
-        const angle=Math.atan2(baseY,baseX);
-        const flight=arc*(1+kinetic*1.8);
-        let x=baseX-Math.sin(angle)*flight*pair.bend;
-        let y=baseY+Math.cos(angle)*flight*pair.bend;
-        // A subtle optical magnification and bevel bend, not a claim of ray tracing.
-        const radial=clamp(Math.hypot(x,y)/30);
-        const bend=1.035-0.045*radial*radial;
-        x*=bend;y*=bend;
-        const item=fragments[i];
-        item.group.setAttribute('transform','translate('+(centerX+x-1.175).toFixed(3)+' '+(54+y-1.175).toFixed(3)+')');
-        const dispersion=.017+.060*kinetic;
-        item.fringe.setAttribute('x',(x*dispersion).toFixed(3));
-        item.fringe.setAttribute('y',(y*dispersion).toFixed(3));
-        item.counterFringe.setAttribute('x',(-x*dispersion*.85).toFixed(3));
-        item.counterFringe.setAttribute('y',(-y*dispersion*.85).toFixed(3));
-      });
-      button.dataset.phase=p.toFixed(5);
-      if(options.onProgress)options.onProgress(p);
+    let position=options.initial==='dark'?0:1, target=position, velocity=0, frameId=0, lastTime=0;
+    let pointer=null, dragging=false, startX=0, startPhase=position, ignoreClick=false, destroyed=false;
+    let committed=position>=0.5?'light':'dark';
+    const cleanups=[];
+
+    function pageColor(){
+      const raw=getComputedStyle(document.documentElement).getPropertyValue('--page').trim();
+      const hex=/^#([0-9a-fA-F]{6})$/.exec(raw);
+      if(!hex) return [0.86,0.89,0.94];
+      return [1,3,5].map(i=>parseInt(hex[1].slice(i,i+2),16)/255);
+    }
+    function draw(){
+      if(!gpu||!button.getClientRects().length) return;
+      const rect=canvas.getBoundingClientRect();
+      const dpr=Math.min(2,window.devicePixelRatio||1);
+      const w=Math.max(1,Math.round(rect.width*dpr));
+      const h=Math.max(1,Math.round(rect.height*dpr));
+      if(canvas.width!==w||canvas.height!==h){canvas.width=w; canvas.height=h;}
+      const gl=gpu.gl;
+      gl.viewport(0,0,w,h);
+      gl.clearColor(0,0,0,0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.uniform2f(gpu.res,w,h);
+      gl.uniform1f(gpu.t,position);
+      const page=pageColor();
+      gl.uniform3f(gpu.page,page[0],page[1],page[2]);
+      gl.uniform3f(gpu.ink,0.12,0.16,0.24);
+      gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
     }
     function publish(value,notify){
       committed=value;
       button.dataset.mode=value;
-      if(interactive){button.setAttribute('aria-pressed',String(value==='dark'));button.setAttribute('aria-label',value==='dark'?'밝은 화면으로 전환':'어두운 화면으로 전환');}
-      else button.setAttribute('aria-label',value==='dark'?'어두운 상태의 유리 스위치':'밝은 상태의 유리 스위치');
-      if(notify&&options.onChange)options.onChange(value);
+      button.setAttribute('aria-pressed',String(value==='dark'));
+      const label=value==='dark'
+        ?(interactive?'밝은 화면으로 전환':'어두운 상태의 유리 스위치')
+        :(interactive?'어두운 화면으로 전환':'밝은 상태의 유리 스위치');
+      button.setAttribute('aria-label',label);
+      if(notify&&options.onChange) options.onChange(value);
+    }
+    function render(){
+      button.dataset.phase=String(Math.max(0,Math.min(1,position)));
+      button.style.setProperty('--progress',button.dataset.phase);
+      draw();
+      if(options.onProgress) options.onProgress(Math.max(0,Math.min(1,position)));
     }
     function step(now){
       frameId=0;
-      if(destroyed)return;
-      const dt=clamp(lastTime?(now-lastTime)/1000:1/60,.001,.034);lastTime=now;
-      if(motion.matches||dragging){position=target;velocity=0;}
+      if(destroyed) return;
+      const dt=Math.max(0.001,Math.min(0.034,lastTime?(now-lastTime)/1000:1/60));
+      lastTime=now;
+      if(motion.matches||dragging){position=target; velocity=0;}
       else{
-        const omega=16,damping=.62;
+        const omega=18, damping=0.72;
         velocity+=((target-position)*omega*omega-2*damping*omega*velocity)*dt;
         position+=velocity*dt;
       }
-      if(Math.abs(target-position)<.0003&&Math.abs(velocity)<.003){position=target;velocity=0;}
-      position=clamp(position,-.018,1.018);render();
+      if(Math.abs(target-position)<0.0004&&Math.abs(velocity)<0.004){position=target; velocity=0;}
+      position=Math.max(-0.03,Math.min(1.03,position));
+      render();
       const active=position!==target||velocity!==0;
       button.dataset.animating=String(active);
-      if(active)frameId=requestAnimationFrame(step);else lastTime=0;
+      if(active) frameId=requestAnimationFrame(step);
+      else lastTime=0;
     }
-    function wake(){if(!frameId){lastTime=0;frameId=requestAnimationFrame(step);}}
+    function wake(){if(!frameId){lastTime=0; frameId=requestAnimationFrame(step);}}
     function setTheme(value,settings={}){
-      if(value!=='dark'&&value!=='light')throw new Error('Unknown theme');
+      if(value!=='dark'&&value!=='light') throw new Error('Unknown theme');
       target=value==='light'?1:0;
       publish(value,settings.notify!==false);
-      if(settings.immediate||motion.matches){position=target;velocity=0;render();button.dataset.animating='false';}
+      if(settings.immediate||motion.matches){position=target; velocity=0; render(); button.dataset.animating='false';}
       else wake();
     }
-    function settle(notify=true){dragging=false;target=position>=.5?1:0;publish(target===1?'light':'dark',notify);wake();}
-    function listen(targetEl,event,fn,opts){targetEl.addEventListener(event,fn,opts);cleanups.push(()=>targetEl.removeEventListener(event,fn,opts));}
+    function listen(el,event,fn,opts){el.addEventListener(event,fn,opts); cleanups.push(()=>el.removeEventListener(event,fn,opts));}
     if(interactive){
       listen(button,'pointerdown',e=>{
-        if(e.button!==0||pointer!==null)return;
-        pointer=e.pointerId;startX=e.clientX;startPhase=position;dragging=false;ignoreClick=false;
+        if(e.button!==0||pointer!==null) return;
+        pointer=e.pointerId; startX=e.clientX; startPhase=position; dragging=false; ignoreClick=false;
         button.setPointerCapture(pointer);
       });
       listen(button,'pointermove',e=>{
-        if(e.pointerType==='mouse'&&!motion.matches){
-          const r=button.getBoundingClientRect();
-          const localX=e.clientX-r.left-(16+position*140);
-          const localY=e.clientY-r.top-18;
-          button.style.setProperty('--shine-x',(16+clamp(localX/72)*28).toFixed(2)+'px');
-          button.style.setProperty('--shine-y',(10+clamp(localY/72)*22).toFixed(2)+'px');
-          button.style.setProperty('--hover', '1');
-        }
-        if(e.pointerId!==pointer)return;
+        if(e.pointerId!==pointer) return;
         const delta=e.clientX-startX;
-        if(!dragging&&Math.abs(delta)<5)return;
-        dragging=true;ignoreClick=true;target=clamp(startPhase+delta/140);position=target;velocity=0;
-        button.dataset.dragging='true';render();
-      });
-      listen(button,'pointerleave',()=>{
-        button.style.setProperty('--hover','0');
-        button.style.setProperty('--shine-x','18px');
-        button.style.setProperty('--shine-y','14px');
+        if(!dragging&&Math.abs(delta)<5) return;
+        dragging=true; ignoreClick=true;
+        target=Math.max(0,Math.min(1,startPhase+delta/150));
+        position=target; velocity=0; button.dataset.dragging='true'; render();
       });
       listen(button,'pointerup',e=>{
-        if(e.pointerId!==pointer)return;
-        const wasDragging=dragging;pointer=null;button.dataset.dragging='false';
-        if(wasDragging)settle();
+        if(e.pointerId!==pointer) return;
+        const was=dragging; pointer=null; button.dataset.dragging='false';
+        if(was){dragging=false; target=position>=0.5?1:0; publish(target===1?'light':'dark',true); wake();}
       });
       listen(button,'pointercancel',e=>{
-        if(e.pointerId!==pointer)return;
-        pointer=null;dragging=false;ignoreClick=true;button.dataset.dragging='false';
+        if(e.pointerId!==pointer) return;
+        pointer=null; dragging=false; ignoreClick=true; button.dataset.dragging='false';
         setTheme(committed,{notify:false});
       });
       listen(button,'click',e=>{
-        if(ignoreClick&&e.detail!==0){ignoreClick=false;return;}
-        ignoreClick=false;setTheme(target>=.5?'dark':'light');
+        if(ignoreClick&&e.detail!==0){ignoreClick=false; return;}
+        ignoreClick=false; setTheme(target>=0.5?'dark':'light');
       });
       listen(button,'keydown',e=>{
-        if(e.key==='ArrowLeft'||e.key==='ArrowDown'||e.key==='Home'){e.preventDefault();setTheme('dark');}
-        if(e.key==='ArrowRight'||e.key==='ArrowUp'||e.key==='End'){e.preventDefault();setTheme('light');}
+        if(e.key==='ArrowLeft'||e.key==='ArrowDown'||e.key==='Home'){e.preventDefault(); setTheme('dark');}
+        if(e.key==='ArrowRight'||e.key==='ArrowUp'||e.key==='End'){e.preventDefault(); setTheme('light');}
       });
     }
-    const reducedChanged=()=>{if(motion.matches){position=target;velocity=0;render();}};
-    const transparencyChanged=()=>{button.dataset.reducedTransparency=String(transparency.matches||options.reducedTransparency===true);};
-    if(motion.addEventListener){listen(motion,'change',reducedChanged);listen(transparency,'change',transparencyChanged);}
-    publish(committed,false);render();button.dataset.animating='false';
-    return{
+    if(window.ResizeObserver){
+      const ro=new ResizeObserver(()=>draw());
+      ro.observe(button);
+      cleanups.push(()=>ro.disconnect());
+    }
+    publish(committed,false);
+    render();
+    button.dataset.animating='false';
+    return {
       element:button,
       setTheme,
-      getState:()=>({phase:clamp(position),target,mode:committed,dragging,animating:!!frameId,particleCount:count}),
-      destroy(){destroyed=true;cancelAnimationFrame(frameId);cleanups.forEach(fn=>fn());button.remove();}
+      getState:()=>({phase:Math.max(0,Math.min(1,position)),target,mode:committed,dragging,animating:!!frameId,particleCount:49}),
+      destroy(){destroyed=true; cancelAnimationFrame(frameId); cleanups.forEach(fn=>fn()); button.remove();}
     };
   }
-  global.GlassSwitchPreview=Object.freeze({create,glyphs:Object.freeze({sun:SUN,moon:MOON})});
+  global.GlassSwitchPreview=Object.freeze({create});
 })(window);
