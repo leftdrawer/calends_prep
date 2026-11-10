@@ -565,16 +565,18 @@ h1{font-size:34px;line-height:1.25;font-weight:700;letter-spacing:-.03em}
   .sheet-bg{-webkit-backdrop-filter:none;backdrop-filter:none}
 }
 
-/* 유리 밝기 손잡이. 누르는 면은 44px, 빛은 캔버스가 밖으로 새어 나간다. */
-.theme-toggle{position:relative;flex:0 0 auto;width:114px;height:44px;margin:0;padding:0;border:0;border-radius:22px;background:transparent;overflow:visible;touch-action:none;color:var(--ink)}
+/* 밝기 손잡이. 로고 옆에 두고, 캔버스가 비어도 놋빛 테가 보이게 한다. */
+.theme-slot{display:flex;align-items:center;gap:8px;min-height:44px;flex:0 0 auto}
+.theme-slot-lab{font-size:12px;font-weight:600;letter-spacing:.08em;color:var(--ink-2)}
+.gate .theme-slot{margin-top:16px}
+.top>.brand-home{margin-right:12px}
+.top>.theme-slot{margin-right:auto}
+.theme-toggle{position:relative;flex:0 0 auto;width:88px;height:44px;margin:0;padding:0;border:0;border-radius:22px;background:var(--card);box-shadow:inset 0 0 0 1.5px var(--brass);overflow:hidden;touch-action:none;color:var(--ink)}
 .theme-toggle:active:not(:disabled){transform:none}
-.theme-toggle canvas{position:absolute;left:50%;top:50%;width:156px;height:78px;transform:translate(-50%,-50%);pointer-events:none}
-.theme-toggle-gate{position:fixed;z-index:61;top:max(12px, env(safe-area-inset-top));right:max(16px, env(safe-area-inset-right))}
-.theme-toggle[data-shader="fallback"]{background:var(--fill);border-radius:999px}
-.theme-toggle[data-shader="fallback"] canvas{display:none}
-.theme-toggle[data-shader="fallback"]:after{content:"";position:absolute;top:6px;left:6px;width:32px;height:32px;border-radius:10px;background:var(--card);box-shadow:0 0 14px var(--brass)}
+.theme-toggle canvas{position:absolute;inset:0;width:100%;height:100%;transform:none;pointer-events:none}
+.theme-toggle[data-shader="fallback"]:after{content:"";position:absolute;top:6px;left:6px;width:32px;height:32px;border-radius:10px;background:var(--fill-2);box-shadow:0 0 0 1px var(--brass)}
 .theme-toggle[data-shader="fallback"][aria-pressed="false"]:after{left:calc(100% - 38px)}
 @media(max-width:760px){
-  .theme-toggle{width:84px}
-  .theme-toggle canvas{width:116px;height:64px}
+  .theme-toggle{width:72px}
+  .theme-slot-lab{font-size:11px}
 }

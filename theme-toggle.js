@@ -339,6 +339,10 @@
     draw(view);
   }
 
+  function redraw(){
+    views.forEach(function(view){resize(view); draw(view);});
+  }
+
   function boot(){
     var saved=storedTheme();
     var theme=saved||systemTheme();
@@ -351,6 +355,13 @@
       view.button.setAttribute('aria-label', labelFor(theme));
     });
     views.forEach(draw);
+    if(window.MutationObserver){
+      var mo=new MutationObserver(redraw);
+      ['gate','app'].forEach(function(id){
+        var el=document.getElementById(id);
+        if(el)mo.observe(el, {attributes:true, attributeFilter:['hidden']});
+      });
+    }
     var mq=window.matchMedia('(prefers-color-scheme: dark)');
     var onScheme=function(){
       if(storedTheme())return;
