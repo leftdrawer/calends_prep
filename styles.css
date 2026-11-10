@@ -27,7 +27,7 @@
   --r:14px;
   --gut:44px;
 }
-@media(prefers-color-scheme:dark){:root{
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --ink:#DCE3EF;
   --ink-2:#98A9C4;
   --ink-3:#7F90AC;
@@ -48,6 +48,29 @@
   --fill:#1E263B;
   --fill-2:#303D59;
 }}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ink:#DCE3EF;
+  --ink-2:#98A9C4;
+  --ink-3:#7F90AC;
+  --page:#111522;
+  --card:#1E263B;
+  --sunk:#1E263B;
+  --stone:#536684;
+  --brass:#AEBDD6;
+  --brass-deep:#C4D0E4;
+  --brass-ink:#C4D0E4;
+  --brass-veil:#28324A;
+  --solid:#4A5B7E;
+  --cinnabar:#FF6B61;
+  --cinnabar-deep:#FF867E;
+  --cinnabar-veil:#3A2420;
+  --line:#303D59;
+  --line-soft:#283347;
+  --fill:#1E263B;
+  --fill-2:#303D59;
+}
+:root[data-theme="light"]{color-scheme:light}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
 body{
@@ -534,8 +557,24 @@ h1{font-size:34px;line-height:1.25;font-weight:700;letter-spacing:-.03em}
   #guestbadge{font-size:12px;padding-left:8px}
 }
 /* 검은 붓글씨 서명이 다크 배경에 묻히지 않도록 */
-@media(prefers-color-scheme:dark){.sign-image,.brand-image{filter:invert(1)}}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .sign-image,:root:not([data-theme="light"]) .brand-image{filter:invert(1)}}
+:root[data-theme="dark"] .sign-image,:root[data-theme="dark"] .brand-image{filter:invert(1)}
+:root[data-theme="light"] .sign-image,:root[data-theme="light"] .brand-image{filter:none}
 @media(prefers-reduced-transparency:reduce){
   .top{background:var(--page);-webkit-backdrop-filter:none;backdrop-filter:none}
   .sheet-bg{-webkit-backdrop-filter:none;backdrop-filter:none}
+}
+
+/* 유리 밝기 손잡이. 누르는 면은 44px, 빛은 캔버스가 밖으로 새어 나간다. */
+.theme-toggle{position:relative;flex:0 0 auto;width:114px;height:44px;margin:0;padding:0;border:0;border-radius:22px;background:transparent;overflow:visible;touch-action:none;color:var(--ink)}
+.theme-toggle:active:not(:disabled){transform:none}
+.theme-toggle canvas{position:absolute;left:50%;top:50%;width:156px;height:78px;transform:translate(-50%,-50%);pointer-events:none}
+.theme-toggle-gate{position:fixed;z-index:61;top:max(12px, env(safe-area-inset-top));right:max(16px, env(safe-area-inset-right))}
+.theme-toggle[data-shader="fallback"]{background:var(--fill);border-radius:999px}
+.theme-toggle[data-shader="fallback"] canvas{display:none}
+.theme-toggle[data-shader="fallback"]:after{content:"";position:absolute;top:6px;left:6px;width:32px;height:32px;border-radius:10px;background:var(--card);box-shadow:0 0 14px var(--brass)}
+.theme-toggle[data-shader="fallback"][aria-pressed="false"]:after{left:calc(100% - 38px)}
+@media(max-width:760px){
+  .theme-toggle{width:84px}
+  .theme-toggle canvas{width:116px;height:64px}
 }
