@@ -49,7 +49,7 @@
     from:night[Math.floor(i*night.length/count)],
     to:day[Math.floor(i*day.length/count)],
     delay:(i/count)*0.22,
-    bend:(i%2===0?1:-1)*(1.5+(i%5)*0.33)
+    bend:(i%2===0?1:-1)*(4.5+(i%5)*0.80)
   }));
 
   function makeSvg(){
@@ -61,16 +61,18 @@
     pairs.forEach(()=>{
       const group=document.createElementNS(SVG,'g');
       const fringe=document.createElementNS(SVG,'rect');
+      const counterFringe=document.createElementNS(SVG,'rect');
       const pixel=document.createElementNS(SVG,'rect');
-      [fringe,pixel].forEach(el=>{
+      [fringe,counterFringe,pixel].forEach(el=>{
         el.setAttribute('width','2.35');el.setAttribute('height','2.35');
         el.setAttribute('rx','.22');
         group.appendChild(el);
       });
       fringe.classList.add('fringe');
+      counterFringe.classList.add('counter-fringe');
       pixel.classList.add('pixel');
       svg.appendChild(group);
-      fragments.push({group,fringe,pixel});
+      fragments.push({group,fringe,counterFringe,pixel});
     });
     return{svg,fragments};
   }
@@ -82,10 +84,12 @@
     const button=document.createElement(interactive?'button':'div');
     button.className='glass-switch';
     if(interactive)button.type='button';else button.setAttribute('role','img');
-    button.innerHTML='<span class="rail" aria-hidden="true"></span><span class="bloom" aria-hidden="true"></span>';
+    button.innerHTML='<span class="aura" aria-hidden="true"></span><span class="rail" aria-hidden="true"></span><span class="bloom" aria-hidden="true"></span>';
     const{svg,fragments}=makeSvg();button.appendChild(svg);
     const lens=document.createElement('span');lens.className='lens';lens.setAttribute('aria-hidden','true');
     const reflection=document.createElement('span');reflection.className='edge-reflection';lens.appendChild(reflection);
+    const spectral=document.createElement('span');spectral.className='spectral-edge';lens.appendChild(spectral);
+    const specular=document.createElement('span');specular.className='specular';lens.appendChild(specular);
     button.appendChild(lens);mount.replaceChildren(button);
     let position=options.initial==='dark'?0:1,target=position,velocity=0,frameId=0,lastTime=0;
     let pointer=null,dragging=false,startX=0,startPhase=position,ignoreClick=false,destroyed=false;
@@ -95,16 +99,26 @@
     button.dataset.blurSupported=String(blurSupported);
     button.dataset.reducedTransparency=String(transparency.matches||options.reducedTransparency===true);
     button.dataset.implementation='svg-css';
+    button.dataset.effects='prismatic';
 
     function render(){
       const p=clamp(position);
       const centerX=52+position*140;
+      const kinetic=motion.matches?0:Math.sin(Math.PI*p);
       const icon=rgb([218,239,255],[31,49,73],p);
-      const lamp=rgb([121,191,255],[226,151,68],p);
+      const lamp=rgb([88,181,255],[247,156,58],p);
+      const spectrum=rgb([163,125,255],[255,109,121],p);
       button.style.setProperty('--progress',p.toFixed(5));
       button.style.setProperty('--glass-x',(position*140).toFixed(3)+'px');
       button.style.setProperty('--lamp-angle',(96-180*p).toFixed(3)+'deg');
       button.style.setProperty('--lamp-rgb',lamp.join(' '));
+      button.style.setProperty('--spectrum-rgb',spectrum.join(' '));
+      button.style.setProperty('--kinetic',kinetic.toFixed(5));
+      button.style.setProperty('--lamp-alpha',(.92+.08*kinetic).toFixed(5));
+      button.style.setProperty('--fringe-opacity',(.28+.42*kinetic).toFixed(5));
+      button.style.setProperty('--spill-y',(78-56*p).toFixed(2)+'%');
+      button.style.setProperty('--shine-x',(28+44*Math.cos((96-180*p)*Math.PI/180)).toFixed(1)+'px');
+      button.style.setProperty('--shine-y',(24+30*Math.sin((96-180*p)*Math.PI/180)).toFixed(1)+'px');
       button.style.setProperty('--icon-color','rgb('+icon.join(',')+')');
       button.style.setProperty('--glass-stroke','rgba('+rgb([166,202,240],[255,255,255],p).join(',')+','+lerp(.27,.56,p).toFixed(3)+')');
       button.style.setProperty('--track-edge','rgba('+rgb([159,188,228],[49,69,100],p).join(',')+','+lerp(.19,.14,p).toFixed(3)+')');
@@ -114,16 +128,20 @@
         const z=clamp((p-pair.delay)/.78),s=ease(z),arc=Math.sin(Math.PI*z);
         const baseX=lerp(pair.from.x,pair.to.x,s),baseY=lerp(pair.from.y,pair.to.y,s);
         const angle=Math.atan2(baseY,baseX);
-        let x=baseX-Math.sin(angle)*arc*pair.bend;
-        let y=baseY+Math.cos(angle)*arc*pair.bend;
+        const flight=arc*(1+kinetic*1.8);
+        let x=baseX-Math.sin(angle)*flight*pair.bend;
+        let y=baseY+Math.cos(angle)*flight*pair.bend;
         // A subtle optical magnification and bevel bend, not a claim of ray tracing.
         const radial=clamp(Math.hypot(x,y)/30);
         const bend=1.035-0.045*radial*radial;
         x*=bend;y*=bend;
         const item=fragments[i];
         item.group.setAttribute('transform','translate('+(centerX+x-1.175).toFixed(3)+' '+(54+y-1.175).toFixed(3)+')');
-        item.fringe.setAttribute('x',(x*0.017).toFixed(3));
-        item.fringe.setAttribute('y',(y*0.012).toFixed(3));
+        const dispersion=.017+.060*kinetic;
+        item.fringe.setAttribute('x',(x*dispersion).toFixed(3));
+        item.fringe.setAttribute('y',(y*dispersion).toFixed(3));
+        item.counterFringe.setAttribute('x',(-x*dispersion*.85).toFixed(3));
+        item.counterFringe.setAttribute('y',(-y*dispersion*.85).toFixed(3));
       });
       button.dataset.phase=p.toFixed(5);
       if(options.onProgress)options.onProgress(p);
@@ -141,7 +159,7 @@
       const dt=clamp(lastTime?(now-lastTime)/1000:1/60,.001,.034);lastTime=now;
       if(motion.matches||dragging){position=target;velocity=0;}
       else{
-        const omega=20,damping=.81;
+        const omega=16,damping=.62;
         velocity+=((target-position)*omega*omega-2*damping*omega*velocity)*dt;
         position+=velocity*dt;
       }
@@ -168,11 +186,24 @@
         button.setPointerCapture(pointer);
       });
       listen(button,'pointermove',e=>{
+        if(e.pointerType==='mouse'&&!motion.matches){
+          const r=button.getBoundingClientRect();
+          const localX=e.clientX-r.left-(16+position*140);
+          const localY=e.clientY-r.top-18;
+          button.style.setProperty('--shine-x',(16+clamp(localX/72)*28).toFixed(2)+'px');
+          button.style.setProperty('--shine-y',(10+clamp(localY/72)*22).toFixed(2)+'px');
+          button.style.setProperty('--hover', '1');
+        }
         if(e.pointerId!==pointer)return;
         const delta=e.clientX-startX;
         if(!dragging&&Math.abs(delta)<5)return;
         dragging=true;ignoreClick=true;target=clamp(startPhase+delta/140);position=target;velocity=0;
         button.dataset.dragging='true';render();
+      });
+      listen(button,'pointerleave',()=>{
+        button.style.setProperty('--hover','0');
+        button.style.setProperty('--shine-x','18px');
+        button.style.setProperty('--shine-y','14px');
       });
       listen(button,'pointerup',e=>{
         if(e.pointerId!==pointer)return;
