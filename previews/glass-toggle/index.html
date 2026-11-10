@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#DCE3EF">
+  <meta name="robots" content="noindex,nofollow">
+  <title>은호당 · 유리 스위치 미리보기</title>
+  <link rel="icon" href="../../assets/icon-192.png">
+  <link rel="stylesheet" href="preview.css?v=1">
+  <script src="glass-switch.js?v=1" defer></script>
+  <script src="preview.js?v=1" defer></script>
+</head>
+<body>
+  <header class="preview-header">
+    <a href="../../">은호당 상차림</a>
+    <span>별도 미리보기 · 운영 미반영</span>
+  </header>
+  <main>
+    <section class="stage" aria-label="밝기 스위치 미리보기">
+      <img class="brand" src="../../assets/wordmark.png" alt="은호당" width="260">
+      <p class="brand-label">상차림 기록</p>
+      <h1>밝기</h1>
+      <div class="switch-mount" id="main-switch"></div>
+      <p class="current-mode" id="mode-label" aria-live="polite">밝은 화면</p>
+      <p class="hint">눌러서 바꾸거나, 유리를 천천히 끌어보세요.</p>
+      <div class="mode-actions" aria-label="밝기 선택">
+        <button type="button" id="choose-dark">어두운 화면</button>
+        <button type="button" id="choose-light">밝은 화면</button>
+      </div>
+    </section>
+    <details class="checks">
+      <summary>두 상태와 투명 배경 확인</summary>
+      <p class="check-intro">배경이 유리를 통해 이어지는지 비교하는 정지 예시입니다.</p>
+      <div class="samples">
+        <section class="sample sample-light" data-sample="light">
+          <h2>밝은 화면</h2>
+          <div class="switch-mount" id="light-sample"></div>
+        </section>
+        <section class="sample sample-dark" data-sample="dark">
+          <h2>어두운 화면</h2>
+          <div class="switch-mount" id="dark-sample"></div>
+        </section>
+      </div>
+      <div class="background-controls" role="group" aria-label="예시 배경">
+        <button type="button" data-background="plain" aria-pressed="true">단색</button>
+        <button type="button" data-background="grid" aria-pressed="false">격자</button>
+        <button type="button" data-background="stripes" aria-pressed="false">대비 줄무늬</button>
+      </div>
+      <p class="implementation-note">이 버전은 투명한 SVG·CSS 층을 사용합니다. 원본과 같은 WebGL 광학 구현은 아니며, 바탕 흐림·가장자리 반사와 문양 위치 변형으로 렌즈를 표현합니다. 외관은 이 미리보기에서 확인하신 뒤 운영에 반영합니다.</p>
+    </details>
+  </main>
+  <footer>
+    <a href="https://experiments.thisiswhitespace.com/glass-light-toggle" target="_blank" rel="noopener noreferrer">원본 참고</a>
+    <span>준비 기록·기존 밝기 설정은 바꾸지 않습니다.</span>
+  </footer>
+</body>
+</html>

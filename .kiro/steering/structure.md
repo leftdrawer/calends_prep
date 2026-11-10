@@ -15,6 +15,12 @@
 - `docs/domain-sangbogi.md`: 명절·대체·자료 호환 규칙
 - `CLAUDE.md`, `DESIGN.md`: 기존 디자인 기준과 외부 참고 자료
 
+## 별도 디자인 미리보기
+
+- `previews/glass-toggle/`: 운영과 독립된 유리 스위치 외관 검토 페이지. SVG/CSS 렌즈이며 WebGL 원본과 구현이 다릅니다. app.js를 로드하지 않고 별도 localStorage 키만 사용합니다.
+- `tests/glass_preview_test.py`: 캡처 없이 크기·도안·투명층·조작·저장 격리·모션/투명도 설정 검사.
+- 운영 버튼 교체는 이 미리보기의 외관을 사용자에게 확인받은 뒤 진행합니다.
+
 ## 데이터와 일정
 
 - `HOLIDAYS`: 달별 명절, 고정일/택일/절기와 안정적인 저장 id
