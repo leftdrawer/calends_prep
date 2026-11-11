@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>은호당 · 유리 스위치</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #121214; overflow: hidden; }
+  body { height: 100dvh; }
+  canvas { position: fixed; left: 0; top: 0; display: block; }
+  #over { pointer-events: none; }
+  #sw { position: fixed; margin: 0; padding: 0; border: 0; background: transparent; border-radius: 999px; pointer-events: none; }
+  #sw:focus-visible { outline: 2px solid #8ab4ff; outline-offset: 6px; }
+  .cap #credits, .cap #sw { display: none; }
+  #credits { position: fixed; right: max(12px, env(safe-area-inset-right)); bottom: max(10px, env(safe-area-inset-bottom)); font: 12px/1.4 system-ui, sans-serif; color: rgba(160,160,170,.75); text-decoration: none; padding: 14px 8px; }
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<canvas id="over"></canvas>
+<button id="sw" role="switch" aria-checked="false" aria-label="Dark mode / light mode"></button>
+<a id="credits" href="credits.html">credits</a>
+<script>if (new URLSearchParams(location.search).get("mode") === "capture") document.documentElement.classList.add("cap");</script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
