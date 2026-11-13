@@ -6,8 +6,6 @@ import { createRenderer, iconDots } from "./assets/duskdot/render.js";
 
 const KEY = "sangbogi:theme";
 const PAD = 56;
-const CSS_W = 178;
-const CSS_H = 112;
 const STEP = 1 / 240;
 const DATA = new URL("./assets/duskdot/data/", import.meta.url).href;
 
@@ -65,14 +63,23 @@ function shownTheme() {
   return systemTheme();
 }
 
+function mixPage(p) {
+  const light = [220, 227, 239];
+  const dark = [17, 21, 34];
+  const c = light.map((v, i) => Math.round(v * p + dark[i] * (1 - p)));
+  return "rgb(" + c[0] + ", " + c[1] + ", " + c[2] + ")";
+}
+function syncProgress(p) {
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let shown = reduced ? (p >= 0.5 ? 1 : 0) : p;
+  if (shown < 0) shown = 0;
+  if (shown > 1) shown = 1;
+  document.documentElement.style.setProperty("--theme-p", shown.toFixed(3));
+  const moving = shown > 0.004 && shown < 0.996;
+  if (choice || moving) document.documentElement.style.setProperty("--page-live", mixPage(shown));
+  else document.documentElement.style.removeProperty("--page-live");
+}
 buttons.forEach((button) => {
-  button.style.width = CSS_W + "px";
-  button.style.height = CSS_H + "px";
-  const canvas = button.querySelector("canvas");
-  if (canvas) {
-    canvas.style.width = CSS_W + "px";
-    canvas.style.height = CSS_H + "px";
-  }
   button.addEventListener("keydown", (e) => {
     if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
       e.preventDefault();
@@ -190,16 +197,21 @@ let cropW = 1;
 function draw() {
   if (!renderer) return;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const W = Math.max(1, Math.round(CSS_W * dpr));
-  const H = Math.max(1, Math.round(CSS_H * dpr));
-  if (buffer.width !== W || buffer.height !== H) {
-    buffer.width = W;
-    buffer.height = H;
-  }
   const snap = sim.snapshot();
-  renderer.draw(snap, iconDots(P, snap, RNG), W / cropW, origin);
+  syncProgress(snap.p);
+  const dots = iconDots(P, snap, RNG);
   views.forEach((view) => {
     if (!view.button.getClientRects().length) return;
+    const cssW = view.canvas.clientWidth;
+    const cssH = view.canvas.clientHeight;
+    if (cssW < 2 || cssH < 2) return;
+    const W = Math.max(1, Math.round(cssW * dpr));
+    const H = Math.max(1, Math.round(cssH * dpr));
+    if (buffer.width !== W || buffer.height !== H) {
+      buffer.width = W;
+      buffer.height = H;
+    }
+    renderer.draw(snap, dots, W / cropW, origin);
     if (view.canvas.width !== W || view.canvas.height !== H) {
       view.canvas.width = W;
       view.canvas.height = H;
@@ -281,6 +293,7 @@ async function main() {
     if (live) live.remove();
     const theme = systemTheme();
     sim.setOn(theme === "light");
+    syncProgress(theme === "light" ? 1 : 0);
     updateAria(theme);
     wake();
   };

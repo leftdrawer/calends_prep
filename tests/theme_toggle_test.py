@@ -67,41 +67,54 @@ class ThemeToggleRegression(unittest.TestCase):
         expect(page.locator("#gate .theme-toggle")).to_have_attribute("data-shader", "fallback" if fallback else "webgl2")
         return page
 
-    def assert_layout(self, page, selector):
+    def assert_layout(self, page, selector, width, height):
         metrics = page.locator(selector).evaluate("""el => {
           const r=el.getBoundingClientRect(), c=el.querySelector('canvas');
           const cs=getComputedStyle(el), cr=c.getBoundingClientRect();
-          const px=c.getContext('2d').getImageData(1,1,1,1).data;
-          const mid=c.getContext('2d').getImageData(Math.floor(c.width/2), Math.floor(c.height/2), 1, 1).data;
-          return {w:r.width,h:r.height,left:r.left,right:r.right,viewport:innerWidth,
+          const ctx=c.getContext('2d');
+          const px=ctx.getImageData(1,1,1,1).data;
+          const edge=ctx.getImageData(Math.floor(c.width/2), 1, 1, 1).data;
+          const data=ctx.getImageData(0,0,c.width,c.height).data;
+          let maxA=0;
+          for (let i=3;i<data.length;i+=16) if (data[i]>maxA) maxA=data[i];
+          const lab=el.parentElement.querySelector('.theme-slot-lab');
+          const lr=lab?lab.getBoundingClientRect():r;
+          return {w:r.width,h:r.height,left:r.left,right:r.right,top:r.top,viewport:innerWidth,
             canvasW:cr.width,canvasH:cr.height,bufferW:c.width,bufferH:c.height,
             overflow:document.documentElement.scrollWidth>innerWidth+1,
             background:cs.backgroundColor,shadow:cs.boxShadow,
-            corner:[...px], mid:[...mid]};
+            corner:[...px], edgeA:edge[3], maxA,
+            labelDy: lab ? (lr.top+lr.height/2) - (r.top+r.height/2) : 0};
         }""")
-        self.assertEqual(metrics["w"], 178)
-        self.assertEqual(metrics["h"], 112)
-        self.assertGreaterEqual(metrics["left"], 0)
+        self.assertEqual(metrics["w"], width)
+        self.assertEqual(metrics["h"], height)
+        self.assertGreaterEqual(metrics["left"], -1)
         self.assertLessEqual(metrics["right"], metrics["viewport"] + 1)
         self.assertFalse(metrics["overflow"])
-        self.assertEqual(metrics["canvasW"], 178)
-        self.assertEqual(metrics["canvasH"], 112)
+        self.assertEqual(metrics["canvasW"], width)
+        self.assertEqual(metrics["canvasH"], height)
         self.assertEqual(metrics["background"], "rgba(0, 0, 0, 0)")
         self.assertEqual(metrics["shadow"], "none")
         self.assertEqual(metrics["corner"], [0, 0, 0, 0])
-        self.assertEqual(metrics["mid"][3], 255)
+        self.assertLessEqual(metrics["edgeA"], 8)
+        self.assertGreaterEqual(metrics["maxA"], 240)
+        self.assertLessEqual(abs(metrics["labelDy"]), 8)
         return metrics
 
     def test_switch_fits_header_without_a_box_or_overflow(self):
         for width, dpr in ((1440, 1), (390, 1), (320, 2), (280, 2)):
             with self.subTest(width=width, dpr=dpr):
                 page = self.open(width=width, dpr=dpr)
-                m = self.assert_layout(page, "#gate .theme-toggle")
+                m = self.assert_layout(page, "#gate .theme-toggle", 178, 112)
                 self.assertEqual(m["bufferW"], 178 * dpr)
                 self.assertEqual(m["bufferH"], 112 * dpr)
                 page.evaluate("document.querySelector('#gate').hidden=true; document.querySelector('#app').hidden=false")
-                page.wait_for_function("document.querySelector('.top canvas').width === 178 * Math.min(2, devicePixelRatio)")
-                self.assert_layout(page, ".top .theme-toggle")
+                header = (124, 78) if width <= 760 else (178, 112)
+                page.wait_for_function(
+                    "([w,h]) => { const c=document.querySelector('.top canvas'); return c && c.width===w*Math.min(2,devicePixelRatio) && c.height===h*Math.min(2,devicePixelRatio); }",
+                    arg=list(header),
+                )
+                self.assert_layout(page, ".top .theme-toggle", *header)
                 overlap = page.evaluate("""() => {
                   const a=document.querySelector('.top .theme-slot').getBoundingClientRect();
                   const b=document.querySelector('#changeme').getBoundingClientRect();
@@ -117,6 +130,7 @@ class ThemeToggleRegression(unittest.TestCase):
         btn.click()
         expect(page.locator('html')).to_have_attribute('data-theme', 'dark')
         self.assertEqual(page.evaluate("localStorage.getItem('sangbogi:theme')"), 'dark')
+        self.assertEqual(page.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--theme-p').trim()"), '0.000')
         expect(btn).to_have_attribute('aria-pressed', 'true')
         expect(btn).to_have_attribute('aria-label', '밝은 화면으로 전환')
         page.reload()

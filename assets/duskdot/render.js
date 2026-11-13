@@ -86,8 +86,40 @@ void main(){
   vec3 rgb = clamp(floor(img + 0.5), 0.0, 255.0) / 255.0;
   if (uIsolate < 0.5) o = vec4(rgb, 1.0);
   else {
-    float pill = ss(-16.0, -8.0, tr.y);
-    o = vec4(mix(qc, rgb, pill), mix(qa, 1.0, pill));
+    vec3 bg = arr(tS, (vec2(8.0, 8.0) + 0.5) / (uS.z * uS.xy), uBase) * 255.0;
+    vec3 plate = arr(tS, (clamp(X, vec2(1.0), uS.xy * uS.z - 1.0) + 0.5) / (uS.z * uS.xy), uBase) * 255.0;
+    float bgL = dot(bg, vec3(0.299, 0.587, 0.114));
+    float plateL = dot(plate, vec3(0.299, 0.587, 0.114));
+    float rim = ss(-15.0, -6.0, tr.y) * (1.0 - ss(16.0, 32.0, tr.y));
+    vec3 rimCol = band(tTB, tr, uTB, uBase) * 255.0;
+    float knobA = ss(-22.0, -8.0, kn.y);
+    vec3 kb = band(tKB, kn, uKB, uBase) * 255.0;
+    vec2 guv = ((X - uKnob.xy) / max(uKnob.zw, vec2(1.0)) + 1.0) * 0.5;
+    vec3 kg = arr(tKG, clamp(guv, vec2(0.0), vec2(1.0)), uBase) * 255.0;
+    vec3 knobCol = mix(kb, kg, ss(18.0, 24.0, kn.y));
+    float deep = ss(24.0, 42.0, tr.y);
+    float lightPage = ss(40.0, 150.0, bgL);
+    float wellA = deep * mix(0.16, 0.74, lightPage);
+    vec3 wellCol = mix(bg * 0.55, plate, lightPage);
+    float outd = max(-tr.y, 0.0);
+    float near = 1.0 - ss(2.0, 36.0, outd);
+    float shade = clamp((bgL - plateL) / 24.0, 0.0, 1.0) * (1.0 - ss(-2.0, 16.0, tr.y)) * near;
+    vec3 premul = vec3(0.0);
+    float a = shade * 0.42;
+    premul = wellCol * wellA + premul * (1.0 - wellA);
+    a = wellA + a * (1.0 - wellA);
+    premul = rimCol * rim + premul * (1.0 - rim);
+    a = rim + a * (1.0 - rim);
+    premul = knobCol * knobA + premul * (1.0 - knobA);
+    a = knobA + a * (1.0 - knobA);
+    premul = premul * (1.0 - qa) + qc * 255.0;
+    a = a * (1.0 - qa) + qa;
+    float feather = 1.0 - ss(10.0, 48.0, outd);
+    vec2 nd = (X - uTrack.xy) / vec2(uTrack.z + 78.0, uTrack.w + 78.0);
+    feather *= 1.0 - ss(0.78, 1.05, length(nd));
+    premul *= feather;
+    a *= feather;
+    o = vec4(premul / 255.0, a);
   }
 }`;
 const DVS = `#version 300 es

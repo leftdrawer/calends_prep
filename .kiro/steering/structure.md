@@ -3,7 +3,7 @@
 ## 파일
 
 - `index.html`: 로그인과 가족 암호 입력, 달·행사 탭, 가족 준비/공개 예물 영역, 기록판
-- `styles.css`: 로그인, PC 두 열·모바일 한 열, 행사 승인, 준비 항목과 기록판 스타일. 밝기 스위치는 178×112px이고 모서리는 투명하다. 휴대폰 머리 막대에서는 별도 줄을 확보해 축소하지 않음.
+- `styles.css`: 로그인, PC 두 열·모바일 한 열, 행사 승인, 준비 항목과 기록판 스타일. 밝기 스위치는 입구에서 178×112px, 좁은 머리 막대에서는 124×78px로 같은 줄에 둔다. 캔버스 가장자리 알파는 0이다.
 - `theme-toggle.js`: 이 브라우저 전용 `sangbogi:theme` 선택. `assets/duskdot`의 시뮬레이터·WebGL2 렌더러·이미지 표로 duskdot 스위치를 그린다. 드래그·클릭·키보드. 기기 밝기는 직접 고르기 전까지 추적하고, WebGL2가 없으면 같은 크기 손잡이로 대체.
 - `assets/duskdot/`: duskdot 엔진(`core.js`, `sim.js`, `render.js`), `data/` 이미지 표·`params.json`, `credits.html`. `render.js`의 `uIsolate`가 0이면 전체 화면 출력은 원래와 같다.
 - `tests/theme_toggle_test.py`: 실데이터·이미지 캡처 없이 280–1440px 배치·투명 모서리·고해상도 크기·입력·저장·기기 밝기 추적·WebGL2 불가 대체 검사.
