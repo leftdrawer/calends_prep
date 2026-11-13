@@ -5,6 +5,7 @@
 - 정적 HTML + CSS + 바닐라 JavaScript. 별도 프레임워크나 빌드 과정 없음.
 - `index.html`은 화면, `app.js`는 로직, `styles.css`는 반응형 스타일을 맡습니다.
 - `assets/`의 PNG 로고·아이콘·합동지방과 봉행자 한자 WOFF는 정적 파일입니다. 기존 외부 웹폰트도 사용합니다.
+- 밝기 스위치는 `assets/duskdot/`의 WebGL2 렌더러와 이미지 표를 `theme-toggle.js` 모듈이 불러 온다. 새 빌드 단계는 없다. 고른 값은 이 브라우저의 `sangbogi:theme`에만 남고, 고르기 전에는 기기 밝기를 따른다.
 - 붓글씨 가로·세로 원본은 `wordmark-horizontal.png`, `wordmark-vertical.png`이며 `<picture>`로 760px 이하에서 세로를 선택합니다. 두 파일이 모두 읽혀야 적용하며 미확보 상태는 기존 `wordmark.png`로 표시합니다.
 - 테스트는 Python Playwright + Chromium을 사용합니다. 실행 명령은 `python3 tests/browser_test.py`입니다.
 

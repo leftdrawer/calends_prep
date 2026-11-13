@@ -19,6 +19,7 @@ uniform vec4 uG;
 uniform vec3 uS;
 uniform vec2 uOff;
 uniform float uEdge;
+uniform float uIsolate;
 float ss(float e0, float e1, float x){ float t = clamp((x - e0) / (e1 - e0), 0.0, 1.0); return t * t * (3.0 - 2.0 * t); }
 
 vec3 rrut(vec2 p, vec2 c, float hw, float hh, float R){
@@ -73,14 +74,53 @@ void main(){
     vec3 knob = mix(kb, kg, ss(18.0, 24.0, kn.y));
     img = mix(img, knob, wk);
   }
+  vec3 qc = vec3(0.0);
+  float qa = 0.0;
   if (kn.y > uG.y && kn.y < uG.y + uG.z * uG.w) {
     float du = fract(kn.x / kn.z - uTheta + 0.5) - 0.5;
     vec2 gt = vec2(du + 0.5, ((kn.y - uG.y) / uG.z) / uG.w);
-    vec3 qc = mix(texture(tGlowC, vec3(gt, uGlowBin.x)).rgb, texture(tGlowC, vec3(gt, uGlowBin.y)).rgb, uGlowBin.z);
-    float qa = mix(texture(tGlowA, vec3(gt, uGlowBin.x)).r, texture(tGlowA, vec3(gt, uGlowBin.y)).r, uGlowBin.z);
+    qc = mix(texture(tGlowC, vec3(gt, uGlowBin.x)).rgb, texture(tGlowC, vec3(gt, uGlowBin.y)).rgb, uGlowBin.z);
+    qa = mix(texture(tGlowA, vec3(gt, uGlowBin.x)).r, texture(tGlowA, vec3(gt, uGlowBin.y)).r, uGlowBin.z);
     img = img * (1.0 - qa) + qc * 255.0;
   }
-  o = vec4(clamp(floor(img + 0.5), 0.0, 255.0) / 255.0, 1.0);
+  vec3 rgb = clamp(floor(img + 0.5), 0.0, 255.0) / 255.0;
+  if (uIsolate < 0.5) o = vec4(rgb, 1.0);
+  else {
+    vec3 bg = arr(tS, (vec2(8.0, 8.0) + 0.5) / (uS.z * uS.xy), uBase) * 255.0;
+    vec3 plate = arr(tS, (clamp(X, vec2(1.0), uS.xy * uS.z - 1.0) + 0.5) / (uS.z * uS.xy), uBase) * 255.0;
+    float bgL = dot(bg, vec3(0.299, 0.587, 0.114));
+    float plateL = dot(plate, vec3(0.299, 0.587, 0.114));
+    float rim = ss(-15.0, -6.0, tr.y) * (1.0 - ss(16.0, 32.0, tr.y));
+    vec3 rimCol = band(tTB, tr, uTB, uBase) * 255.0;
+    float knobA = ss(-22.0, -8.0, kn.y);
+    vec3 kb = band(tKB, kn, uKB, uBase) * 255.0;
+    vec2 guv = ((X - uKnob.xy) / max(uKnob.zw, vec2(1.0)) + 1.0) * 0.5;
+    vec3 kg = arr(tKG, clamp(guv, vec2(0.0), vec2(1.0)), uBase) * 255.0;
+    vec3 knobCol = mix(kb, kg, ss(18.0, 24.0, kn.y));
+    float deep = ss(24.0, 42.0, tr.y);
+    float lightPage = ss(40.0, 150.0, bgL);
+    float wellA = deep * mix(0.16, 0.74, lightPage);
+    vec3 wellCol = mix(bg * 0.55, plate, lightPage);
+    float outd = max(-tr.y, 0.0);
+    float near = 1.0 - ss(2.0, 36.0, outd);
+    float shade = clamp((bgL - plateL) / 24.0, 0.0, 1.0) * (1.0 - ss(-2.0, 16.0, tr.y)) * near;
+    vec3 premul = vec3(0.0);
+    float a = shade * 0.42;
+    premul = wellCol * wellA + premul * (1.0 - wellA);
+    a = wellA + a * (1.0 - wellA);
+    premul = rimCol * rim + premul * (1.0 - rim);
+    a = rim + a * (1.0 - rim);
+    premul = knobCol * knobA + premul * (1.0 - knobA);
+    a = knobA + a * (1.0 - knobA);
+    premul = premul * (1.0 - qa) + qc * 255.0;
+    a = a * (1.0 - qa) + qa;
+    float feather = 1.0 - ss(10.0, 48.0, outd);
+    vec2 nd = (X - uTrack.xy) / vec2(uTrack.z + 78.0, uTrack.w + 78.0);
+    feather *= 1.0 - ss(0.78, 1.05, length(nd));
+    premul *= feather;
+    a *= feather;
+    o = vec4(premul / 255.0, a);
+  }
 }`;
 const DVS = `#version 300 es
 in vec2 a; in vec4 d; in vec4 c;
@@ -108,7 +148,8 @@ precision highp float;
 in vec2 v; out vec4 o;
 uniform sampler2D tR0, tR1;
 uniform vec2 uOut, uOff, uW, uL;
-uniform float uScale, uSign, uEdge;
+uniform float uScale, uSign, uEdge, uIsolate, uTrackR;
+uniform vec4 uTrack;
 float ss(float e0, float e1, float x){ float t = clamp((x - e0) / (e1 - e0), 0.0, 1.0); return t * t * (3.0 - 2.0 * t); }
 void main(){
   vec2 px = vec2(gl_FragCoord.x, uOut.y - gl_FragCoord.y);
@@ -116,7 +157,14 @@ void main(){
   vec2 m = vec2(uEdge) / uL, uc = clamp(uv, m, 1.0 - m);
   float inb = 1.0 - ss(0.0, 48.0, length((uv - uc) * uL));
   vec3 r = ((texture(tR0, uc).rgb * 255.0 - 128.0) * uW.x + (texture(tR1, uc).rgb * 255.0 - 128.0) * uW.y) * inb;
-  o = vec4(max(r * uSign, 0.0) / 255.0, 0.0);
+  float mask = 1.0;
+  if (uIsolate > 0.5) {
+    vec2 X = px / uScale - 0.5 + uOff;
+    vec2 d = abs(X - uTrack.xy) - vec2(uTrack.z, uTrack.w) + vec2(uTrackR);
+    float dist = length(max(d, 0.0)) + min(max(d.x, d.y), 0.0) - uTrackR;
+    mask = 1.0 - ss(-2.0, 8.0, dist);
+  }
+  o = vec4(max(r * uSign, 0.0) / 255.0 * mask, 0.0);
 }`;
 const sstep = (a, b, x) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
@@ -150,7 +198,8 @@ function pixels(img) {
 }
 async function createRenderer(canvas, P, base, opt = {}) {
   const edge = opt.edge || 0;
-  const gl = canvas.getContext("webgl2", { antialias: false, premultipliedAlpha: true, preserveDrawingBuffer: true, alpha: false });
+  const isolate = !!opt.isolate;
+  const gl = canvas.getContext("webgl2", { antialias: false, premultipliedAlpha: true, preserveDrawingBuffer: true, alpha: isolate });
   if (!gl) throw new Error("webgl2");
   const L = P.look;
   const NB = L.baseBins[2];
@@ -244,6 +293,11 @@ async function createRenderer(canvas, P, base, opt = {}) {
     gl.uniform1f(U("uScale"), scale);
     gl.uniform2f(U("uOff"), off[0], off[1]);
     gl.uniform1f(U("uEdge"), edge);
+    gl.uniform1f(U("uIsolate"), isolate ? 1 : 0);
+    if (isolate) {
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+    }
     const b = bins(L.baseBins, snap.p), g = bins(L.glowBins, snap.p);
     gl.uniform4f(U("uBase"), b[0], b[1], b[2], 0);
     gl.uniform4f(U("uGlowBin"), g[0], g[1], g[2], 0);
@@ -291,6 +345,9 @@ async function createRenderer(canvas, P, base, opt = {}) {
       gl.uniform1f(UR("uScale"), scale);
       gl.uniform2f(UR("uOff"), off[0], off[1]);
       gl.uniform1f(UR("uEdge"), edge);
+      gl.uniform1f(UR("uIsolate"), isolate ? 1 : 0);
+      gl.uniform4f(UR("uTrack"), T.cx, T.cy, T.hw, T.hh);
+      gl.uniform1f(UR("uTrackR"), T.r);
       gl.uniform2f(UR("uW"), w0, w1);
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.ONE, gl.ONE);

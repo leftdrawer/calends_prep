@@ -1,9 +1,9 @@
-import { FixedStepClock, LogInput, LiveInput, EventQueue, mulberry32 } from "./core.js";
-import { createSim } from "./sim.js";
-import { createRenderer, iconDots } from "./render.js";
+import { FixedStepClock, LogInput, LiveInput, EventQueue, mulberry32 } from "../../../assets/duskdot/core.js";
+import { createSim } from "../../../assets/duskdot/sim.js";
+import { createRenderer, iconDots } from "../../../assets/duskdot/render.js";
 const qs = new URLSearchParams(location.search);
 const MODE = qs.get("mode") || "live";
-const DATA = "data/";
+const DATA = new URL("../../../assets/duskdot/data/", import.meta.url).href;
 const STEP = 1 / 240;
 const P = await (await fetch(DATA + "params.json")).json();
 const LW = P.logical[0], LH = P.logical[1];

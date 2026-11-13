@@ -1,5 +1,6 @@
-"""Theme controls: layout, WebGL geometry, input, persistence and fallback.
-No screenshots, canvas captures or live API requests. Run: python tests/theme_toggle_test.py
+"""Theme control: duskdot switch layout, input, persistence and fallback.
+No screenshots, canvas captures saved to disk, or live API requests.
+Run: python tests/theme_toggle_test.py
 """
 import functools
 import os
@@ -44,7 +45,12 @@ class ThemeToggleRegression(unittest.TestCase):
             self.assertEqual(fixture.unexpected, [])
 
     def open(self, width=390, dpr=1, fallback=False, reduced=False):
-        ctx = self.browser.new_context(viewport={"width": width, "height": 900}, device_scale_factor=dpr, color_scheme="light", reduced_motion="reduce" if reduced else "no-preference")
+        ctx = self.browser.new_context(
+            viewport={"width": width, "height": 900},
+            device_scale_factor=dpr,
+            color_scheme="light",
+            reduced_motion="reduce" if reduced else "no-preference",
+        )
         self.contexts.append(ctx)
         fixture = Fixture()
         self.fixtures.append(fixture)
@@ -52,53 +58,71 @@ class ThemeToggleRegression(unittest.TestCase):
         if fallback:
             ctx.add_init_script("""const get = HTMLCanvasElement.prototype.getContext;
             HTMLCanvasElement.prototype.getContext = function(type, ...args) {
-              return type === 'webgl' ? null : get.call(this, type, ...args);
+              return type === 'webgl2' ? null : get.call(this, type, ...args);
             };""")
         page = ctx.new_page()
         page.on("pageerror", lambda e: self.errors.append(str(e)))
         page.goto(self.url)
         expect(page.locator("#gate")).to_be_visible()
-        expect(page.locator("#gate .theme-toggle")).to_have_attribute("data-shader", "fallback" if fallback else "webgl")
+        expect(page.locator("#gate .theme-toggle")).to_have_attribute("data-shader", "fallback" if fallback else "webgl2")
         return page
 
-    def assert_layout(self, page, selector):
+    def assert_layout(self, page, selector, width, height):
         metrics = page.locator(selector).evaluate("""el => {
           const r=el.getBoundingClientRect(), c=el.querySelector('canvas');
           const cs=getComputedStyle(el), cr=c.getBoundingClientRect();
-          return {w:r.width,h:r.height,left:r.left,right:r.right,viewport:innerWidth,
+          const ctx=c.getContext('2d');
+          const px=ctx.getImageData(1,1,1,1).data;
+          const edge=ctx.getImageData(Math.floor(c.width/2), 1, 1, 1).data;
+          const data=ctx.getImageData(0,0,c.width,c.height).data;
+          let maxA=0;
+          for (let i=3;i<data.length;i+=16) if (data[i]>maxA) maxA=data[i];
+          const lab=el.parentElement.querySelector('.theme-slot-lab');
+          const lr=lab?lab.getBoundingClientRect():r;
+          return {w:r.width,h:r.height,left:r.left,right:r.right,top:r.top,viewport:innerWidth,
             canvasW:cr.width,canvasH:cr.height,bufferW:c.width,bufferH:c.height,
             overflow:document.documentElement.scrollWidth>innerWidth+1,
-            background:cs.backgroundColor,shadow:cs.boxShadow};
+            background:cs.backgroundColor,shadow:cs.boxShadow,
+            corner:[...px], edgeA:edge[3], maxA,
+            labelDy: lab ? (lr.top+lr.height/2) - (r.top+r.height/2) : 0};
         }""")
-        self.assertEqual(metrics["w"], 216)
-        self.assertEqual(metrics["h"], 96)
-        self.assertGreaterEqual(metrics["left"], 0)
+        self.assertEqual(metrics["w"], width)
+        self.assertEqual(metrics["h"], height)
+        self.assertGreaterEqual(metrics["left"], -1)
         self.assertLessEqual(metrics["right"], metrics["viewport"] + 1)
         self.assertFalse(metrics["overflow"])
-        self.assertEqual(metrics["canvasW"], 216)
-        self.assertEqual(metrics["canvasH"], 96)
+        self.assertEqual(metrics["canvasW"], width)
+        self.assertEqual(metrics["canvasH"], height)
         self.assertEqual(metrics["background"], "rgba(0, 0, 0, 0)")
         self.assertEqual(metrics["shadow"], "none")
-        # Shader has a 60px lens in a logical 216x96 viewport, independent of DPR.
-        self.assertEqual(metrics["canvasW"] * 60 / 216, 60)
+        self.assertEqual(metrics["corner"], [0, 0, 0, 0])
+        self.assertLessEqual(metrics["edgeA"], 8)
+        self.assertGreaterEqual(metrics["maxA"], 240)
+        self.assertLessEqual(abs(metrics["labelDy"]), 8)
         return metrics
 
-    def test_lens_does_not_shrink_at_mobile_widths_or_high_dpi(self):
-        for width, dpr in ((1440,1), (390,1), (320,2), (280,2)):
+    def test_switch_fits_header_without_a_box_or_overflow(self):
+        for width, dpr in ((1440, 1), (390, 1), (320, 2), (280, 2)):
             with self.subTest(width=width, dpr=dpr):
                 page = self.open(width=width, dpr=dpr)
-                m = self.assert_layout(page, "#gate .theme-toggle")
-                self.assertEqual(m["bufferW"], 216*dpr)
+                m = self.assert_layout(page, "#gate .theme-toggle", 178, 112)
+                self.assertEqual(m["bufferW"], 178 * dpr)
+                self.assertEqual(m["bufferH"], 112 * dpr)
                 page.evaluate("document.querySelector('#gate').hidden=true; document.querySelector('#app').hidden=false")
-                page.wait_for_function("document.querySelector('.top canvas').width === 216 * Math.min(2, devicePixelRatio)")
-                self.assert_layout(page, ".top .theme-toggle")
+                header = (124, 78) if width <= 760 else (178, 112)
+                page.wait_for_function(
+                    "([w,h]) => { const c=document.querySelector('.top canvas'); return c && c.width===w*Math.min(2,devicePixelRatio) && c.height===h*Math.min(2,devicePixelRatio); }",
+                    arg=list(header),
+                )
+                self.assert_layout(page, ".top .theme-toggle", *header)
                 overlap = page.evaluate("""() => {
                   const a=document.querySelector('.top .theme-slot').getBoundingClientRect();
                   const b=document.querySelector('#changeme').getBoundingClientRect();
                   return a.left<b.right && a.right>b.left && a.top<b.bottom && a.bottom>b.top;
                 }""")
                 self.assertFalse(overlap)
-                self.assertEqual(page.locator('.top .theme-toggle').get_attribute('data-shader'), 'webgl')
+                self.assertEqual(page.locator('.top .theme-toggle').get_attribute('data-shader'), 'webgl2')
+                expect(page.locator('a.theme-credit').first).to_have_attribute('href', 'assets/duskdot/credits.html')
 
     def test_click_keyboard_reload_and_drag(self):
         page = self.open(reduced=True)
@@ -106,8 +130,11 @@ class ThemeToggleRegression(unittest.TestCase):
         btn.click()
         expect(page.locator('html')).to_have_attribute('data-theme', 'dark')
         self.assertEqual(page.evaluate("localStorage.getItem('sangbogi:theme')"), 'dark')
+        self.assertEqual(page.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--theme-p').trim()"), '0.000')
         expect(btn).to_have_attribute('aria-pressed', 'true')
+        expect(btn).to_have_attribute('aria-label', '밝은 화면으로 전환')
         page.reload()
+        expect(page.locator('#gate .theme-toggle')).to_have_attribute('data-shader', 'webgl2')
         expect(page.locator('html')).to_have_attribute('data-theme', 'dark')
         btn.press('ArrowRight')
         expect(page.locator('html')).to_have_attribute('data-theme', 'light')
@@ -116,9 +143,9 @@ class ThemeToggleRegression(unittest.TestCase):
         btn.press('Space')
         expect(page.locator('html')).to_have_attribute('data-theme', 'light')
         r = btn.bounding_box()
-        page.mouse.move(r['x']+r['width']-25, r['y']+r['height']/2)
+        page.mouse.move(r['x'] + r['width'] - 25, r['y'] + r['height'] / 2)
         page.mouse.down()
-        page.mouse.move(r['x']+25, r['y']+r['height']/2, steps=12)
+        page.mouse.move(r['x'] + 25, r['y'] + r['height'] / 2, steps=12)
         page.mouse.up()
         expect(page.locator('html')).to_have_attribute('data-theme', 'dark')
         self.assertEqual(page.evaluate("localStorage.getItem('sangbogi:theme')"), 'dark')
@@ -129,29 +156,41 @@ class ThemeToggleRegression(unittest.TestCase):
         page.emulate_media(color_scheme='dark', reduced_motion='reduce')
         expect(page.locator('#gate .theme-toggle')).to_have_attribute('aria-pressed', 'true')
         self.assertIsNone(page.evaluate("localStorage.getItem('sangbogi:theme')"))
+        self.assertEqual(page.evaluate("document.documentElement.getAttribute('data-theme')"), None)
         page.emulate_media(color_scheme='light', reduced_motion='reduce')
         expect(page.locator('#gate .theme-toggle')).to_have_attribute('aria-pressed', 'false')
         self.assertIsNone(page.evaluate("localStorage.getItem('sangbogi:theme')"))
 
-    def test_webgl_disabled_still_has_large_lens_and_icons(self):
+    def test_webgl2_disabled_still_toggles_and_keeps_the_hit_target(self):
         page = self.open(fallback=True, reduced=True)
-        btn=page.locator('#gate .theme-toggle')
-        expect(btn.locator('.theme-fallback-sun')).to_be_visible()
-        lens=btn.locator('.theme-fallback-lens').bounding_box()
-        self.assertEqual((lens['width'], lens['height']), (60,60))
+        btn = page.locator('#gate .theme-toggle')
+        box = btn.bounding_box()
+        self.assertGreaterEqual(box['width'], 44)
+        self.assertGreaterEqual(box['height'], 44)
+        self.assertEqual((box['width'], box['height']), (178, 112))
         btn.click()
         expect(page.locator('html')).to_have_attribute('data-theme', 'dark')
-        expect(btn.locator('.theme-fallback-moon')).to_be_visible()
-        expect(btn.locator('.theme-fallback-sun')).not_to_be_visible()
+        expect(btn).to_have_attribute('aria-pressed', 'true')
+        knob = btn.evaluate("""el => {
+          const s=getComputedStyle(el, ':after');
+          return {left:s.left, right:s.right, width:s.width, height:s.height};
+        }""")
+        self.assertEqual(knob['left'], '14px')
+        self.assertEqual(knob['width'], '72px')
+        self.assertEqual(knob['height'], '80px')
 
-    def test_shader_defines_large_geometry_and_fades_unused_pixels(self):
-        source=(ROOT/'theme-toggle.js').read_text(encoding='utf-8')
-        self.assertIn('vec2(216.0,96.0)', source)
-        self.assertIn('vec2(30.0),14.0', source)
-        self.assertIn('for(int i=0;i<49;i++)', source)
-        self.assertIn('float visible=mix(m,s,progress)', source)
-        self.assertIn('offset*5.5', source)
-        self.assertIn('1.0-smoothstep', source)
+    def test_control_reuses_the_duskdot_renderer(self):
+        source = (ROOT / 'theme-toggle.js').read_text(encoding='utf-8')
+        render = (ROOT / 'assets/duskdot/render.js').read_text(encoding='utf-8')
+        self.assertIn('assets/duskdot/render.js', source)
+        self.assertIn("sangbogi:theme", source)
+        self.assertIn('prefers-reduced-motion', source)
+        self.assertIn('aria-pressed', source)
+        self.assertIn('vec3 rrut', render)
+        self.assertIn('tGlowC', render)
+        self.assertIn('tGlowA', render)
+        self.assertIn('uIsolate', render)
+        self.assertNotIn('theme-fallback-sun', (ROOT / 'index.html').read_text(encoding='utf-8'))
 
 
 if __name__ == '__main__':
