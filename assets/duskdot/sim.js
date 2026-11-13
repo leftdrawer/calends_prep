@@ -1,8 +1,9 @@
 import { springStep, lowpassStep } from "./core.js";
 const FPS = 30;
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
-function createSim(P) {
+function createSim(P, startOverride) {
   const G = P.geom, M = P.motion;
+  const start = startOverride == null ? P.start : startOverride;
   const X0 = G.knobLeft, X1 = G.knobRight, MID = (X0 + X1) / 2;
   const s = {
     t: 0,
@@ -24,9 +25,10 @@ function createSim(P) {
     theta: 0.5 - P.glow.restBias,
     hover: false,
     q: 0,
-    zone: true
+    zone: true,
+    reduce: false
   };
-  if (P.start === 1) {
+  if (start === 1) {
     s.x = X1;
     s.target = X1;
     s.on = 1;
@@ -81,10 +83,20 @@ function createSim(P) {
       z = M.dragZeta;
     }
     [s.x, s.v] = springStep(s.x, s.v, tg, wn, z, dt);
+    if (s.reduce) {
+      s.x = tg;
+      s.v = 0;
+    }
     const D = P.deform;
     const over = Math.max(0, s.x - X1, X0 - s.x);
-    [s.st, s.sv] = springStep(s.st, s.sv, Math.min(D.k * Math.abs(s.v), D.lim) - D.squash * over, D.wn, D.zeta, dt);
-    s.pr = lowpassStep(s.pr, s.pressed ? 1 : 0, D.pressTau, dt);
+    if (s.reduce) {
+      s.st = 0;
+      s.sv = 0;
+      s.pr = s.pressed ? 1 : 0;
+    } else {
+      [s.st, s.sv] = springStep(s.st, s.sv, Math.min(D.k * Math.abs(s.v), D.lim) - D.squash * over, D.wn, D.zeta, dt);
+      s.pr = lowpassStep(s.pr, s.pressed ? 1 : 0, D.pressTau, dt);
+    }
     const p = prog(), Gl = P.glow, eps = Gl.endEps, dl = Gl.restBias;
     const inz = p <= eps || p >= 1 - eps;
     if (s.zone && !inz) s.fam = (s.theta % 1 + 1) % 1 > 0.5 ? 1 : 0;
@@ -97,9 +109,35 @@ function createSim(P) {
       th = s.fam === 0 ? 0.5 - 0.5 * h : 1 - 0.5 * (1 - h);
     }
     th += Math.round(s.theta - th);
-    s.theta = lowpassStep(s.theta, th, Gl.tau, dt);
-    s.q = lowpassStep(s.q, p, P.dots.iconTau, dt);
+    if (s.reduce) {
+      s.theta = th;
+      s.q = p;
+    } else {
+      s.theta = lowpassStep(s.theta, th, Gl.tau, dt);
+      s.q = lowpassStep(s.q, p, P.dots.iconTau, dt);
+    }
     s.t += dt;
+  }
+  function setReduce(v) {
+    s.reduce = !!v;
+  }
+  function setOn(on) {
+    const next = on ? 1 : 0;
+    s.target = next ? X1 : X0;
+    s.on = next;
+    s.fam = next;
+    s.pressed = false;
+    s.dragging = false;
+    if (s.reduce) {
+      s.x = s.target;
+      s.v = 0;
+      s.st = 0;
+      s.sv = 0;
+      s.pr = 0;
+      s.q = next;
+      s.theta = (next ? 1 : 0.5) - P.glow.restBias;
+      s.zone = true;
+    }
   }
   function interp(knots, x) {
     const n = knots.length - 1, f = x * n, i = Math.min(n - 1, Math.max(0, Math.floor(f))), w = f - i;
@@ -127,7 +165,7 @@ function createSim(P) {
       hover: s.hover
     };
   }
-  return { step, snapshot };
+  return { step, snapshot, setOn, setReduce };
 }
 export {
   FPS,

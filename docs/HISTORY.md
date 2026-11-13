@@ -1,5 +1,14 @@
 # 작업 이력 (HISTORY)
 
+## 2026-11-13 — 운영 밝기 스위치를 duskdot으로 교체
+
+- 무엇: 입구와 위 막대의 밝기 버튼을 duskdot 스위치로 바꿨다. `previews/duskdot`에 있던 엔진·이미지 표를 `assets/duskdot/`으로 옮겨 운영과 미리보기가 같이 쓴다. 버튼은 178×112px이고, 알약 밖은 손잡이 빛만 남긴 뒤 모서리를 투명하게 한다.
+- 왜: 은호당님이 운영 버튼이 보기 좋지 않다 하여 https://duskdot.vercel.app/ 스위치를 그대로 넣으라고 함.
+- 보존: `sangbogi:theme` 저장, 고르기 전 기기 밝기 추적, 버튼·`aria-pressed`·키보드·동작 줄이기, 휴대폰에서 줄을 나눠 크기를 유지. 준비 기록 키는 건드리지 않음.
+- 한계: 전체 화면이던 스위치를 머리 막대에 맞추느라 약 178×112px로 줄였다. 알약에서 먼 은은한 배경 빛과 바닥 그림자는 사각 상자가 되지 않도록 넣지 않았다. 페이지 색은 기존 블루그레이 두 단계로 바뀌고, duskdot처럼 배경 전체가 회색으로 서서히 바뀌지는 않는다.
+- 검증: 미리보기 정지 화면은 옮기기 전과 픽셀이 같다(956×718, 차이 0). `python3 tests/theme_toggle_test.py` 5개, `python3 tests/browser_test.py` 55개, `node tests/domain_test.cjs` 통과. 외부 API는 합성 응답이고 준비 기록 쓰기는 0.
+- 관련 파일: `theme-toggle.js`, `index.html`, `styles.css`, `assets/duskdot/`, `previews/duskdot/`, `tests/theme_toggle_test.py`
+
 ## 2026-11-10 — 미리보기의 빛·색 분산·전환 강조
 
 - 사용자 피드백: 많이 좋아졌지만 원본보다 덜 화려함. 운영 반영이 아닌 기존 미리보기의 효과를 강화.

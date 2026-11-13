@@ -565,28 +565,28 @@ h1{font-size:34px;line-height:1.25;font-weight:700;letter-spacing:-.03em}
   .sheet-bg{-webkit-backdrop-filter:none;backdrop-filter:none}
 }
 
-/* 큰 유리 밝기 손잡이: 바깥 가짜 통 없이 60px 렌즈 / 약 40px 문양. */
-.theme-slot{display:flex;align-items:center;gap:12px;flex:0 0 auto;min-width:0}
+/* duskdot 밝기 스위치. 178×112 안에 알약과 주변 빛을 그리고, 모서리는 투명하다. */
+.theme-slot{display:flex;align-items:center;gap:8px;flex:0 0 auto;min-width:0}
 .theme-slot-lab{font-size:12px;font-weight:600;color:var(--ink-2);white-space:nowrap}
-.gate .theme-slot{margin-top:12px;align-self:flex-start}
+.theme-credit{display:inline-flex;align-items:center;min-height:44px;padding:0 2px;font-size:12px;font-weight:600;color:var(--brass-deep);text-underline-offset:3px}
+.gate .theme-slot{margin-top:12px;align-self:flex-start;flex-wrap:wrap}
+.gate .theme-credit{flex-basis:100%}
 .top>.brand-home{margin-right:8px}
 .top>.theme-slot{margin-right:auto}
-.theme-toggle{position:relative;flex:0 0 216px;width:216px;height:96px;margin:0;padding:0;border:0;border-radius:36px;background:transparent;box-shadow:none;overflow:visible;touch-action:pan-y;color:var(--ink)}
+.theme-toggle{position:relative;flex:0 0 178px;width:178px;height:112px;max-width:none;margin:0;padding:0;border:0;border-radius:40px;background:transparent;box-shadow:none;overflow:visible;touch-action:none;color:var(--ink);appearance:none;-webkit-appearance:none}
 .theme-toggle:active:not(:disabled){transform:none}
-.theme-toggle canvas{position:absolute;inset:0;width:100%;height:100%;transform:none;pointer-events:none}
-.theme-fallback-lens{display:none}
-.theme-toggle[data-shader="fallback"]:before{content:"";position:absolute;inset:14px 16px;border-radius:34px;background:var(--fill-2);box-shadow:inset 0 0 0 1px var(--line)}
-.theme-toggle[data-shader="fallback"] canvas{display:none}
-.theme-toggle[data-shader="fallback"] .theme-fallback-lens{position:absolute;top:18px;left:20px;display:grid;place-items:center;width:60px;height:60px;border-radius:14px;background:var(--card);box-shadow:0 2px 7px #11152233,inset 0 0 0 1px var(--brass);color:var(--ink)}
-.theme-toggle[data-shader="fallback"][aria-pressed="false"] .theme-fallback-lens{left:calc(100% - 80px)}
-.theme-fallback-lens svg{width:38px;height:38px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
-.theme-toggle[aria-pressed="false"] .theme-fallback-moon,.theme-toggle[aria-pressed="true"] .theme-fallback-sun{display:none}
+.theme-toggle canvas{position:absolute;inset:0;width:178px;height:112px;display:block;background:transparent;pointer-events:none}
+.theme-toggle[data-shader="fallback"]{background:var(--fill-2);box-shadow:inset 0 0 0 1px var(--line)}
+.theme-toggle[data-shader="fallback"] canvas{visibility:hidden}
+.theme-toggle[data-shader="fallback"]:after{content:"";position:absolute;top:16px;left:14px;width:72px;height:80px;border-radius:22px;background:var(--card);box-shadow:inset 0 0 0 1px var(--brass)}
+.theme-toggle[data-shader="fallback"][aria-pressed="false"]:after{left:auto;right:14px}
 @media(max-width:760px){
-  /* 손잡이를 줄이지 않고 한 줄을 따로 확보한다. */
+  /* 스위치를 줄이지 않고 머리 막대에서 한 줄을 따로 쓴다. */
   .top{flex-wrap:wrap;gap:8px 12px}
   .top>.brand-home{order:0;margin-right:auto;flex:1 1 100px}
   .top>.mepill{order:1}
   .top>#guestbadge{order:2}
   .top>.theme-slot{order:3;flex-basis:100%;justify-content:flex-end;margin-right:0;gap:8px}
-  .gate .theme-slot{align-self:center}
+  .gate .theme-slot{align-self:center;justify-content:center}
+  .gate .theme-credit{justify-content:center}
 }
