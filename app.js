@@ -301,12 +301,22 @@ const REMOTE = {
   table:'sangbogi'
 };
 const HAS_SB = () => !!(REMOTE.url && REMOTE.key);
-const sbHead = () => ({apikey:REMOTE.key, Authorization:'Bearer '+REMOTE.key});
+const ALLOWED_GOOGLE_USERS = {'phlogos1@gmail.com':'은호당'};
+const authClient = window.supabase?.createClient(REMOTE.url,REMOTE.key,{
+  auth:{flowType:'pkce',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+})||null;
+async function sbHead(){
+  if(!authClient)throw new Error('Google authentication is not configured');
+  const {data,error}=await authClient.auth.getSession();
+  const token=data&&data.session&&data.session.access_token;
+  if(error||!token)throw new Error('Google sign-in required');
+  return {apikey:REMOTE.key,Authorization:'Bearer '+token};
+}
 
 const store = {
   async get(k){
     if(HAS_SB()){
-      const r=await fetch(REMOTE.url+'/rest/v1/'+REMOTE.table+'?key=eq.'+encodeURIComponent(k)+'&select=value',{headers:sbHead()});
+      const r=await fetch(REMOTE.url+'/rest/v1/'+REMOTE.table+'?key=eq.'+encodeURIComponent(k)+'&select=value',{headers:await sbHead()});
       if(!r.ok) throw new Error('get '+r.status);
       const j=await r.json();
       if(!j.length) return null;
@@ -317,8 +327,8 @@ const store = {
   },
   async set(k,v){
     if(HAS_SB()){
-      const post=()=>fetch(REMOTE.url+'/rest/v1/'+REMOTE.table,{method:'POST',
-        headers:Object.assign({'Content-Type':'application/json',Prefer:'resolution=merge-duplicates'},sbHead()),
+      const post=async()=>fetch(REMOTE.url+'/rest/v1/'+REMOTE.table,{method:'POST',
+        headers:Object.assign({'Content-Type':'application/json',Prefer:'resolution=merge-duplicates'},await sbHead()),
         body:JSON.stringify({key:k,value:v,updated_at:new Date().toISOString()})});
       const r=await post();
       if(!r.ok) throw new Error('set '+r.status);
@@ -329,7 +339,7 @@ const store = {
   },
   async list(prefix){
     if(HAS_SB()){
-      const r=await fetch(REMOTE.url+'/rest/v1/'+REMOTE.table+'?key=like.'+encodeURIComponent(prefix+'*')+'&select=key',{headers:sbHead()});
+      const r=await fetch(REMOTE.url+'/rest/v1/'+REMOTE.table+'?key=like.'+encodeURIComponent(prefix+'*')+'&select=key',{headers:await sbHead()});
       if(!r.ok) throw new Error('list '+r.status);
       return {keys:(await r.json()).map(x=>x.key)};
     }
@@ -1763,23 +1773,73 @@ async function loadLog(){
   });
 }
 
-/* ── 이름과 가족 암호 ── */
-const FAMILY_CODES = {'은호당':'102938','어머니':'9394'};
-let unlockedRole=null, lockRole=null;
+/* ── Google 계정 인증과 앱 화면 ── */
+let unlockedRole=null, authUser=null, authRole=null, authNotice='', restoringStoredRole=false;
+function showAuthGate(message=''){
+  clearInterval(poller);
+  closeSheet();
+  document.getElementById('gate').hidden=false;
+  document.getElementById('app').hidden=true;
+  document.getElementById('authpane').hidden=false;
+  document.querySelector('#gate > .gate-layout').hidden=true;
+  document.getElementById('autherr').textContent=message;
+  window.scrollTo(0,0);
+}
+function showIdentityGate(){
+  document.getElementById('gate').hidden=false;
+  document.getElementById('app').hidden=true;
+  document.getElementById('authpane').hidden=true;
+  document.querySelector('#gate > .gate-layout').hidden=false;
+  document.getElementById('gatecancel').hidden=!me;
+  document.getElementById('auth-account').textContent=authUser?'Google 계정 · '+authUser.email:'';
+  window.scrollTo(0,0);
+  if(!me)document.getElementById('othername').focus({preventScroll:true});
+}
+function googleRoleFor(user){
+  if(!user||!user.email||!user.app_metadata||user.app_metadata.provider!=='google')return null;
+  return ALLOWED_GOOGLE_USERS[String(user.email).trim().toLowerCase()]||null;
+}
+async function applyAuthSession(session){
+  const user=session&&session.user;
+  if(!user){
+    authUser=null;authRole=null;me=null;unlockedRole=null;
+    showAuthGate(authNotice);
+    return;
+  }
+  const role=googleRoleFor(user);
+  if(!role){
+    authUser=null;authRole=null;me=null;unlockedRole=null;
+    authNotice='이 Google 계정은 사용할 수 없습니다.';
+    showAuthGate(authNotice);
+    if(authClient)authClient.auth.signOut().catch(()=>{});
+    return;
+  }
+  const changed=!authUser||authUser.id!==user.id;
+  authUser=user;authRole=role;
+  if(changed){clearInterval(poller);closeSheet();me=null;unlockedRole=null;}
+  if(changed||!me){
+    if(restoringStoredRole)return;
+    restoringStoredRole=true;
+    try{
+      const saved=await store.getMine('sangbogi:me');
+      const savedName=saved&&JSON.parse(saved.value||'{}').name;
+      if(savedName){await setName(savedName);return;}
+    }catch(err){}
+    finally{restoringStoredRole=false;}
+    showIdentityGate();
+  }
+}
 function askName(){
   clearInterval(poller);
   closeSheet();
-  showLock(false);
   document.getElementById('gatecancel').hidden=!me;
-  document.getElementById('gate').hidden=false;
-  document.getElementById('app').hidden=true;
+  showIdentityGate();
   document.getElementById('othername').focus({preventScroll:true});
-  window.scrollTo(0,0);
 }
-async function setName(n,verified=false){
+async function setName(n){
   n=String(n||'').trim(); if(!n)return;
-  if(HANDS.includes(n)&&!verified){showLock(n);return;}
-  if(!HANDS.includes(n))unlockedRole=null;
+  if(!authUser||!authRole){showAuthGate('먼저 Google 계정으로 로그인해 주세요.');return;}
+  unlockedRole=HANDS.includes(n)?n:null;
   me=n;
   closeSheet();
   try{await store.setMine('sangbogi:me',JSON.stringify({name:HANDS.includes(n)?'':n}));}catch(err){}
@@ -1790,46 +1850,28 @@ async function setName(n,verified=false){
   document.getElementById('app').hidden=false;
   await start();
 }
-function showLock(role){
-  lockRole=HANDS.includes(role)?role:null;
-  document.querySelector('#gate > .card-in').hidden=!!lockRole;
-  document.getElementById('lockpane').hidden=!lockRole;
-  const input=document.getElementById('familycode');
-  input.value='';
-  document.getElementById('lockerr').textContent='';
-  if(lockRole){
-    clearInterval(poller);
-    const digits=lockRole==='은호당'?6:4;
-    document.getElementById('gate').hidden=false;
-    document.getElementById('app').hidden=true;
-    document.getElementById('locktitle').textContent=lockRole+'으로 들어가기';
-    document.getElementById('lockdesc').textContent=digits===6?'암호를 입력해주세요':'네 자리 암호를 입력해 주세요.';
-    input.maxLength=digits;
-    input.placeholder=digits===6?'암호를 입력해주세요':'네 자리 암호';
-    input.focus();
-  }
+async function signInWithGoogle(){
+  authNotice='';
+  document.getElementById('autherr').textContent='';
+  if(!authClient){showAuthGate('로그인 기능을 불러오지 못했습니다. 네트워크 연결을 확인해 주세요.');return;}
+  const {error}=await authClient.auth.signInWithOAuth({provider:'google',options:{
+    redirectTo:new URL('.',window.location.href).href,
+    scopes:'openid email profile',
+    queryParams:{prompt:'select_account'}
+  }});
+  if(error)showAuthGate('Google 로그인을 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.');
 }
-function verifyFamilyCode(){
-  if(!lockRole)return;
-  const role=lockRole, input=document.getElementById('familycode');
-  if(input.value!==FAMILY_CODES[role]){
-    document.getElementById('lockerr').textContent='암호가 맞지 않습니다. 다시 입력해 주세요.';
-    input.value='';input.focus();return;
-  }
-  unlockedRole=role;
-  showLock(false);
-  setName(role,true);
+async function signOutGoogle(){
+  await flush();
+  authNotice='';
+  clearInterval(poller);closeSheet();
+  if(!authClient){showAuthGate();return;}
+  const {error}=await authClient.auth.signOut();
+  if(error)showAuthGate('로그아웃하지 못했습니다. 다시 시도해 주세요.');
 }
-document.getElementById('lockverify').onclick=verifyFamilyCode;
-document.getElementById('familycode').addEventListener('keydown',e=>{if(e.key==='Enter')verifyFamilyCode();});
-/* 암호를 역할별 자릿수만큼 채우면 들어가기를 누르지 않아도 바로 확인합니다. */
-document.getElementById('familycode').addEventListener('input',e=>{
-  if(!lockRole)return;
-  const need=FAMILY_CODES[lockRole]?FAMILY_CODES[lockRole].length:0;
-  if(need&&e.target.value.length>=need)verifyFamilyCode();
-});
-document.getElementById('lockback').onclick=()=>showLock(false);
-document.querySelectorAll('.who button').forEach(b=>b.onclick=()=>showLock(b.dataset.name));
+document.getElementById('google-signin').onclick=signInWithGoogle;
+document.getElementById('authlogout').onclick=signOutGoogle;
+document.querySelectorAll('.who button').forEach(b=>b.onclick=()=>setName(b.dataset.name));
 document.getElementById('otherbtn').onclick=()=>setName(document.getElementById('othername').value);
 document.getElementById('othername').addEventListener('keydown',e=>{if(e.key==='Enter')setName(e.target.value);});
 document.getElementById('changeme').onclick=askName;
@@ -1839,7 +1881,6 @@ document.querySelector('.brand-home').onclick=e=>{
 };
 document.getElementById('gatecancel').onclick=()=>{
   if(!me)return;
-  showLock(false);
   document.getElementById('gate').hidden=true;
   document.getElementById('app').hidden=false;
   render();resumePolling();
@@ -1884,12 +1925,14 @@ document.addEventListener('visibilitychange',()=>{
 });
 window.addEventListener('pagehide',()=>flush());
 (async function init(){
-  // 예전 이메일 인증 토큰은 사용하지 않습니다. 가족 암호는 기억하지 않습니다.
   try{localStorage.removeItem('sangbogi:owner_session');}catch(err){}
+  if(!authClient){showAuthGate('로그인 기능을 불러오지 못했습니다. 네트워크 연결을 확인해 주세요.');return;}
+  authClient.auth.onAuthStateChange((_event,session)=>{
+    setTimeout(()=>{applyAuthSession(session).catch(()=>showAuthGate('로그인 상태를 확인하지 못했습니다. 다시 로그인해 주세요.'));},0);
+  });
   try{
-    const r=await store.getMine('sangbogi:me');
-    const v=r?JSON.parse(r.value):null;
-    if(v&&v.name&&!HANDS.includes(v.name))return setName(v.name);
-  }catch(err){}
-  askName();
+    const {data,error}=await authClient.auth.getSession();
+    if(error)throw error;
+    await applyAuthSession(data&&data.session);
+  }catch(err){showAuthGate('로그인 상태를 확인하지 못했습니다. 다시 로그인해 주세요.');}
 })();

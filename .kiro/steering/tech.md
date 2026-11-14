@@ -10,13 +10,15 @@
 
 ## 저장과 로그인
 
-- `app.js`의 `REMOTE` 객체가 Supabase 프로젝트와 공개 anon 키, `sangbogi` 테이블을 가리킵니다.
+- `app.js`의 `REMOTE` 객체가 Supabase 프로젝트와 공개 anon 키, `sangbogi` 테이블을 가리킵니다. `@supabase/supabase-js` CDN 클라이언트가 Google OAuth PKCE와 세션 유지를 처리합니다.
 - 우선순위: Supabase → 호스트 `window.storage` → 브라우저 `localStorage`.
 - `sangbogi`는 key-value 형태이며 `value`는 JSON 문자열입니다.
 - 기존 월 기록 `sangbogi:cycle:<월>`은 초하루 데이터입니다. 명절은 `sangbogi:event:<월>:<id>`, 대체 승인은 `sangbogi:calendar:<월>`로 나눕니다.
-- 가족은 클라이언트 PIN으로 확인합니다. 이메일 OTP 및 세션 토큰 갱신 요청을 제거했고 기존 브라우저 이메일 세션은 정리합니다.
-- 사용자 요청에 따른 화면 잠금 수준이며, PIN이 서버의 인증 토큰을 발급하지는 않습니다. 현재 anon으로 분리된 테스트 키 저장·삭제를 확인했습니다.
-- 손님 화면은 사적 준비 내용을 DOM에 생성하지 않습니다. 공개 API 접근 정책까지 바꾸는 변경은 아닙니다.
+- Google OAuth 허용 이메일은 `phlogos1@gmail.com` 하나이며 `app_metadata.provider === 'google'`도 검사합니다. 앱 로그인·역할 선택만으로는 충분하지 않으며 모든 REST 요청에 Supabase 세션 access token을 보냅니다.
+- `supabase/migrations/20261115000000_google_account_auth.sql`은 `anon` 권한과 공개 RLS 정책을 제거하고 허용된 Google 계정의 `authenticated` 읽기·쓰기만 허용합니다. 운영 DB에는 아직 적용하지 않았습니다.
+- Client secret은 Supabase Auth의 Google 공급자 설정에만 보관하며 공개 저장소나 브라우저 JavaScript에 넣지 않습니다. OAuth 설정 순서와 URL은 `docs/google-auth-setup.md`에 있습니다.
+- 현재 운영 DB에는 `anon` 전체 권한과 `USING true` 공개 정책이 남아 있으므로 OAuth 설정과 마이그레이션이 끝나기 전에는 앱을 배포하지 않습니다.
+- 손님 화면은 사적 준비 내용을 DOM에 생성하지 않습니다. 이는 화면 노출 제어이며 서버 RLS와는 별도 방어 계층입니다.
 - 목록·메모·직접 입력한 출처와 성함은 입력 즉시 해당 상의 로컬 기록에 반영합니다. 저장은 기존 400ms 묶음 처리를 사용하고, 저장 중 추가 수정은 다음 저장까지 유지합니다.
 - 입력 중인 목록은 저장 완료·12초 자동 갱신 때 DOM을 교체하지 않습니다. 포커스·선택 범위·한글 조합을 유지하며 포커스 이동 후 갱신합니다. 다른 월/행사나 손님 화면으로 바꾸면 이 보호를 적용하지 않습니다.
 - 입력 이력은 저장·포커스 이동·다른 수정 전에 항목별로 묶어 확정합니다. 한글 조합 중에는 새 저장을 시작하지 않으며, 기록은 작성 당시 월과 작성자에 귀속됩니다.

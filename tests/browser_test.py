@@ -25,6 +25,30 @@ ROOT = Path(__file__).resolve().parents[1]
 SUPABASE_HOST = "nfrubhmtyqvecckvzmxi.supabase.co"
 PRIVATE_ITEM = "가족구매내역_TEST_ONLY"
 PRIVATE_SHOP = "가족구입처_TEST_ONLY"
+MOCK_GOOGLE_USER = {
+    "id": "mock-google-owner",
+    "email": "phlogos1@gmail.com",
+    "app_metadata": {"provider": "google"},
+}
+MOCK_SUPABASE_JS = r"""
+(function(){
+  let user=null;
+  try{user=JSON.parse(localStorage.getItem('__mock-google-user')||'null');}catch(e){}
+  const listeners=[];
+  const session=()=>user?{user,access_token:'mock-google-access-token',refresh_token:'mock-google-refresh-token'}:null;
+  const emit=(event)=>listeners.forEach(fn=>fn(event,session()));
+  window.__authMock={setUser(value){user=value;if(user)localStorage.setItem('__mock-google-user',JSON.stringify(user));else localStorage.removeItem('__mock-google-user');emit(value?'SIGNED_IN':'SIGNED_OUT');}};
+  window.supabase={createClient(){return {auth:{
+    getSession:async()=>({data:{session:session()},error:null}),
+    onAuthStateChange(fn){listeners.push(fn);return {data:{subscription:{unsubscribe(){}}}};},
+    signInWithOAuth:async()=>({data:{url:null},error:null}),
+    signOut:async()=>{user=null;localStorage.removeItem('__mock-google-user');emit('SIGNED_OUT');return {error:null};}
+    }
+  };
+  }
+};
+})();
+"""
 
 
 def stamp(**fields):
@@ -93,6 +117,7 @@ class Fixture:
         }
         self.writes = []
         self.auth_requests = []
+        self.unauthorized_requests = []
         self.unexpected = []
         self.fail_writes = False
 
@@ -108,6 +133,9 @@ class Fixture:
                 return
             route.continue_()
             return
+        if url.hostname == "cdn.jsdelivr.net" and url.path == "/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js":
+            route.fulfill(status=200, content_type="application/javascript", body=MOCK_SUPABASE_JS)
+            return
         if url.hostname != SUPABASE_HOST:
             # Web fonts are optional; abort them deterministically in these tests.
             route.abort("blockedbyclient")
@@ -119,6 +147,10 @@ class Fixture:
         if url.path != "/rest/v1/sangbogi":
             self.unexpected.append((request.method, url.path))
             route.abort("blockedbyclient")
+            return
+        if request.headers.get("authorization") != "Bearer mock-google-access-token":
+            self.unauthorized_requests.append((request.method, url.path))
+            route.fulfill(status=401, content_type="application/json", body='{"message":"mock authentication required"}')
             return
         if request.method == "GET":
             query = parse_qs(url.query)
@@ -177,7 +209,8 @@ class BrowserRegression(unittest.TestCase):
             context.close()
         self.assertEqual(self.page_errors, [], "Unexpected JavaScript errors")
         for fixture in self.fixtures:
-            self.assertEqual(fixture.auth_requests, [], "PIN login must not send email/auth API requests")
+            self.assertEqual(fixture.auth_requests, [], "Auth requests are provided by the deterministic SDK mock")
+            self.assertEqual(fixture.unauthorized_requests, [], "Database requests must carry a user session token")
             self.assertEqual(fixture.unexpected, [], "Unexpected Supabase request")
 
     def open_page(self, records=None, width=1440, height=1000, storage=None, wordmarks=False):
@@ -193,17 +226,25 @@ class BrowserRegression(unittest.TestCase):
         page.goto(self.base_url, wait_until="domcontentloaded")
         return page, fixture
 
-    def login(self, page, name="은호당"):
+    def authenticate(self, page, user=MOCK_GOOGLE_USER):
         expect(page.locator("#gate")).to_be_visible()
+        if page.locator("#authpane").is_visible():
+            page.locator("#google-signin").click()
+            page.evaluate("user => window.__authMock.setUser(user)", user)
+        expect(page.locator(".gate-layout")).to_be_visible()
+
+    def login(self, page, name="은호당"):
+        self.authenticate(page)
         page.locator(f'button[data-name="{name}"]').click()
-        expect(page.locator("#lockpane")).to_be_visible()
-        # 암호를 역할별 자릿수만큼 채우면 들어가기 버튼 없이 자동으로 입장한다.
-        page.locator("#familycode").fill("102938" if name == "은호당" else "9394")
         expect(page.locator("#app")).to_be_visible()
         expect(page.locator("#mename")).to_have_text(name)
         page.wait_for_function("document.querySelector('#title').textContent !== '불러오는 중'")
 
     def guest(self, page, name="방문객"):
+        if page.locator("#authpane").is_visible():
+            self.login(page)
+        if page.locator("#app").is_visible():
+            page.locator("#changeme").click()
         page.locator("#othername").fill(name)
         page.locator("#otherbtn").click()
         expect(page.locator("#app")).to_be_visible()
@@ -224,35 +265,31 @@ class BrowserRegression(unittest.TestCase):
         dimensions = page.evaluate("({width: innerWidth, document: document.documentElement.scrollWidth, body: document.body.scrollWidth})")
         self.assertLessEqual(max(dimensions["document"], dimensions["body"]), dimensions["width"])
 
-    def test_family_pins_reject_wrong_codes_and_never_send_email(self):
-        for name, wrong in (("은호당", "9394"), ("어머니", "102938")):
-            with self.subTest(role=name):
-                page, fixture = self.open_page()
-                page.locator(f'button[data-name="{name}"]').click()
-                code = page.locator("#familycode")
-                expect(code).to_have_attribute("type", "password")
-                code.fill(wrong)
-                page.locator("#lockverify").click()
-                expect(page.locator("#app")).to_be_hidden()
-                expect(page.locator("#lockerr")).not_to_be_empty()
-                self.assertEqual(fixture.writes, [])
-                code.fill("102938" if name == "은호당" else "9394")
-                code.press("Enter")
-                expect(page.locator("#app")).to_be_visible()
-                expect(page.locator("#mename")).to_have_text(name)
+    def test_google_auth_is_required_and_unapproved_account_is_rejected(self):
+        page, fixture = self.open_page()
+        expect(page.locator("#authpane")).to_be_visible()
+        expect(page.locator("#app")).to_be_hidden()
+        page.locator("#google-signin").click()
+        page.evaluate("user => window.__authMock.setUser(user)", {
+            "id": "mock-unapproved",
+            "email": "someone@example.com",
+            "app_metadata": {"provider": "google"},
+        })
+        expect(page.locator("#app")).to_be_hidden()
+        expect(page.locator("#autherr")).to_contain_text("사용할 수 없습니다")
+        self.assertEqual(fixture.writes, [])
+        page.locator("#google-signin").click()
+        page.evaluate("user => window.__authMock.setUser(user)", MOCK_GOOGLE_USER)
+        expect(page.locator(".gate-layout")).to_be_visible()
+        self.assertEqual(fixture.writes, [])
 
-    def test_reserved_guest_names_and_saved_names_require_pin(self):
-        for name in ("은호당", "어머니"):
-            with self.subTest(role=name):
-                page, fixture = self.open_page()
-                page.locator("#othername").fill("  " + name + "  ")
-                page.locator("#otherbtn").click()
-                expect(page.locator("#lockpane")).to_be_visible()
-                expect(page.locator("#app")).to_be_hidden()
-                self.assertEqual(fixture.writes, [])
-                saved, _ = self.open_page(storage={"sangbogi:me": json.dumps({"name": name})})
-                expect(saved.locator("#gate")).to_be_visible()
+    def test_saved_name_does_not_bypass_google_auth(self):
+        for name in ("은호당", "어머니", "방문객"):
+            with self.subTest(name=name):
+                saved, fixture = self.open_page(storage={"sangbogi:me": json.dumps({"name": name})})
+                expect(saved.locator("#authpane")).to_be_visible()
                 expect(saved.locator("#app")).to_be_hidden()
+                self.assertEqual(fixture.writes, [])
 
     def test_guest_excludes_private_content_and_cannot_mutate(self):
         previous = {"stock": {"bae": stamp(state="gift")}, "shop": {"bae": stamp(name="박보살", gift=True)}}
@@ -334,11 +371,6 @@ class BrowserRegression(unittest.TestCase):
         expect(page.locator("#gate")).to_be_visible()
         expect(page.locator("#othername")).to_be_focused()
         page.locator('button[data-name="은호당"]').click()
-        expect(page.locator("#lockpane")).to_be_visible()
-        expect(page.locator("#familycode")).to_be_empty()
-        expect(page.locator("#app")).to_be_hidden()
-        page.locator("#familycode").fill("102938")
-        page.locator("#familycode").press("Enter")
         expect(page.locator("#app")).to_be_visible()
         self.select_month(page, 9)
         expect(page.locator("#fixed .tick").first).to_have_attribute("aria-checked", "false")
@@ -1085,10 +1117,13 @@ class BrowserRegression(unittest.TestCase):
                         self.assertGreater(dimensions["width"], dimensions["height"])
                     self.assert_no_overflow(page)
 
+                assert_logo("#authpane .brand-image", 160)
+                self.authenticate(page)
                 assert_logo(".gate-brand .brand-image", 160)
                 page.locator('button[data-name="어머니"]').click()
-                assert_logo("#lockpane .brand-image", 140)
-                page.locator("#lockback").click()
+                expect(page.locator("#app")).to_be_visible()
+                page.locator("#changeme").click()
+                assert_logo(".gate-brand .brand-image", 160)
                 self.guest(page)
                 assert_logo(".brand-home .sign-image", 64)
 
@@ -1096,13 +1131,12 @@ class BrowserRegression(unittest.TestCase):
         for width, height in ((1440, 1000), (390, 844), (320, 640)):
             with self.subTest(viewport=f"{width}x{height}"):
                 page, _ = self.open_page(width=width, height=height)
-                expect(page.locator("#othername")).to_be_visible()
+                expect(page.locator("#authpane")).to_be_visible()
+                self.assert_no_overflow(page)
+                self.authenticate(page)
                 self.assert_no_overflow(page)
                 page.locator('button[data-name="어머니"]').click()
-                expect(page.locator("#familycode")).to_be_visible()
-                self.assert_no_overflow(page)
-                page.locator("#lockback").click()
-                self.login(page)
+                expect(page.locator("#app")).to_be_visible()
                 self.assert_no_overflow(page)
                 self.select_month(page, 9)
                 self.assert_no_overflow(page)
@@ -1690,15 +1724,15 @@ class BrowserRegression(unittest.TestCase):
     def test_palette_contrast_stays_accessible_in_light_and_dark(self):
         # Rendered computed styles catch palette-token regressions that drop
         # filled-button or body-text contrast below WCAG thresholds. The gate
-        # screen shows #otherbtn (.btn.solid) and body text before any login.
+        # gate shows #google-signin (.btn.solid) and body text before login.
         page, fixture = self.open_page()
         expect(page.locator("#gate")).to_be_visible()
-        expect(page.locator("#otherbtn")).to_be_visible()
+        expect(page.locator("#google-signin")).to_be_visible()
         for scheme in ("light", "dark"):
             with self.subTest(scheme=scheme):
                 page.emulate_media(color_scheme=scheme)
                 measured = page.evaluate("""() => {
-                  const button = document.querySelector('#otherbtn');
+                  const button = document.querySelector('#google-signin');
                   const bodyStyle = getComputedStyle(document.body);
                   const buttonStyle = getComputedStyle(button);
                   return {

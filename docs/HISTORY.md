@@ -1,5 +1,16 @@
 # 작업 이력 (HISTORY)
 
+## 2026-11-15 — 가족 PIN 로그인을 Google OAuth로 전환
+
+- 사용자 요청: 공개 저장소 `leftdrawer/calends_prep`의 평문 가족 PIN 대신 `phlogos1@gmail.com` Google 계정 인증을 사용.
+- 구현: `index.html`에 Google 로그인 화면 및 Supabase JS SDK 로드를 추가. `app.js`는 Supabase Auth PKCE 세션을 복구하고, 허용 이메일과 Google provider를 검사하며, Supabase REST 요청에 access token을 보냅니다. 기존 은호당·어머니·손님 화면 역할은 유지하되 유효한 Google 세션 뒤에만 역할을 복구합니다. 로그인 전 저장된 이름만으로는 앱 데이터에 접근할 수 없습니다.
+- 보안: `supabase/migrations/20261115000000_google_account_auth.sql`은 anon의 전체 권한과 공개 `sangbogi open` 정책을 제거하고 허용된 Google 계정만 authenticated로 조회·추가·수정하게 준비했습니다. 기존 기록 행이나 저장 키는 변경하지 않습니다.
+- 운영 DB 확인: 읽기 전용 조회에서 `sangbogi open`이 anon 전체 접근 정책이며 anon/authenticated에 모든 권한이 부여된 점을 확인했습니다. 운영 DB에는 DDL을 실행하지 않았습니다. Google 공급자와 redirect 설정 없이 먼저 정책을 바꾸면 현재 앱 접근이 중단될 수 있기 때문입니다.
+- 외부 설정/남은 사항: Google Auth Platform에서 consent screen과 Web OAuth Client를 만들고, 허용 origin `https://leftdrawer.github.io`, redirect URI `https://nfrubhmtyqvecckvzmxi.supabase.co/auth/v1/callback`을 등록해야 합니다. Client ID/Secret을 Supabase Google provider에 넣고 Supabase Site URL 및 redirect allowlist에 `https://leftdrawer.github.io/calends_prep/`를 등록한 뒤에만 마이그레이션을 적용하고 앱을 배포해야 합니다. Client Secret은 공개 저장소나 브라우저 코드에 넣지 않습니다. 절차와 공식 출처는 `docs/google-auth-setup.md`에 있습니다.
+- 기존 PIN 코드는 현재 소스에서 제거했습니다. 공개 Git 이력에는 이전 PIN 문자열이 남아 있을 수 있으며, 별도 승인 없이 공개 이력을 강제 재작성하지 않았습니다.
+- 검증: `python3 tests/browser_test.py` — 55개 모두 통과(합성 Auth/Supabase 응답만 사용); `node tests/domain_test.cjs` 통과; `node --check app.js` 통과. Supabase 보안 advisory 조회에서 별도 lint 항목은 반환되지 않았습니다. 외부 Google 로그인·실제 DB 읽기/쓰기 검증은 수행하지 않았습니다.
+- 상태: 수정 파일은 로컬 작업본에만 있으며 커밋·푸시·운영 배포는 하지 않았습니다.
+
 ## 2026-11-10 — 미리보기의 빛·색 분산·전환 강조
 
 - 사용자 피드백: 많이 좋아졌지만 원본보다 덜 화려함. 운영 반영이 아닌 기존 미리보기의 효과를 강화.

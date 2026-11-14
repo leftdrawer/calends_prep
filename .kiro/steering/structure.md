@@ -2,7 +2,7 @@
 
 ## 파일
 
-- `index.html`: 로그인과 가족 암호 입력, 달·행사 탭, 가족 준비/공개 예물 영역, 기록판
+- `index.html`: Google 로그인, 달·행사 탭, 가족 준비/공개 예물 영역, 기록판
 - `styles.css`: 로그인, PC 두 열·모바일 한 열, 행사 승인, 준비 항목과 기록판 스타일. 밝기 스위치는 216×96px, 휴대폰 머리 막대에서는 별도 줄을 확보해 축소하지 않음.
 - `theme-toggle.js`: 이 브라우저 전용 `sangbogi:theme` 선택, WebGL 유리 렌즈(60px)·해/달 픽셀(약 38px), 드래그·키보드 조작. 기기 밝기는 직접 고르기 전까지 추적하고, WebGL 불가 시 같은 크기 렌즈와 SVG로 대체.
 - `tests/theme_toggle_test.py`: 실데이터·이미지 캡처 없이 280–1440px 배치·고해상도 크기·입력·저장·기기 밝기 추적·대체 표시 검사.
@@ -11,6 +11,8 @@
 - `assets/`: PNG 로고·기존 홈 아이콘·`jungyang-jibang-s25-ultra.png` 합동지방
 - `assets/fonts/`: 봉행자 여섯 한자의 `eunhodang-hanja.woff`, 원본·파생 정보 `SOURCE.md`, 라이선스 `OFL.txt`
 - `tests/browser_test.py`: 실제 외부 요청을 차단한 브라우저 회귀 검사. Playwright `BrowserRegression` 외에 Pillow로 아이콘 파일을 직접 검사하는 `AppIconFiles`와 WCAG 대비 헬퍼(`parse_rgb`/`relative_luminance`/`contrast_ratio`)를 포함(아이콘 투명도·팔레트 대비·manifest 회귀 방지)
+- `supabase/migrations/20261115000000_google_account_auth.sql`: Google allowlist의 `authenticated` 접근으로 전환하는 RLS/권한 SQL. 운영 DB 미적용 상태
+- `docs/google-auth-setup.md`: Google Cloud와 Supabase provider·redirect 설정 절차 및 현재 운영 주의사항
 - `docs/HISTORY.md`: 변경 이력
 - `docs/domain-sangbogi.md`: 명절·대체·자료 호환 규칙
 - `CLAUDE.md`, `DESIGN.md`: 기존 디자인 기준과 외부 참고 자료
@@ -46,7 +48,11 @@
 
 - `initWordmarks`: 가로·세로 PNG 두 파일의 로드와 방향을 확인한 뒤 `<picture>`에 모바일 원본을 연결. 파일 미확보 시 기존 로고 유지
 
-- `FAMILY_CODES`, `showLock`, `verifyFamilyCode`: 가족 PIN 확인
+- `authClient`: Supabase JS CDN 클라이언트. Google OAuth PKCE, 지속 세션, URL 세션 감지와 refresh token 관리를 맡음
+- `ALLOWED_GOOGLE_USERS`, `googleRoleFor`, `applyAuthSession`: `phlogos1@gmail.com` 및 Google 공급자를 검증하고 저장된 화면 역할을 유효한 세션 뒤 복구
+- `signInWithGoogle`, `signOutGoogle`: OAuth 시작·세션 종료
+- `sbHead`: Supabase REST 요청에 anon API key와 사용자 access token을 포함
+- `supabase/migrations/20261115000000_google_account_auth.sql`: 기존 공개 anon 권한/정책을 제거하고 허용 이메일과 공급자를 RLS로 검사. 대시보드 설정 완료 후 적용해야 하며 현재 미적용
 - `isFamily`, `canWrite`: 은호당과 어머니의 준비 권한
 - `isAdmin`: 은호당 전용 대체 승인·택일·초기화 권한
 - `renderHead`, `renderEventNav`, `renderEventPlan`: 날짜와 행사·대체 상태
@@ -59,7 +65,7 @@
 - `isSangdalFirstDay`, `renderSeasonalPrep`: 정규 음력10월 초하루의 가족 전용 불사단지 쌀 교체 카드. 그 외 화면은 슬롯을 비움
 - `BULSA_RICE_ID`: 기존 `cycle.part`에 별도 저장하는 `bulsa-rice` 키. 기존 구매 수량과 차례 단계에는 포함하지 않음
 - `renderSheet`: 담당과 변경 이력. 동적 이름·메모는 textContent로 표시
-- `askName`: 접속 바꾸기·왼쪽 위 서명에서 이름 입력 첫 화면으로 복귀. 기록과 저장 대기 입력을 보존하고 이름 입력에 포커스
+- `askName`: 접속 바꾸기·왼쪽 위 서명에서 역할 선택 화면으로 복귀. 기록과 저장 대기 입력을 보존하고 이름 입력에 포커스
 
 새 명절 품목을 구현할 때 먼저 사용자 규칙을 문서화하고, 그 명절의 별도 저장 키를 사용하세요.
 

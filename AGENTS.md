@@ -6,6 +6,6 @@
 - 실데이터를 보존하세요. 기존 `sangbogi:cycle:` 키는 초하루입니다. 명절은 별도 `sangbogi:event:` 키를 사용합니다.
 - 사용자가 아직 정하지 않은 명절 품목과 절차를 만들거나 초하루 템플릿을 복사하지 마세요.
 - 은호당만 월별 대체를 승인합니다. 어머니는 준비를 함께 관리하고 손님은 예물·지난 기여 기록만 봅니다.
-- 가족 PIN은 사용자 요청에 따른 간단한 화면 잠금입니다. 이메일 OTP로 다시 바꾸지 마세요.
+- 최신 요구: PIN 인증 대신 `phlogos1@gmail.com` Google OAuth와 Supabase access-token/RLS를 사용합니다. Google Cloud/Supabase 설정과 운영 마이그레이션이 끝나기 전에는 배포하지 마세요. 설정 순서는 `docs/google-auth-setup.md`를 따릅니다.
 - 기능 검증은 `python3 tests/browser_test.py`로 수행하세요. 테스트는 외부 API를 합성 응답으로 처리합니다. 실제 사용자 기록을 테스트 대상으로 수정하지 마세요.
 - 클라우드 작업은 이미 격리되어 있습니다. 기존 체크아웃을 사용하고 명시적으로 요청하지 않은 Git worktree를 만들지 마세요.
