@@ -77,3 +77,7 @@ GitHub Pages 저장소는 `leftdrawer/calends_prep`, 배포 소스는 `main` 루
 
 ## 성주 참고항목 저장 (2026-10-26)
 - 기존seongju이벤트part의ritual-seongju-fruit는그대로입니다. 새cake및step-opening/jowang/seongju/jeonan/gate/closing은독립part에저장하고기존체크에서완료를추정하지않습니다. 서버/테이블/상위그룹변경없음.
+
+## 성주맞이 차림·택일 저장 (2026-11-14)
+- 성주맞이 준비10항목은 기존 `sangbogi:event:<연>-<월>:seongju`의 part에 `ritual-seongju-<id>`로 저장하며 새 테이블·이관·서버 변경이 없습니다. 기존 `ritual-seongju-fruit`·`ritual-seongju-cake` 값과 이력은 그대로 읽고 덮어쓰지 않습니다.
+- 택일 후보 버튼은 기존 `savePickedDate`를 그대로 사용해 `sangbogi:picked`의 `2026-10|성주맞이 고사`만 바꿉니다. 후보 계산과 카드 렌더링은 읽기만 하며 저장을 만들지 않습니다.

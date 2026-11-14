@@ -63,16 +63,39 @@ for (const [eventId, month, count] of [['yeongdeung',2,5],['chilseok',7,8],['don
   assert.equal(run('eventPlan().items.length'), run('GIFTS.length'));
   assert.equal(run('eventPlan().steps.length'), 0);
 }
-for (const [eventId, month] of [['hongsumagi',1],['samsin',3],['chopail',4],['dano',5],['baekjung',7],['seongju',10]]) {
+for (const [eventId, month] of [['hongsumagi',1],['samsin',3],['chopail',4],['dano',5],['baekjung',7]]) {
   run(`idx=LUNAR.findIndex(e=>e[1]===2026&&e[2]===${month}&&!e[3]);selectedEvent='${eventId}'`);
   assert.equal(run('isEventConfigured()'), false);
   assert.equal(run('getRitualGuide().sources.length>0'), true);
-  const partialCounts={hongsumagi:9,seongju:2};
+  const partialCounts={hongsumagi:9};
   assert.equal(run('ritualCheckItems(getSelectedEvent().id).length'), partialCounts[eventId]||0);
   assert.equal(run('isPartialRitual()'), !!partialCounts[eventId]);
   assert.equal(run('eventPlan().items.length'), 0);
   assert.equal(run('getRitualGuide().pending.length>0'), true);
 }
+run("idx=LUNAR.findIndex(e=>e[1]===2026&&e[2]===10&&!e[3]);selectedEvent='seongju'");
+assert.equal(run('isEventConfigured()'), true);
+assert.equal(run('isSourceRitual()'), true);
+assert.equal(run('isPartialRitual()'), false);
+assert.equal(run('ritualCheckItems("seongju").length'), 10);
+assert.equal(run('ritualCheckItems("seongju","steps").length'), 6);
+assert.equal(run('getRitualGuide().title'), '성주맞이 · 시월 상달의 성주 고사');
+assert.equal(run('getRitualGuide().sections.map(s=>s.id).join(",")'), 'date,hours,sang,order,yebeop');
+assert.equal(run('getRitualGuide().sections.find(s=>s.id==="yebeop").list.length'), 4);
+assert.equal(run('getRitualGuide().sections.find(s=>s.id==="order").groups.length'), 2);
+assert.equal(run('dayGanjiName("2026-11-16")'), '갑오일');
+assert.equal(run('dayGanjiName("2026-11-28")'), '병오일');
+assert.equal(run('seongjuPickCandidates(LUNAR[idx]).map(c=>c.date).join(",")'),
+  '2026-11-09,2026-11-16,2026-11-17,2026-11-18,2026-11-21,2026-11-27,2026-11-28,2026-12-03,2026-12-07,2026-12-08');
+assert.equal(run('seongjuPickCandidates(LUNAR[idx]).filter(c=>c.best).length'), 0);
+assert.equal(run('dayGanjiName("2026-12-10")'), '무오일');
+assert.equal(run('seongjuPickCandidates({0:"2026-12-01",2:12,3:false,4:20}).filter(c=>c.best).map(c=>c.date).join(",")'),
+  '2026-12-10');
+assert.equal(run('seongjuPickCandidates(LUNAR[idx]).filter(c=>c.avoid).map(c=>c.date).join(",")'),
+  '2026-11-28');
+assert.equal(run('seongjuPickCandidates(LUNAR[idx]).find(c=>c.date==="2026-11-16").labels.join(",")'), '말날 · 갑오일');
+assert.equal(run('seongjuPickCandidates(LUNAR[idx]).find(c=>c.date==="2026-11-27").lunarDay'), 19);
+assert.equal(run('seongjuPickCandidates(LUNAR.find(e=>e[1]===2028&&e[2]===5&&e[3])).length'), 0);
 run("idx=LUNAR.findIndex(e=>e[1]===2026&&e[2]===1&&!e[3]);selectedEvent='daeboreum'");
 assert.equal(run('getSelectedEvent().date'), '2026-03-03');
 assert.equal(run('isEventConfigured()'), true);
@@ -107,13 +130,13 @@ run('cycle.mode["ritual-choice-dano"]={state:"invalid"}');
 assert.equal(run('ritualOptionId("dano")'), '');
 assert.equal(run('ritualCheckItems("dano").length'), 0);
 run("idx=LUNAR.findIndex(e=>e[1]===2026&&e[2]===10&&!e[3]);selectedEvent='seongju';cycle={mode:{},part:{}}");
-assert.equal(run('isEventConfigured()'), false);
-assert.equal(run('isPartialRitual()'), true);
-assert.equal(run('ritualCheckItems("seongju").length'), 2);
+assert.equal(run('isEventConfigured()'), true);
+assert.equal(run('ritualCheckItems("seongju").length'), 10);
 assert.equal(run('ritualCheckItems("seongju","steps").length'), 6);
-assert.equal(run('getRitualGuide().title'), '성주맞이 · 신당의 간소 고사');
+assert.equal(run('eventPlan().items.length'), run('GIFTS.length'));
+assert.equal(run('getRitualGuide().title'), '성주맞이 · 시월 상달의 성주 고사');
 assert.equal(run('ritualCheckItems("seongju","steps")[0].name'), '정심경 → 태을보신경 → 부정경');
-assert.equal(run('nameOfKey("part/ritual-seongju-fruit")'), '법도에 맞는 제철과일 고르기 · 재료');
+assert.equal(run('nameOfKey("part/ritual-seongju-fruit")'), '제철 삼색과일 · 재료');
 const allIds = run('Object.keys(RITUAL_LIBRARY.events).flatMap(id=>allRitualCheckItems(id).map(item=>item.id))');
 assert.equal(new Set(allIds).size, allIds.length);
 assert.equal(run('Object.values(RITUAL_LIBRARY.events).every(plan=>plan.sources.every(id=>!!RITUAL_LIBRARY.sources[id]))'), true);
@@ -123,4 +146,4 @@ assert.equal(run('BUY.length'), 18);
 assert.equal(run('nameOfKey("part/ritual-chilseok-rice")'), '공양밥 일곱 그릇 · 재료');
 run("idx=LUNAR.findIndex(e=>e[1]===2028&&e[2]===5&&e[3]);selectedEvent='first'");
 assert.equal(run('eventsFor(LUNAR[idx]).length'), 1);
-console.log('PASS: Jungyang date/configuration, 7 basic and 2 prayer checks, preserved retired history, year-specific Hanmun/reading/meaning triples, first-day and unconfigured-holiday preservation.');
+console.log('PASS: Jungyang date/configuration, 7 basic and 2 prayer checks, preserved retired history, year-specific Hanmun/reading/meaning triples, first-day and unconfigured-holiday preservation, seongju sangdal guide and its lunar pick candidates.');

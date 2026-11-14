@@ -95,3 +95,9 @@
 
 ## 성주 고사 참고진행 (2026-10-26)
 - RITUAL_LIBRARY.events.seongju는기존fruit체크+cake확인과stepTitle/steps6을가집니다. renderRitualGuidance는계획에stepTitle이있으면그제목을쓰고다른행사의기존제목은보존합니다. partialChecklist의준비집계와steps집계를섞지않습니다.
+
+## 성주맞이 정리 카드·택일 후보 (2026-11-14)
+- RITUAL_LIBRARY.events.seongju의 sections(rows/list/groups)는 `ritualSectionCard`가 `ritual-section-<id>` 카드로 그립니다. 라벨과 제목이 같으면 라벨을 생략하고, 체크박스·집계는 만들지 않습니다.
+- `SON_EOPNEUN_LUNAR_DAYS`, `dayGanjiIndex`, `dayGanjiName`, `seongjuPickCandidates`는 손 없는 날·말날·돼지날만 계산합니다. 일진 기준은 `DAY_GANJI_ANCHOR`(2026-11-16 갑오일)이며 연·월과 무관하게 같은 60갑자를 씁니다.
+- `renderSeongjuPicks`는 `ritual-pick-card`를 만들고, 은호당에게만 `ritual-pick-<날짜>` 버튼을 붙여 기존 `savePickedDate`로 `sangbogi:picked`에 저장합니다. 어머니·손님에게는 버튼이 없습니다.
+- 준비10항목은 checklist이며 part 이름은 `ritual-seongju-<id>`, 경문6묶음은 `ritual-seongju-step-<id>`입니다. 기존 fruit/cake 체크 값은 키를 바꾸지 않고 그대로 읽습니다.

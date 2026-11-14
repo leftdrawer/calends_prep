@@ -1246,9 +1246,10 @@ class BrowserRegression(unittest.TestCase):
     RITUALS = {
         "yeongdeung": (2, 5, 1), "chilseok": (7, 8, 2),
         "chuseok": (8, 5, 2), "dongji": (11, 3, 1), "samjae": (12, 10, 1),
+        "seongju": (10, 10, 6),
     }
     REFERENCE_ONLY = {"samsin": 3, "chopail": 4, "dano": 5, "baekjung": 7}
-    PARTIAL_RITUALS = {"seongju": (10, 2), "hongsumagi": (1, 9)}
+    PARTIAL_RITUALS = {"hongsumagi": (1, 9)}
 
     def open_event(self, page, event_id, month, year=2026):
         self.select_month(page, month, year=year)
@@ -1342,7 +1343,7 @@ class BrowserRegression(unittest.TestCase):
         self.open_event(page, 'daeboreum', 1)
         expect(page.locator('#ritual-progress')).to_have_text('준비안 1 / 3 확인')
 
-    def test_seongju_fruit_conditions_stay_scoped_with_partial_preparation(self):
+    def test_seongju_fruit_conditions_stay_scoped_to_its_own_event(self):
         page, fixture = self.open_page(width=390, height=844)
         self.login(page, '어머니')
         self.open_event(page, 'seongju', 10)
@@ -1350,13 +1351,12 @@ class BrowserRegression(unittest.TestCase):
         details.locator('summary').click()
         expect(details).to_contain_text('씨없는수박')
         expect(details).to_contain_text('자몽도 가능하다는 회원 댓글은 본문과 다르며')
-        expect(page.locator('#ritual-items-card [role=checkbox]')).to_have_count(2)
-        expect(page.locator('#donebox button')).to_have_count(0)
+        expect(page.locator('#ritual-items-card [role=checkbox]')).to_have_count(10)
         self.assertEqual(fixture.writes, [])
         self.assert_no_overflow(page)
         preview_dir = os.environ.get('CALENDS_PREVIEW_DIR')
         if preview_dir:
-            page.locator('#ritual-prep').screenshot(path=str(Path(preview_dir) / 'partial-seongju-source-390.png'))
+            page.locator('#ritual-prep').screenshot(path=str(Path(preview_dir) / 'seongju-source-390.png'))
         self.open_event(page, 'samsin', 3)
         expect(page.locator('.ritual-source-details')).not_to_contain_text('씨없는수박')
         self.open_event(page, 'first', 10)
@@ -1549,7 +1549,7 @@ class BrowserRegression(unittest.TestCase):
             self.wait_saved(page)
             self.assertTrue(all(w['key'] == 'sangbogi:event:2026-05:dano' for w in fixture.writes))
 
-    def test_seongju_simple_shrine_scope_keeps_old_fruit_and_first_day_records(self):
+    def test_seongju_sangdal_guide_keeps_old_fruit_and_first_day_records(self):
         key = 'sangbogi:event:2026-10:seongju'
         first_key = 'sangbogi:cycle:2026-10'
         first = legacy_cycle()
@@ -1560,18 +1560,18 @@ class BrowserRegression(unittest.TestCase):
         old_event, old_first = fixture.records[key], fixture.records[first_key]
         self.login(page, '어머니')
         self.open_event(page, 'seongju', 10)
-        expect(page.locator('#ritual-guide-card')).to_contain_text('성주맞이 · 신당의 간소 고사')
-        expect(page.locator('#ritual-progress')).to_have_text('확인된 일부 1 / 2 · 전체 차림 미정')
+        expect(page.locator('#ritual-guide-card')).to_contain_text('성주맞이 · 시월 상달의 성주 고사')
+        expect(page.locator('#ritual-progress')).to_have_text('준비안 1 / 10 확인')
         expect(page.locator('#ritual-seongju-fruit-check')).to_have_attribute('aria-checked', 'true')
         expect(page.locator('#ritual-seongju-cake-check')).to_have_attribute('aria-checked', 'false')
         expect(page.locator('#ritual-steps-card [role=checkbox]')).to_have_count(6)
-        expect(page.locator('#donecard')).to_be_hidden()
+        expect(page.locator('#donebox button')).to_have_count(1)
         self.assertEqual(fixture.writes, [])
         self.assertEqual(fixture.records[key], old_event)
         self.assertEqual(fixture.records[first_key], old_first)
         page.locator('#ritual-seongju-step-opening-check').click()
         self.wait_saved(page)
-        expect(page.locator('#ritual-progress')).to_have_text('확인된 일부 1 / 2 · 전체 차림 미정')
+        expect(page.locator('#ritual-progress')).to_have_text('준비안 1 / 10 확인')
         saved = json.loads(fixture.records[key])
         self.assertTrue(saved['part']['ritual-seongju-fruit']['on'])
         self.assertTrue(saved['part']['ritual-seongju-step-opening']['on'])
@@ -1583,24 +1583,95 @@ class BrowserRegression(unittest.TestCase):
         self.open_event(page, 'seongju', 10)
         expect(page.locator('#ritual-seongju-step-opening-check')).to_have_attribute('aria-checked', 'true')
         self.open_event(page, 'seongju', 10, year=2027)
-        expect(page.locator('#ritual-progress')).to_have_text('확인된 일부 0 / 2 · 전체 차림 미정')
+        expect(page.locator('#ritual-progress')).to_have_text('준비안 0 / 10 확인')
         expect(page.locator('#ritual-steps-card [aria-checked=true]')).to_have_count(0)
 
     def test_seongju_reference_order_is_gosa_grouping_not_large_gut(self):
         page, fixture = self.open_page(width=390, height=844)
         self.login(page, '어머니')
         self.open_event(page, 'seongju', 10)
-        expect(page.locator('#ritual-steps-card h2')).to_have_text('성주고사 순서 · 자료 참고')
+        expect(page.locator('#ritual-steps-card h2')).to_have_text('성주고사 경문 순서 · 참고')
         expect(page.locator('#ritual-steps-card .nm')).to_have_text([
             '정심경 → 태을보신경 → 부정경', '조왕경', '성주축원문 → 성주좌정 안택경',
             '전안축원문', '길대신장축원 → 걸립축원', '전안뒤풀이'])
-        expect(page.locator('#ritual-items-card')).to_contain_text('팥시루·절편 모두 성주떡')
+        expect(page.locator('#ritual-items-card')).to_contain_text('붉은 팥시루떡')
+        expect(page.locator('#ritual-items-card')).to_contain_text('마른 북어')
         expect(page.locator('#ritual-pending-card')).not_to_contain_text('지낼 고사의 장소·규모')
+        expect(page.locator('#ritual-section-order')).to_contain_text('주당살')
         self.assertEqual(fixture.writes, [])
         self.assert_no_overflow(page)
         folder = os.environ.get('CALENDS_PREVIEW_DIR')
         if folder:
-            page.locator('#ritual-prep').screenshot(path=str(Path(folder) / 'seongju-shrine-simple-390.png'))
+            page.locator('#ritual-prep').screenshot(path=str(Path(folder) / 'seongju-sangdal-390.png'))
+
+    def test_seongju_guide_shows_dates_hours_setup_and_taboos(self):
+        page, fixture = self.open_page(width=390, height=844)
+        self.login(page, '어머니')
+        self.open_event(page, 'seongju', 10)
+        date = page.locator('#ritual-section-date')
+        expect(date).to_contain_text('양력 11월 9일(월)부터 12월 8일(화)까지')
+        expect(date).to_contain_text('손 없는 날')
+        expect(date).to_contain_text('무오일을 으뜸')
+        expect(date).to_contain_text('생기복덕')
+        expect(page.locator('#ritual-section-hours')).to_contain_text('자시 전후')
+        expect(page.locator('#ritual-section-hours')).to_contain_text('해 질 무렵')
+        sang = page.locator('#ritual-section-sang')
+        expect(sang).to_contain_text('자르지 않고 시루째')
+        expect(sang).to_contain_text('마른 북어 1~3마리')
+        expect(sang).to_contain_text('삼신 · 제석')
+        expect(sang).to_contain_text('건궁성주')
+        expect(page.locator('#ritual-section-order h3')).to_have_text(['가정 고사', '무속 성주맞이 · 경기·서울'])
+        expect(page.locator('#ritual-section-order')).to_contain_text('황제풀이')
+        expect(page.locator('#ritual-section-yebeop li')).to_have_text([
+            '집안이나 이웃에 초상·출산 부정이 있으면 다음 달로 미룹니다.',
+            '음식은 미리 간을 보지 않습니다.',
+            '성주단지의 묵은 쌀은 남에게 주지 않고 식구끼리 밥을 해 먹습니다.',
+            '문밖에 내놓은 떡은 다시 집 안으로 들이지 않습니다.'])
+        for section in ('date', 'hours', 'sang', 'order', 'yebeop'):
+            expect(page.locator(f'#ritual-section-{section} [role=checkbox]')).to_have_count(0)
+        self.assertEqual(fixture.writes, [])
+        self.assert_no_overflow(page)
+
+    def test_seongju_pick_candidates_follow_lunar_rules_and_save_only_when_pressed(self):
+        page, fixture = self.open_page(width=390, height=844)
+        self.login(page)
+        self.open_event(page, 'seongju', 10)
+        card = page.locator('#ritual-pick-card')
+        expect(card).to_be_visible()
+        lines = card.locator('.pickline')
+        expect(lines).to_have_count(10)
+        expect(card.locator('.pickline .pw')).to_have_text([
+            '11월 9일 월요일 · 음력 10월 1일 · 정해일',
+            '11월 16일 월요일 · 음력 10월 8일 · 갑오일',
+            '11월 17일 화요일 · 음력 10월 9일 · 을미일',
+            '11월 18일 수요일 · 음력 10월 10일 · 병신일',
+            '11월 21일 토요일 · 음력 10월 13일 · 기해일',
+            '11월 27일 금요일 · 음력 10월 19일 · 을사일',
+            '11월 28일 토요일 · 음력 10월 20일 · 병오일',
+            '12월 3일 목요일 · 음력 10월 25일 · 신해일',
+            '12월 7일 월요일 · 음력 10월 29일 · 을묘일',
+            '12월 8일 화요일 · 음력 10월 30일 · 병진일'])
+        expect(page.locator('#ritual-pick-2026-11-16')).to_be_visible()
+        expect(page.locator('#ritual-pick-2026-11-28')).to_be_visible()
+        self.assertIn('병오일 피함', card.locator('#ritual-pick-2026-11-28').evaluate('el => el.parentElement.textContent'))
+        self.assertEqual(fixture.writes, [])
+        self.assert_no_overflow(page)
+        page.locator('#ritual-pick-2026-11-17').click()
+        expect(page.locator('#status')).to_contain_text('날짜를 저장했습니다')
+        saved = json.loads(fixture.records['sangbogi:picked'])
+        self.assertEqual(saved['2026-10|성주맞이 고사'], '2026-11-17')
+        expect(page.locator('#chips')).to_contain_text('11월 17일')
+        expect(page.locator('#ritual-pick-2026-11-17')).to_have_text('택일 해제')
+        self.assertFalse(any(w['key'].startswith('sangbogi:event:') for w in fixture.writes))
+        page.locator('#ritual-pick-2026-11-17').click()
+        expect(page.locator('#status')).to_contain_text('택일한 날짜를 지웠습니다')
+        self.assertIsNone(json.loads(fixture.records['sangbogi:picked'])['2026-10|성주맞이 고사'])
+        page.locator('#changeme').click()
+        self.login(page, '어머니')
+        self.open_event(page, 'seongju', 10)
+        expect(page.locator('#ritual-pick-card')).to_be_visible()
+        expect(page.locator('#ritual-pick-card button')).to_have_count(0)
+        expect(page.locator('#ritual-pick-card')).to_contain_text('택일은 은호당이 정합니다')
 
     def test_reference_only_events_have_guidance_without_checks_or_writes(self):
         for event_id, month in self.REFERENCE_ONLY.items():

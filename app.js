@@ -140,6 +140,10 @@ function todayISO(){return new Intl.DateTimeFormat('sv-SE',{
 function diffDays(a,b){const p=s=>{const[y,m,d]=s.split('-').map(Number);return Date.UTC(y,m-1,d);};
   return Math.round((p(b)-p(a))/86400000);}
 function ganji(y){return GAN[(y-4)%10]+JI[(y-4)%12]+'년';}
+/* 일진은 2026-11-16(갑오일)을 기준으로 셈합니다. 택일 후보의 말날·돼지날 판정에 씁니다. */
+const DAY_GANJI_ANCHOR='2026-11-16', DAY_GANJI_ANCHOR_INDEX=30;
+function dayGanjiIndex(iso){return ((DAY_GANJI_ANCHOR_INDEX+diffDays(DAY_GANJI_ANCHOR,iso))%60+60)%60;}
+function dayGanjiName(iso){const i=dayGanjiIndex(iso);return GAN[i%10]+JI[i%12]+'일';}
 function monthName(e){return (e[3]?'윤':'')+MONTHNAME[e[2]-1];}
 function cycleKey(e){return e[1]+'-'+(e[3]?'L':'')+String(e[2]).padStart(2,'0');}
 /* 택일하는 날은 은호당께서 정하신 것을 여기에 담습니다 */
@@ -195,6 +199,22 @@ function ritualCheckItems(eventId,kind='checklist',optionId=null){
 }
 function allRitualCheckItems(eventId){
   return ['',...(RITUAL_LIBRARY.events[eventId]?.choices||[]).map(option=>option.id)].flatMap(option=>ritualCheckItems(eventId,'checklist',option).concat(ritualCheckItems(eventId,'steps',option)));
+}
+/* 성주맞이 택일 후보: 손 없는 날(음력 9·10·19·20·29·30일)과 말날(午)·돼지날(亥)만 셈합니다.
+   생기복덕은 집안 식구의 생년·생월이 필요하므로 앱이 정하지 않습니다. */
+const SON_EOPNEUN_LUNAR_DAYS=[9,10,19,20,29,30];
+function seongjuPickCandidates(e){
+  if(!e||e[3])return [];
+  const out=[];
+  for(let d=0;d<e[4];d++){
+    const date=addDays(e[0],d),lunarDay=d+1,i=dayGanjiIndex(date),stem=GAN[i%10],branch=JI[i%12],labels=[];
+    if(SON_EOPNEUN_LUNAR_DAYS.includes(lunarDay))labels.push('손 없는 날');
+    if(branch==='오')labels.push(stem==='무'?'말날 · 무오일 으뜸':stem==='병'?'말날 · 병오일 피함':'말날 · '+stem+'오일');
+    if(branch==='해')labels.push('돼지날 · '+stem+'해일');
+    if(!labels.length)continue;
+    out.push({date,lunarDay,ganji:stem+branch,labels,best:branch==='오'&&stem==='무',avoid:branch==='오'&&stem==='병'});
+  }
+  return out;
 }
 function isJungyang(){return getSelectedEvent().id==='jungyang';}
 function isEventConfigured(){return !!getSelectedEvent().configured;}
@@ -936,6 +956,83 @@ function renderJungyangGuide(){
   sources.innerHTML='<p class="section-label">자료와 적용 범위</p><h2>참고한 글</h2><ul><li><a href="https://cafe.naver.com/f-e/cafes/11840628/articles/14197" target="_blank" rel="noopener noreferrer">중양절(음력 9월 9일)</a> · 스승니임ㅡ서울, 2023.07.31. 중양의 대상·취지와 세시풍속 참고.</li><li><a href="https://cafe.naver.com/f-e/cafes/11840628/articles/28564" target="_blank" rel="noopener noreferrer">무명조상 해원경</a> · 스승니임ㅡ서울, 2026.10.03. 작성자가 만든 중양 경문으로, 제수와 해원 발원의 취지 참고.</li></ul><p class="note">카페 글은 로그인·회원 자격이 필요할 수 있습니다. 기본 수량은 은호당의 결정이고, 국화 음식과 간소 진행안은 자료의 취지를 참고했습니다. 지방과 축문은 두 집안을 함께 모시려는 요청에 맞춰 새로 정리했습니다. 중양 상의 체크는 다른 달·초하루 기록과 따로 저장합니다.</p>';
   el.appendChild(sources);
 }
+/* 행사 정리 카드: 택일·시각·상차림·신체·절차·예법처럼 진척을 세지 않는 설명입니다.
+   rows(용어+설명), list(차례 없는 목록), groups(제목 있는 순서) 중 있는 것만 그립니다. */
+function ritualSectionCard(section){
+  const card=document.createElement('section');
+  card.className='card ritual-section-card';card.id='ritual-section-'+(section.id||'info');
+  const label=document.createElement('p');label.className='section-label';
+  label.textContent=section.label||'정리';
+  const heading=document.createElement('h2');heading.textContent=section.title||'';
+  if(label.textContent===heading.textContent)card.appendChild(heading);
+  else card.append(label,heading);
+  if(section.intro){const intro=document.createElement('p');intro.className='sub';intro.textContent=section.intro;card.appendChild(intro);}
+  if(section.rows?.length){
+    const terms=document.createElement('dl');terms.className='ritual-terms';
+    section.rows.forEach(([term,text])=>{
+      const dt=document.createElement('dt');dt.textContent=term;
+      const dd=document.createElement('dd');dd.textContent=text;
+      terms.append(dt,dd);
+    });
+    card.appendChild(terms);
+  }
+  if(section.list?.length){
+    const list=document.createElement('ul');list.className='ritual-list';
+    section.list.forEach(text=>{const li=document.createElement('li');li.textContent=text;list.appendChild(li);});
+    card.appendChild(list);
+  }
+  (section.groups||[]).forEach(group=>{
+    const sub=document.createElement('h3');sub.textContent=group.title;card.appendChild(sub);
+    if(group.intro){const intro=document.createElement('p');intro.className='sub';intro.textContent=group.intro;card.appendChild(intro);}
+    const list=document.createElement('ol');list.className='ritual-list';
+    group.items.forEach(text=>{const li=document.createElement('li');li.textContent=text;list.appendChild(li);});
+    card.appendChild(list);
+  });
+  if(section.note){const note=document.createElement('p');note.className='note';note.textContent=section.note;card.appendChild(note);}
+  return card;
+}
+/* 성주맞이 택일 후보 카드. 은호당은 후보일을 눌러 그 날로 택일할 수 있습니다. */
+function renderSeongjuPicks(event){
+  const e=LUNAR[idx];
+  if(!event||event.id!=='seongju'||e[3])return null;
+  const picks=seongjuPickCandidates(e);
+  if(!picks.length)return null;
+  const card=document.createElement('section');
+  card.className='card ritual-pick-card';card.id='ritual-pick-card';
+  const label=document.createElement('p');label.className='section-label';label.textContent='택일';
+  const heading=document.createElement('h2');heading.textContent=MONTHNAME[e[2]-1]+' 택일 후보';
+  const intro=document.createElement('p');intro.className='sub';
+  intro.textContent='이 음력 달의 손 없는 날과 말날·돼지날을 일진으로 셈해 보여 줍니다. 집안 식구의 생기복덕이 맞는 날은 은호당이 가립니다.';
+  card.append(label,heading,intro);
+  const list=document.createElement('div');list.className='picklist';
+  const today=todayISO(),renderedKey=keyNow();
+  picks.forEach(candidate=>{
+    const line=document.createElement('div');
+    line.className='pickline'+(candidate.best?' best':'')+(candidate.avoid?' avoid':'')+(candidate.date===event.date?' picked':'');
+    const when=document.createElement('span');when.className='pw';
+    when.textContent=fmtK(candidate.date)+' · 음력 '+e[2]+'월 '+candidate.lunarDay+'일 · '+candidate.ganji+'일';
+    const tags=document.createElement('span');tags.className='pt';
+    const parts=[...candidate.labels];
+    if(candidate.date<today)parts.push('지난 날');
+    if(candidate.date===event.date)parts.push('택일함');
+    tags.textContent=parts.join(' · ');
+    line.append(when,tags);
+    if(isAdmin()){
+      const button=document.createElement('button');button.type='button';
+      button.id='ritual-pick-'+candidate.date;button.className='btn pickbtn';
+      button.textContent=candidate.date===event.date?'택일 해제':'이 날로 택일';
+      button.disabled=PICKED_SAVING;
+      button.onclick=()=>{if(!isAdmin()||keyNow()!==renderedKey)return;savePickedDate(e,event,candidate.date===event.date?'':candidate.date);};
+      line.appendChild(button);
+    }
+    list.appendChild(line);
+  });
+  card.appendChild(list);
+  const note=document.createElement('p');note.className='note';
+  note.textContent=isAdmin()?'후보일은 음력 날짜와 일진으로만 셈했습니다. 생기복덕·집안 일정·이웃 부정은 앱이 판단하지 않으며, 누른 뒤 저장되어야 일정에 들어갑니다.':'택일은 은호당이 정합니다. 어머니는 후보일을 보고 준비 날을 가늠할 수 있습니다.';
+  card.appendChild(note);
+  return card;
+}
 function renderRitualGuidance(){
   const reference=document.getElementById('ritual-reference'),prep=document.getElementById('ritual-prep');
   const previous=reference.querySelector('details')||prep.querySelector('details');
@@ -976,7 +1073,7 @@ function renderRitualGuidance(){
     const progress=document.createElement('p');progress.id='ritual-progress';progress.className='jungyang-count';
     progress.textContent=isPartialRitual()?'확인된 일부 '+count+' / '+items.length+' · 전체 차림 미정':'준비안 '+count+' / '+items.length+' 확인';card.appendChild(progress);
     const scope=document.createElement('p');scope.className='sub';
-    scope.textContent=isPartialRitual()?'해당 자료의 방식을 쓰기로 정했을 때만 참고할 일부 준비입니다. 은호당의 전체 차림이나 필수 구매 목록이 아니며, 미확인 수량은 만들지 않았습니다.':event.id==='chuseok'?'기존 은호당 추석 기준을 점검합니다.':'해당 작성자의 자료를 바탕으로 정리한 준비안입니다. 모든 신당의 의무 법도는 아니며, 수량이 없는 곳은 임의로 정하지 않았습니다.';
+    scope.textContent=isPartialRitual()?'해당 자료의 방식을 쓰기로 정했을 때만 참고할 일부 준비입니다. 은호당의 전체 차림이나 필수 구매 목록이 아니며, 미확인 수량은 만들지 않았습니다.':event.id==='chuseok'?'기존 은호당 추석 기준을 점검합니다.':event.id==='seongju'?'은호당이 정리한 상달 성주맞이 차림입니다. 카페 자료는 비교와 참고로 함께 두었고, 수량이 없는 곳은 임의로 정하지 않았습니다.':'해당 작성자의 자료를 바탕으로 정리한 준비안입니다. 모든 신당의 의무 법도는 아니며, 수량이 없는 곳은 임의로 정하지 않았습니다.';
     card.appendChild(scope);
     if(event.id==='dongji'&&event.date){
       const date=document.createElement('p');date.className='sub';
@@ -985,8 +1082,10 @@ function renderRitualGuidance(){
     }
   }
   slot.appendChild(card);
+  const picks=renderSeongjuPicks(event);if(picks)slot.appendChild(picks);
   if(items.length)slot.appendChild(preparationCard('ritual-items-card',isPartialRitual()?'확인된 일부 준비':'준비할 것',items,'확인'));
   if(steps.length)slot.appendChild(preparationCard('ritual-steps-card',plan.stepTitle||'마음을 고하고 마무리하기',steps,'짚음'));
+  (plan.sections||[]).forEach(section=>slot.appendChild(ritualSectionCard(section)));
   if(plan.pending?.length){
     const pendingCard=document.createElement('section');pendingCard.className='card ritual-pending-card';pendingCard.id='ritual-pending-card';
     const heading=document.createElement('h2');heading.textContent='아직 정할 것';

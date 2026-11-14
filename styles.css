@@ -590,3 +590,27 @@ h1{font-size:34px;line-height:1.25;font-weight:700;letter-spacing:-.03em}
   .top>.theme-slot{order:3;flex-basis:100%;justify-content:flex-end;margin-right:0;gap:8px}
   .gate .theme-slot{align-self:center}
 }
+
+/* 성주맞이 정리·택일 카드 (2026-11-14): 진척을 세지 않는 설명과 후보일.
+   기존 토큰만 쓰고 새 색·글꼴은 두지 않습니다. */
+.ritual-section-card h3{font-size:17px;font-weight:600;color:var(--ink);margin:22px 0 6px}
+.ritual-terms{margin:10px 0 0}
+.ritual-terms dt{font-size:15px;font-weight:600;color:var(--ink);margin:16px 0 0}
+.ritual-terms dt:first-child{margin-top:4px}
+.ritual-terms dd{margin:4px 0 0;font-size:15px;line-height:1.65;color:var(--ink-2)}
+.ritual-list{margin:10px 0 0;padding-left:22px;font-size:15px;line-height:1.65;color:var(--ink-2)}
+.ritual-list li+li{margin-top:8px}
+.ritual-section-card .note,.ritual-pick-card .note{margin-top:16px}
+.picklist{margin:14px 0 0}
+.pickline{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;padding:12px 0;border-top:1px solid var(--line)}
+.pickline:first-child{border-top:0;padding-top:4px}
+.pickline .pw{flex:1 1 100%;font-size:15px;font-weight:600;color:var(--ink)}
+.pickline .pt{flex:1 1 auto;font-size:13px;color:var(--ink-2)}
+.pickline.best .pw{color:var(--brass-deep)}
+.pickline.avoid .pt{color:var(--cinnabar-deep)}
+.pickline.picked{background:var(--brass-veil);border-radius:16px;padding:12px 14px}
+.pickline .pickbtn{width:auto;margin-left:auto;min-height:44px;padding:8px 16px;font-size:15px;background:var(--fill-2)}
+.pickline.picked .pickbtn{background:var(--card)}
+@media(max-width:760px){
+  .pickline .pickbtn{margin-left:auto}
+}
