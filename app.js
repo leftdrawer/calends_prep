@@ -628,6 +628,12 @@ async function saveMonthPlan(e,event){
   }catch(err){setStatus('승인을 저장하지 못했습니다. 현재 일정은 그대로입니다.');}
   finally{MONTH_PLAN_SAVING.delete(code); render();}
 }
+/* 받침에 따라 '로'와 '으로'를 고릅니다. 행사 이름 뒤에 붙는 조사입니다. */
+function roParticle(word){
+  const text=String(word||''),last=text.charCodeAt(text.length-1);
+  if(!(last>=0xAC00&&last<=0xD7A3))return '으로';
+  return (last-0xAC00)%28?'으로':'로';
+}
 function renderEventPlan(){
   const e=LUNAR[idx],event=getSelectedEvent(),replacement=substituteFor(e),code=cycleKey(e);
   const el=document.getElementById('eventplan'); if(!el) return;
@@ -686,7 +692,7 @@ function renderEventPlan(){
     revoke.onclick=()=>{replacementPrompt={code,revoke:true};render();}; el.appendChild(revoke);
   }else if(event.id!=='first'){
     const approve=document.createElement('button'); approve.type='button'; approve.id='approve-replacement';
-    approve.className='btn'; approve.textContent='이번 달 초하루를 '+event.name+'으로 대신하기'; approve.disabled=PICKED_SAVING||saving||!loaded||!event.date;
+    approve.className='btn'; approve.textContent='이번 달 초하루를 '+event.name+roParticle(event.name)+' 대신하기'; approve.disabled=PICKED_SAVING||saving||!loaded||!event.date;
     approve.onclick=()=>{replacementPrompt={code,eventId:event.id};render();}; el.appendChild(approve);
     if(!event.date){const note=document.createElement('p');note.className='note';note.textContent='날짜를 정한 뒤 대체를 승인할 수 있습니다.';el.appendChild(note);}
   }
