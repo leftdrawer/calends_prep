@@ -23,23 +23,32 @@
   }catch(err){ /* 두 원본이 모두 준비되기 전에는 깨진 이미지를 표시하지 않습니다. */ }
 })();
 
-/* 홈 화면에 추가할 때 사용하는 정적 아이콘 */
+/* 홈 화면 매니페스트는 현재 페이지 테마의 바탕색을 사용합니다. */
 (function(){
-  try{
-    const png512=new URL('assets/icon-512.png',document.baseURI).href;
-    const png192=new URL('assets/icon-192.png',document.baseURI).href;
-    const m={name:'은호당 초하루 준비', short_name:'초하루',
-      description:'초하루와 절기 상차림 장보기',
-      start_url:new URL('.',document.baseURI).href, scope:new URL('.',document.baseURI).href, display:'standalone',
-      background_color:'#DCE3EF', theme_color:'#DCE3EF',
-      icons:[
-        {src:png192, sizes:'192x192', type:'image/png', purpose:'any'},
-        {src:png512, sizes:'512x512', type:'image/png', purpose:'any'}
-      ]};
-    const url=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}));
-    const l=document.createElement('link'); l.rel='manifest'; l.href=url;
-    document.head.appendChild(l);
-  }catch(e){}
+  let previousUrl=null;
+  function updateManifest(){
+    try{
+      const png512=new URL('assets/icon-512.png',document.baseURI).href;
+      const png192=new URL('assets/icon-192.png',document.baseURI).href;
+      const pageColor=document.documentElement.dataset.theme==='dark'?'#18181B':'#DCD8D4';
+      const manifest={name:'은호당 초하루 준비', short_name:'초하루',
+        description:'초하루와 절기 상차림 장보기',
+        start_url:new URL('.',document.baseURI).href, scope:new URL('.',document.baseURI).href, display:'standalone',
+        background_color:pageColor, theme_color:pageColor,
+        icons:[
+          {src:png192, sizes:'192x192', type:'image/png', purpose:'any'},
+          {src:png512, sizes:'512x512', type:'image/png', purpose:'any'}
+        ]};
+      const url=URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:'application/manifest+json'}));
+      let link=document.querySelector('link[rel="manifest"]');
+      if(!link){link=document.createElement('link');link.rel='manifest';document.head.appendChild(link);}
+      link.href=url;
+      if(previousUrl)URL.revokeObjectURL(previousUrl);
+      previousUrl=url;
+    }catch(e){}
+  }
+  window.addEventListener('sangbogi:themechange',updateManifest);
+  updateManifest();
 })();
 
 /* 초하루와 명절은 별개의 상입니다. 명절이 있어도 초하루를 자동 생략하지

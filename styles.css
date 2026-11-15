@@ -2,73 +2,76 @@
 [hidden]{display:none!important}
 :root{
   color-scheme:light dark;
-  --ink:#111522;
-  --ink-2:#303D59;
-  --ink-3:#536684;
-  --hanji:#F1F4F9;
-  --page:#DCE3EF;
-  --card:#F6F8FC;
-  --sunk:#DCE3EF;
-  --stone:#98A9C4;
-  --brass:#3C4C6E;
-  --brass-deep:#303D59;
-  --brass-ink:#303D59;
-  --brass-veil:#CBD4E4;
-  --solid:#3C4C6E;
-  --cinnabar:#D23A2E;
-  --cinnabar-deep:#B22318;
-  --cinnabar-veil:#F3E4E4;
-  --line:#98A9C4;
-  --line-soft:#C2CCDC;
-  --fill:#DCE3EF;
-  --fill-2:#CBD4E4;
+  --ink:#2D2925;
+  --ink-2:#5A554E;
+  --ink-3:#68625B;
+  --hanji:#F5F1EA;
+  --page:#DCD8D4;
+  --card:#EFECE7;
+  --sunk:#D8D2CA;
+  --stone:#A49A8E;
+  --brass:#765A37;
+  --brass-deep:#654A2D;
+  --brass-ink:#654A2D;
+  --brass-veil:#E5DAC9;
+  --solid:#725534;
+  --on-solid:#F5F1EA;
+  --cinnabar:#B84839;
+  --cinnabar-deep:#963528;
+  --cinnabar-veil:#F0DDD7;
+  --line:#BBB2A8;
+  --line-soft:#CEC7BE;
+  --fill:#D8D2CA;
+  --fill-2:#C8C0B6;
   --shadow:none;
   --shadow-up:none;
   --r:14px;
   --gut:44px;
 }
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --ink:#DCE3EF;
-  --ink-2:#98A9C4;
-  --ink-3:#7F90AC;
-  --page:#111522;
-  --card:#1E263B;
-  --sunk:#1E263B;
-  --stone:#536684;
-  --brass:#AEBDD6;
-  --brass-deep:#C4D0E4;
-  --brass-ink:#C4D0E4;
-  --brass-veil:#28324A;
-  --solid:#4A5B7E;
-  --cinnabar:#FF6B61;
-  --cinnabar-deep:#FF867E;
-  --cinnabar-veil:#3A2420;
-  --line:#303D59;
-  --line-soft:#283347;
-  --fill:#1E263B;
-  --fill-2:#303D59;
+  --ink:#E9E4DC;
+  --ink-2:#BEB7AE;
+  --ink-3:#A29A91;
+  --page:#18181B;
+  --card:#252528;
+  --sunk:#242427;
+  --stone:#6F6A64;
+  --brass:#D7B984;
+  --brass-deep:#E2C99A;
+  --brass-ink:#E2C99A;
+  --brass-veil:#3C3428;
+  --solid:#785B38;
+  --on-solid:#F5F1EA;
+  --cinnabar:#F08A79;
+  --cinnabar-deep:#F5A091;
+  --cinnabar-veil:#402A26;
+  --line:#403E3D;
+  --line-soft:#333235;
+  --fill:#242427;
+  --fill-2:#333235;
 }}
 :root[data-theme="dark"]{
   color-scheme:dark;
-  --ink:#DCE3EF;
-  --ink-2:#98A9C4;
-  --ink-3:#7F90AC;
-  --page:#111522;
-  --card:#1E263B;
-  --sunk:#1E263B;
-  --stone:#536684;
-  --brass:#AEBDD6;
-  --brass-deep:#C4D0E4;
-  --brass-ink:#C4D0E4;
-  --brass-veil:#28324A;
-  --solid:#4A5B7E;
-  --cinnabar:#FF6B61;
-  --cinnabar-deep:#FF867E;
-  --cinnabar-veil:#3A2420;
-  --line:#303D59;
-  --line-soft:#283347;
-  --fill:#1E263B;
-  --fill-2:#303D59;
+  --ink:#E9E4DC;
+  --ink-2:#BEB7AE;
+  --ink-3:#A29A91;
+  --page:#18181B;
+  --card:#252528;
+  --sunk:#242427;
+  --stone:#6F6A64;
+  --brass:#D7B984;
+  --brass-deep:#E2C99A;
+  --brass-ink:#E2C99A;
+  --brass-veil:#3C3428;
+  --solid:#785B38;
+  --on-solid:#F5F1EA;
+  --cinnabar:#F08A79;
+  --cinnabar-deep:#F5A091;
+  --cinnabar-veil:#402A26;
+  --line:#403E3D;
+  --line-soft:#333235;
+  --fill:#242427;
+  --fill-2:#333235;
 }
 :root[data-theme="light"]{color-scheme:light}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -157,7 +160,7 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .event-plan{padding:18px 20px;margin:0 0 24px;background:var(--brass-veil);border:1px solid var(--line);border-radius:var(--r)}
 .event-plan h2{font-size:17px}
 .event-plan .btn{width:auto;min-height:44px;margin:8px 0 0;padding:10px 14px;font-size:13px;background:var(--page);border:1px solid var(--line)}
-.event-plan .btn.solid{background:var(--solid);color:#fff;border-color:var(--solid)}
+.event-plan .btn.solid{background:var(--solid);color:var(--on-solid);border-color:var(--solid)}
 .plan-status{font-size:13px;color:var(--ink-2);margin:8px 0 0;line-height:1.75}
 .date-pick-label{display:flex;align-items:center;flex-wrap:wrap;gap:12px;font-size:13px;margin:14px 0 10px}
 .npick{border:1px solid var(--line);background:var(--page);border-radius:var(--r);padding:9px 12px;font-size:14px;color:var(--ink);min-height:44px}
@@ -195,7 +198,7 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .row .by{font-size:12px;font-weight:500;color:var(--brass-deep);margin-top:7px}
 .row.done .nm{color:var(--ink-2);text-decoration:line-through;text-decoration-color:var(--stone)}
 .tick{flex:0 0 auto;width:22px;height:22px;margin-top:3px;border-radius:10px;border:1px solid var(--brass);background:transparent;position:relative;transition:background .15s,border-color .15s}
-.tick:after{content:"";position:absolute;left:7px;top:3px;width:5px;height:10px;border:solid var(--hanji);border-width:0 2px 2px 0;transform:rotate(43deg);opacity:0}
+.tick:after{content:"";position:absolute;left:7px;top:3px;width:5px;height:10px;border:solid var(--on-solid);border-width:0 2px 2px 0;transform:rotate(43deg);opacity:0}
 .row.done .tick{background:var(--solid);border-color:var(--solid)}
 .row.done .tick:after{opacity:1}
 .ritual-prep-card button.tick{width:40px;height:40px;border:0;padding:0;margin-top:-6px;background:transparent}
@@ -207,12 +210,12 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .note:before{content:"※ ";color:var(--ink-3)}
 .seg{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
 .seg button{min-height:44px;padding:7px 12px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink-2);font-size:12px;font-weight:500}
-.seg button.have[aria-pressed="true"],.seg.plan button[aria-pressed="true"]{background:var(--solid);border-color:var(--solid);color:#fff}
+.seg button.have[aria-pressed="true"],.seg.plan button[aria-pressed="true"]{background:var(--solid);border-color:var(--solid);color:var(--on-solid)}
 .seg button.buy[aria-pressed="true"]{background:var(--cinnabar-veil);border-color:var(--line);color:var(--cinnabar-deep)}
 .parts,.shops,.ilist{margin-top:12px;padding:12px 13px;background:var(--fill);border-radius:var(--r)}
 .part{display:flex;align-items:center;gap:9px;padding:8px 0;min-height:44px;cursor:pointer}
 .ptick{width:16px;height:16px;position:relative;flex:0 0 auto;border:1px solid var(--brass);border-radius:8px}
-.ptick:after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid var(--hanji);border-width:0 1.5px 1.5px 0;transform:rotate(43deg);opacity:0}
+.ptick:after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid var(--on-solid);border-width:0 1.5px 1.5px 0;transform:rotate(43deg);opacity:0}
 .part.done .ptick{background:var(--solid);border-color:var(--solid)}
 .part.done .ptick:after{opacity:1}
 .pnm{font-size:13px}
@@ -226,7 +229,7 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .shopcap,.icap{margin:0 0 9px;font-size:12px;font-weight:500;color:var(--ink-2)}
 .shoprow,.isrcpick{display:flex;flex-wrap:wrap;gap:6px}
 .shoprow button,.isrcpick button{border:1px solid var(--line);border-radius:10px;background:var(--page);color:var(--ink-2);font-size:12px;font-weight:500;padding:7px 10px;min-height:44px}
-.shoprow button[aria-pressed="true"],.isrcpick button[aria-pressed="true"]{background:var(--solid);border-color:var(--solid);color:#fff}
+.shoprow button[aria-pressed="true"],.isrcpick button[aria-pressed="true"]{background:var(--solid);border-color:var(--solid);color:var(--on-solid)}
 .icap{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
 .icap em{font-style:normal;font-size:12px}
 .icap em.ok{color:var(--brass-deep)}
@@ -272,7 +275,7 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .step{display:flex;align-items:center;gap:13px;padding:16px 0;min-height:52px;border-top:1px solid var(--line-soft);cursor:pointer}
 .step:first-child{border-top:0}
 .sno{flex:0 0 auto;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:10px;font-size:12px;color:var(--ink-2)}
-.step.done .sno{background:var(--solid);border-color:var(--solid);color:#fff}
+.step.done .sno{background:var(--solid);border-color:var(--solid);color:var(--on-solid)}
 .stx{flex:1;font-size:14px;line-height:1.6}
 .step.done .stx{color:var(--ink-2);text-decoration:line-through;text-decoration-color:var(--stone)}
 .sby{flex:0 0 auto;font-size:12px;color:var(--brass-deep)}
@@ -288,7 +291,7 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .sheet-lab{font-size:12px;font-weight:600;color:var(--brass-deep);letter-spacing:.07em;margin:0 0 10px}
 .sheet-pick{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:25px}
 .sheet-pick button{border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink-2);padding:9px 13px;min-height:44px;font-size:13px}
-.sheet-pick button[aria-pressed="true"]{background:var(--solid);border-color:var(--solid);color:#fff}
+.sheet-pick button[aria-pressed="true"]{background:var(--solid);border-color:var(--solid);color:var(--on-solid)}
 .sheet-log{margin-bottom:22px}
 .hrow{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-top:1px solid var(--line-soft);font-size:13px;line-height:1.7}
 .hrow:first-child{border-top:0}
@@ -298,12 +301,12 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .addname{background:transparent!important;border:1px dashed var(--stone)!important;color:var(--ink-2)!important}
 .newname{display:flex;gap:8px;margin:-10px 0 24px}
 .newname input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;background:var(--page);color:var(--ink);font-size:14px;padding:9px 11px;min-height:44px}
-.newname button{border:0;border-radius:10px;background:var(--solid);color:#fff;padding:9px 14px;font-size:13px;font-weight:500}
+.newname button{border:0;border-radius:10px;background:var(--solid);color:var(--on-solid);padding:9px 14px;font-size:13px;font-weight:500}
 
 /* 공통 단추와 바닥 */
 .btn{width:100%;min-height:46px;padding:12px 16px;border:1px solid var(--line);border-radius:var(--r);background:var(--fill);color:var(--ink-2);font-size:14px;font-weight:550;line-height:1.5}
 .btn:hover:not(:disabled){filter:brightness(.98)}
-.btn.solid{background:var(--solid);border-color:var(--solid);color:#fff}
+.btn.solid{background:var(--solid);border-color:var(--solid);color:var(--on-solid)}
 .btn.danger{background:transparent;border-color:var(--line);color:var(--cinnabar-deep)}
 .btn.ghost{background:transparent;border-color:transparent;font-size:12px;font-weight:400;margin-top:8px}
 .foot{padding-top:20px;border-top:1px solid var(--line);margin-top:12px}
@@ -432,8 +435,8 @@ h1{font-size:40px;font-weight:650;letter-spacing:-.045em;line-height:1.3;margin:
 .ritual-source-list span{font-size:12px}
 
 
-/* Apple HIG 기반 (2026-10-28, 팔레트 갱신): 묶음 카드·알약 버튼·텍스트 스타일 단계·유리 막대.
-   색은 :root 토큰(블루-그레이 6단계 + 블루 파생 강조 하나)을 쓰며 이 구간은 모양만 덮어씁니다. */
+/* Apple HIG 기반 (2026-10-28): 묶음 카드·알약 버튼·텍스트 스타일 단계·유리 막대.
+   색은 :root의 따뜻한 중성색·놋빛·주칠 토큰을 쓰며 이 구간은 모양만 덮어씁니다. */
 body{
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Apple SD Gothic Neo","Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;
   font-size:17px;line-height:1.5;letter-spacing:-.01em;
@@ -470,7 +473,7 @@ h1{font-size:34px;line-height:1.25;font-weight:700;letter-spacing:-.03em}
 .chip{font-size:14px}
 .event-tab{font-size:16px}
 
-/* 묶음 카드: 회색 바탕 위의 흰 카드, 반경 26 */
+/* 묶음 카드: 따뜻한 중성 바탕 위의 밝은 카드, 반경 26 */
 .card{background:var(--card);border:0;border-radius:26px;padding:24px 24px 26px;margin:0 0 20px}
 .public-grid,.shopping-grid{gap:0 20px}
 .public-grid{margin:14px 0 8px}
@@ -484,11 +487,11 @@ h1{font-size:34px;line-height:1.25;font-weight:700;letter-spacing:-.03em}
 
 /* 버튼·입력: 알약, 44px 이상 */
 .btn{min-height:50px;border:0;border-radius:999px;background:var(--fill-2);color:var(--brass-deep);font-size:17px;font-weight:600}
-.btn.solid{background:var(--solid);color:#fff}
+.btn.solid{background:var(--solid);color:var(--on-solid)}
 .btn.danger{background:transparent;color:var(--cinnabar-deep);border:1px solid var(--line)}
 .btn.ghost{background:transparent;color:var(--brass-deep);font-size:15px;font-weight:500}
 .event-plan .btn{background:var(--card);border:0;font-size:15px}
-.event-plan .btn.solid{background:var(--solid);color:#fff}
+.event-plan .btn.solid{background:var(--solid);color:var(--on-solid)}
 .gate .btn{font-size:17px}
 .gate input,.npick,.memo input,.etcline input,.newname input{border:0;border-radius:12px;background:var(--fill);font-size:17px}
 .gate input{background:var(--card);padding:13px 16px}
@@ -497,7 +500,7 @@ h1{font-size:34px;line-height:1.25;font-weight:700;letter-spacing:-.03em}
 .who button{border:0;background:var(--card);font-size:17px;font-weight:600}
 .who button:hover{background:var(--fill-2)}
 .seg button,.shoprow button,.isrcpick button,.sheet-pick button{border:0;background:var(--fill-2);color:var(--ink);font-size:15px}
-.seg button.have[aria-pressed="true"],.seg.plan button[aria-pressed="true"],.shoprow button[aria-pressed="true"],.isrcpick button[aria-pressed="true"],.sheet-pick button[aria-pressed="true"]{background:var(--solid);color:#fff}
+.seg button.have[aria-pressed="true"],.seg.plan button[aria-pressed="true"],.shoprow button[aria-pressed="true"],.isrcpick button[aria-pressed="true"],.sheet-pick button[aria-pressed="true"]{background:var(--solid);color:var(--on-solid)}
 .seg button.buy[aria-pressed="true"]{background:var(--cinnabar-veil);color:var(--cinnabar-deep)}
 /* 신도님 몫: 집(먹빛 채움)·구매(주칠)와 겹치지 않게 흰 바탕에 놋빛 테를 두릅니다 */
 .seg button.gift[aria-pressed="true"]{background:var(--card);color:var(--brass-deep);box-shadow:inset 0 0 0 2px var(--brass-deep);font-weight:600}

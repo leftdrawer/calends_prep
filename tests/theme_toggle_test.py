@@ -86,7 +86,7 @@ class ThemeToggleRegression(unittest.TestCase):
             with self.subTest(width=width, dpr=dpr):
                 page = self.open(width=width, dpr=dpr)
                 frame = page.locator("#gate iframe[data-theme-frame]")
-                expect(frame).to_have_attribute("src", "previews/duskdot/index.html")
+                expect(frame).to_have_attribute("src", "previews/duskdot/index.html?v=2")
                 expect(frame).to_have_attribute("title", "밝기 전환 스위치")
                 self.assertTrue(frame.evaluate("el => el.contentWindow.APP && el.contentWindow.APP.getState() !== undefined"))
                 self.assertTrue(frame.evaluate("el => !!el.contentDocument.getElementById('view').getContext('webgl2')"))
@@ -199,6 +199,74 @@ class ThemeToggleRegression(unittest.TestCase):
         self.assertNotIn("uniform vec2", source)
         self.assertNotIn("theme-fallback", source)
         self.assertEqual((ROOT / "previews/duskdot/index.html").read_text(encoding="utf-8").count("<canvas"), 2)
+
+    def test_palette_manifest_and_switch_canvas_match_both_page_backgrounds(self):
+        page = self.open(color_scheme="light")
+        frame = page.locator("#gate iframe[data-theme-frame]")
+        for scheme, expected_hex, expected_rgb, body_ink, button_bg in (
+            ("light", "#DCD8D4", "rgb(220, 216, 212)", "rgb(45, 41, 37)", "rgb(114, 85, 52)"),
+            ("dark", "#18181B", "rgb(24, 24, 27)", "rgb(233, 228, 220)", "rgb(120, 91, 56)"),
+        ):
+            with self.subTest(scheme=scheme):
+                page.emulate_media(color_scheme=scheme)
+                expect(page.locator("html")).to_have_attribute("data-theme", scheme)
+                page.wait_for_function("""() => {
+                  const f=document.querySelector('#gate iframe[data-theme-frame]');
+                  return f?.contentDocument?.documentElement.dataset.theme === document.documentElement.dataset.theme;
+                }""")
+                measured = page.evaluate("""async () => {
+                  const frame=document.querySelector('#gate iframe[data-theme-frame]');
+                  const canvas=frame.contentDocument.getElementById('view');
+                  const gl=canvas.getContext('webgl2'), read=(x,y) => {
+                    const rgba=new Uint8Array(4);
+                    gl.readPixels(x, canvas.height-y-1, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, rgba);
+                    return Array.from(rgba);
+                  };
+                  const link=document.querySelector('link[rel="manifest"]');
+                  const manifest=await (await fetch(link.href)).json();
+                  return {
+                    page:getComputedStyle(document.body).backgroundColor,
+                    bodyInk:getComputedStyle(document.body).color,
+                    buttonBg:getComputedStyle(document.querySelector('#otherbtn')).backgroundColor,
+                    buttonFg:getComputedStyle(document.querySelector('#otherbtn')).color,
+                    frame:getComputedStyle(frame.contentDocument.documentElement).backgroundColor,
+                    themeColor:document.querySelector('meta[name="theme-color"][data-live]').content,
+                    manifestBackground:manifest.background_color,
+                    manifestTheme:manifest.theme_color,
+                    corners:[[2,2],[canvas.width-3,2],[2,canvas.height-3],[canvas.width-3,canvas.height-3]].map(([x,y])=>read(x,y)),
+                    outside:read(125,187),
+                    nearOutside:[140,142,144].map(x=>read(x,187)[3])
+                  };
+                }""")
+                self.assertEqual(measured["page"], expected_rgb)
+                self.assertEqual(measured["bodyInk"], body_ink)
+                self.assertEqual(measured["buttonBg"], button_bg)
+                self.assertEqual(measured["buttonFg"], "rgb(245, 241, 234)")
+                self.assertEqual(measured["frame"], expected_rgb)
+                self.assertEqual(measured["themeColor"], expected_hex)
+                self.assertEqual(measured["manifestBackground"], expected_hex)
+                self.assertEqual(measured["manifestTheme"], expected_hex)
+                self.assertTrue(all(rgba[3] == 0 for rgba in measured["corners"]), measured)
+                self.assertEqual(measured["outside"][3], 0, measured)
+                self.assertTrue(all(alpha <= 32 for alpha in measured["nearOutside"]), measured)
+
+    def test_jibang_controls_use_warm_palette_in_both_system_themes(self):
+        page = self.open(color_scheme="light")
+        page.goto(self.url + "jibang.html", wait_until="load")
+        for scheme, button_bg, panel_bg in (
+            ("light", "rgb(114, 85, 52)", "rgb(239, 236, 231)"),
+            ("dark", "rgb(120, 91, 56)", "rgb(37, 37, 40)"),
+        ):
+            with self.subTest(scheme=scheme):
+                page.emulate_media(color_scheme=scheme)
+                measured = page.evaluate("""() => ({
+                  buttonBg:getComputedStyle(document.querySelector('#fullscreen')).backgroundColor,
+                  buttonFg:getComputedStyle(document.querySelector('#fullscreen')).color,
+                  panelBg:getComputedStyle(document.querySelector('#controls')).backgroundColor
+                })""")
+                self.assertEqual(measured["buttonBg"], button_bg)
+                self.assertEqual(measured["panelBg"], panel_bg)
+                self.assertEqual(measured["buttonFg"], "rgb(245, 241, 234)")
 
 
 if __name__ == "__main__":

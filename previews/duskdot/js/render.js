@@ -45,7 +45,8 @@ vec3 rrut(vec2 p, vec2 c, float hw, float hh, float R){
   }
   return vec3(mod(u, PER), t, PER);
 }
-vec3 arr(sampler2DArray s, vec2 uv, vec4 L){ return mix(texture(s, vec3(uv, L.x)).rgb, texture(s, vec3(uv, L.y)).rgb, L.z); }
+vec4 arr4(sampler2DArray s, vec2 uv, vec4 L){ return mix(texture(s, vec3(uv, L.x)), texture(s, vec3(uv, L.y)), L.z); }
+vec3 arr(sampler2DArray s, vec2 uv, vec4 L){ return arr4(s, uv, L).rgb; }
 vec3 band(sampler2DArray s, vec3 ut, vec4 P, vec4 L){
   float x = (ut.x / (ut.z / P.x) + 0.5) / P.x;
   float y = ((clamp(ut.y, P.y, P.y + P.z * (P.w - 1.0)) - P.y) / P.z + 0.5) / P.w;
@@ -56,11 +57,19 @@ void main(){
   vec2 X = px / uScale - 0.5 + uOff;
   vec2 E = uS.xy * uS.z;
   vec3 img;
-  if (uEdge > 0.0) img = arr(tS, (clamp(X, vec2(uEdge), E - uEdge) + 0.5) / uS.z / uS.xy, uBase) * 255.0;
-  else if (any(lessThan(X, vec2(-2.0))) || any(greaterThan(X, E + 2.0))) {
+  float coverage;
+  if (uEdge > 0.0) {
+    vec4 base = arr4(tS, (clamp(X, vec2(uEdge), E - uEdge) + 0.5) / uS.z / uS.xy, uBase);
+    img = base.rgb * 255.0; coverage = base.a;
+  } else if (any(lessThan(X, vec2(-2.0))) || any(greaterThan(X, E + 2.0))) {
     vec2 Xe = clamp(X, vec2(-2.0), E + 2.0), Xi = clamp(X, vec2(12.0), E - 12.0);
-    img = mix(arr(tS, (Xe + 0.5) / uS.z / uS.xy, uBase), arr(tS, (Xi + 0.5) / uS.z / uS.xy, uBase), ss(0.0, 48.0, length(X - Xe))) * 255.0;
-  } else img = arr(tS, (X + 0.5) / uS.z / uS.xy, uBase) * 255.0;
+    vec4 edge = arr4(tS, (Xe + 0.5) / uS.z / uS.xy, uBase), inner = arr4(tS, (Xi + 0.5) / uS.z / uS.xy, uBase);
+    float fade = ss(0.0, 48.0, length(X - Xe));
+    img = mix(edge.rgb, inner.rgb, fade) * 255.0; coverage = mix(edge.a, inner.a, fade);
+  } else {
+    vec4 base = arr4(tS, (X + 0.5) / uS.z / uS.xy, uBase);
+    img = base.rgb * 255.0; coverage = base.a;
+  }
   vec3 tr = rrut(X, uTrack.xy, uTrack.z, uTrack.w, uTrackR);
   float tw = ss(-16.0, -12.0, tr.y) * (1.0 - ss(20.0, 24.0, tr.y));
   if (tw > 0.0) img = mix(img, band(tTB, tr, uTB, uBase) * 255.0, tw);
@@ -80,7 +89,8 @@ void main(){
     float qa = mix(texture(tGlowA, vec3(gt, uGlowBin.x)).r, texture(tGlowA, vec3(gt, uGlowBin.y)).r, uGlowBin.z);
     img = img * (1.0 - qa) + qc * 255.0;
   }
-  o = vec4(clamp(floor(img + 0.5), 0.0, 255.0) / 255.0, 1.0);
+  vec3 rgb = clamp(floor(img + 0.5), 0.0, 255.0) / 255.0;
+  o = vec4(rgb * coverage, coverage);
 }`;
 const DVS = `#version 300 es
 in vec2 a; in vec4 d; in vec4 c;
@@ -148,9 +158,45 @@ function pixels(img) {
   g.drawImage(img, 0, 0);
   return g.getImageData(0, 0, img.width, img.height).data;
 }
+function keyBaseBackground(img, P) {
+  const data = pixels(img), width = img.width, layerHeight = P.look.S[1];
+  const layers = Math.min(P.look.baseBins[2], Math.floor(img.height / layerHeight));
+  const scaleX = P.logical[0] / width, scaleY = P.logical[1] / layerHeight;
+  const T = P.geom.track;
+  const smooth = (a, b, x) => {
+    const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+    return t * t * (3 - 2 * t);
+  };
+  for (let layer = 0; layer < layers; layer++) {
+    const y0 = layer * layerHeight;
+    const corner = [[0, y0], [width - 1, y0], [0, y0 + layerHeight - 1], [width - 1, y0 + layerHeight - 1]];
+    const bg = [0, 0, 0];
+    corner.forEach(([x, y]) => {
+      const k = (y * width + x) * 4;
+      bg[0] += data[k] / 4; bg[1] += data[k + 1] / 4; bg[2] += data[k + 2] / 4;
+    });
+    for (let y = 0; y < layerHeight; y++) {
+      const py = (y + 0.5) * scaleY;
+      const qy = Math.abs(py - T.cy) - (T.hh - T.r);
+      for (let x = 0; x < width; x++) {
+        const px = (x + 0.5) * scaleX;
+        const qx = Math.abs(px - T.cx) - (T.hw - T.r);
+        const ox = Math.max(qx, 0), oy = Math.max(qy, 0);
+        const distance = Math.hypot(ox, oy) + Math.min(Math.max(qx, qy), 0) - T.r;
+        const k = ((y0 + y) * width + x) * 4;
+        const colorDistance = Math.max(Math.abs(data[k] - bg[0]), Math.abs(data[k + 1] - bg[1]), Math.abs(data[k + 2] - bg[2]));
+        const shape = 1 - smooth(-1.5, 3.5, distance);
+        const outerGlow = 1 - smooth(0, 2, Math.max(distance, 0));
+        const detail = smooth(10, 48, colorDistance) * outerGlow;
+        data[k + 3] = Math.round(255 * Math.max(shape, detail));
+      }
+    }
+  }
+  return data;
+}
 async function createRenderer(canvas, P, base, opt = {}) {
   const edge = opt.edge || 0;
-  const gl = canvas.getContext("webgl2", { antialias: false, premultipliedAlpha: true, preserveDrawingBuffer: true, alpha: false });
+  const gl = canvas.getContext("webgl2", { antialias: false, premultipliedAlpha: true, preserveDrawingBuffer: true, alpha: true });
   if (!gl) throw new Error("webgl2");
   const L = P.look;
   const NB = L.baseBins[2];
@@ -170,7 +216,7 @@ async function createRenderer(canvas, P, base, opt = {}) {
   const imgs = await Promise.all(files.map((f) => loadImage(base + f + ".png")));
   const dims = [[L.S[0], L.S[1], NB], [L.TB.n, L.TB.ts[2], NB], [L.KB.n, L.KB.ts[2], NB], [L.KG, L.KG, NB], [L.glowU, L.glowT[2], L.glowBins[2]], [L.glowU, L.glowT[2], L.glowBins[2]]];
   const wraps = [gl.CLAMP_TO_EDGE, gl.REPEAT, gl.REPEAT, gl.CLAMP_TO_EDGE, gl.REPEAT, gl.REPEAT];
-  imgs.forEach((im, i) => texArr(i, pixels(im), dims[i][0], dims[i][1], dims[i][2], wraps[i]));
+  imgs.forEach((im, i) => texArr(i, i === 0 ? keyBaseBackground(im, P) : pixels(im), dims[i][0], dims[i][1], dims[i][2], wraps[i]));
   imgs.forEach((im) => im.close && im.close());
   const tex2 = (unit, im) => {
     const t = gl.createTexture();

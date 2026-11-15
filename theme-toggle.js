@@ -24,7 +24,7 @@
       tag.setAttribute('data-live','');
       document.head.appendChild(tag);
     }
-    tag.setAttribute('content',theme==='dark'?'#111522':'#DCE3EF');
+    tag.setAttribute('content',theme==='dark'?'#18181B':'#DCD8D4');
   }
 
   function readFrameTheme(frame){
@@ -63,6 +63,7 @@
     root.setAttribute('data-theme',theme);
     root.style.colorScheme=theme;
     setThemeColor(theme);
+    window.dispatchEvent(new CustomEvent('sangbogi:themechange',{detail:theme}));
     if(persist){
       try{localStorage.setItem(KEY,theme);}catch(err){}
     }
