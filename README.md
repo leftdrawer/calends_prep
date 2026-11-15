@@ -8,7 +8,10 @@
 
 - `index.html` — 화면 구조와 로그인 입력
 - `app.js` — 음력 일정, 가족 암호, 역할별 화면, Supabase 저장
-- `styles.css` — 데스크톱·모바일 화면 스타일
+- `styles.css` — 데스크톱·모바일 화면 스타일과 원본 스위치 크롭(220×133px)
+- `theme-toggle.js` — 원본 스위치 상태를 페이지 색상·브라우저 저장값과 연결
+- `previews/duskdot/` — 원본 Duskdot의 로컬 복사본. 500×375px iframe에서 스위치 영역만 표시
+- `tests/theme_toggle_test.py` — 원본 WebGL2 스위치 통합·입력·테마 회귀 검사
 - `jibang.html` — 합동지방의 세로·전체 화면 보기
 - `assets/` — 로고·홈 화면 아이콘·중양 합동지방 PNG·봉행자 한자 글꼴
 - `tests/browser_test.py` — 브라우저 회귀 검사
@@ -16,7 +19,7 @@
 - `.kiro/steering/` — 제품·기술·구조·문서 유지 지침
 - `docs/HISTORY.md` / `docs/domain-sangbogi.md` — 변경 이력과 도메인 규칙
 
-별도 빌드나 실행용 패키지 설치가 필요 없습니다. HTML·CSS·JavaScript와 이미지 파일을 함께 배포합니다.
+별도 빌드나 실행용 패키지 설치가 필요 없습니다. HTML·CSS·JavaScript와 이미지 파일을 함께 배포합니다. 원본 Duskdot 스위치는 WebGL2를 지원하는 브라우저가 필요합니다.
 
 ## 붓글씨 PNG 표시
 
@@ -85,10 +88,11 @@ Claude의 `claude/magical-wozniak-2x71lp` 브랜치에 기록된 안내문 대�
 Python Playwright와 Chromium이 설치된 환경에서 실행합니다.
 
 ```sh
+python3 tests/theme_toggle_test.py
 python3 tests/browser_test.py
 ```
 
-테스트는 별도 로컬 서버를 시작하고 Supabase 요청을 모두 테스트 응답으로 처리합니다.
+스위치 검사는 원본 프레임·WebGL2·크롭·포인터·키보드·끌기와 테마 저장 동기화를 확인합니다. 전체 앱 검사는 별도 로컬 서버를 시작하고 Supabase 요청을 모두 테스트 응답으로 처리합니다.
 실제 데이터나 이메일 인증 API에 읽기·쓰기 요청을 보내지 않습니다.
 가족 암호, 손님 노출 범위, 초하루·명절 분리, 기존 기록 보존, 대체 승인 실패·재시도,
 기기 간 날짜·승인 갱신, 저장 실패와 입력 경합, 데스크톱·390px·320px 레이아웃을 검사합니다.

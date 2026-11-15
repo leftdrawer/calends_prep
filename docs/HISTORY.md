@@ -1,5 +1,16 @@
 # 작업 이력 (HISTORY)
 
+## 2026-11-15 — Duskdot 원본 밝기 스위치를 상차림 화면에 이식
+
+- 사용자 요청: 직접 다시 흉내 내지 말고 `https://duskdot.vercel.app/`의 이미 구현된 스위치를 대상 `https://leftdrawer.github.io/calends_prep/`에 그대로 이식. Webdev은 사용하지 않음.
+- 구현: 기존 `previews/duskdot/`의 HTML·모듈·이미지·매개변수 복사본을 입구와 앱 상단의 같은 슬롯에 iframe으로 연결. 원본 렌더·시뮬레이션 코드는 수정하지 않고 `theme-toggle.js`만 `APP.getState()`를 읽어 앱 테마·theme-color·`sangbogi:theme`과 동기화.
+- 표시: 220×133px 크롭 창 안에서 원본 956×718 좌표계가 약 0.522배가 되도록 iframe 뷰포트를 500×375px로 설정. WebGL2가 없는 브라우저용 대체 렌더러는 추가하지 않음.
+- 테스트 자원: 반복 행사 카드 검사에서 다음 페이지를 열기 전 이전 페이지를 닫고, 가상 시계 테스트에서는 Playwright 시계 설치 전에 원본 iframe을 닫아 WebGL 애니메이션 충돌을 막음. 운영 렌더러는 변경하지 않음.
+- 검증: `python3 tests/theme_toggle_test.py` 5개 통과(25.221초); `python3 tests/browser_test.py` 전체 57개 통과(566.468초); 도메인·JavaScript/Python 구문·`git diff --check` 통과. 외부 실데이터 요청 없음.
+- 배포: 미완성 OAuth/Supabase 작업은 제외하고 PIN 로그인 기준의 Duskdot 변경만 `main`에 반영.
+- 작업자: Aside
+
+
 ## 2026-11-14 — 음력 10월 상달 성주맞이 고사 정리 반영
 
 - 무엇: 은호당이 그날 정리한 상달 성주맞이 고사의 택일·시각·상차림·신체·절차·예법을 `RITUAL_LIBRARY.events.seongju`에 담았다. 화면은 정리 카드 다섯 장(시기·택일 / 시각 / 상차림·신체 / 절차 / 예법·금기), 준비 10항목, 시월 택일 후보 카드로 나뉜다. 경문 6묶음은 '성주고사 경문 순서 · 참고'로 이름을 고쳐 참고 체크로 남겼다.

@@ -565,24 +565,16 @@ h1{font-size:34px;line-height:1.25;font-weight:700;letter-spacing:-.03em}
   .sheet-bg{-webkit-backdrop-filter:none;backdrop-filter:none}
 }
 
-/* 큰 유리 밝기 손잡이: 바깥 가짜 통 없이 60px 렌즈 / 약 40px 문양. */
+/* 원본 Duskdot 화면에서 스위치만 같은 배율로 잘라 표시합니다. */
 .theme-slot{display:flex;align-items:center;gap:12px;flex:0 0 auto;min-width:0}
 .theme-slot-lab{font-size:12px;font-weight:600;color:var(--ink-2);white-space:nowrap}
 .gate .theme-slot{margin-top:12px;align-self:flex-start}
 .top>.brand-home{margin-right:8px}
 .top>.theme-slot{margin-right:auto}
-.theme-toggle{position:relative;flex:0 0 216px;width:216px;height:96px;margin:0;padding:0;border:0;border-radius:36px;background:transparent;box-shadow:none;overflow:visible;touch-action:pan-y;color:var(--ink)}
-.theme-toggle:active:not(:disabled){transform:none}
-.theme-toggle canvas{position:absolute;inset:0;width:100%;height:100%;transform:none;pointer-events:none}
-.theme-fallback-lens{display:none}
-.theme-toggle[data-shader="fallback"]:before{content:"";position:absolute;inset:14px 16px;border-radius:34px;background:var(--fill-2);box-shadow:inset 0 0 0 1px var(--line)}
-.theme-toggle[data-shader="fallback"] canvas{display:none}
-.theme-toggle[data-shader="fallback"] .theme-fallback-lens{position:absolute;top:18px;left:20px;display:grid;place-items:center;width:60px;height:60px;border-radius:14px;background:var(--card);box-shadow:0 2px 7px #11152233,inset 0 0 0 1px var(--brass);color:var(--ink)}
-.theme-toggle[data-shader="fallback"][aria-pressed="false"] .theme-fallback-lens{left:calc(100% - 80px)}
-.theme-fallback-lens svg{width:38px;height:38px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
-.theme-toggle[aria-pressed="false"] .theme-fallback-moon,.theme-toggle[aria-pressed="true"] .theme-fallback-sun{display:none}
+.theme-toggle{position:relative;flex:0 0 220px;width:220px;height:133px;margin:0;padding:0;overflow:hidden;isolation:isolate}
+.duskdot-frame{position:absolute;left:50%;top:50%;width:500px;height:375px;border:0;display:block;transform:translate(-50%,-50%);transform-origin:center center}
 @media(max-width:760px){
-  /* 손잡이를 줄이지 않고 한 줄을 따로 확보한다. */
+  /* 원본 비율을 유지한 스위치 영역을 별도 줄에 둡니다. */
   .top{flex-wrap:wrap;gap:8px 12px}
   .top>.brand-home{order:0;margin-right:auto;flex:1 1 100px}
   .top>.mepill{order:1}

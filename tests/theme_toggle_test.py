@@ -1,5 +1,5 @@
-"""Theme controls: layout, WebGL geometry, input, persistence and fallback.
-No screenshots, canvas captures or live API requests. Run: python tests/theme_toggle_test.py
+"""Duskdot iframe integration: source, crop, input, theme sync and persistence.
+No screenshots or live API requests. Run: python3 tests/theme_toggle_test.py
 """
 import functools
 import os
@@ -37,122 +37,169 @@ class ThemeToggleRegression(unittest.TestCase):
     def tearDown(self):
         for ctx in self.contexts:
             ctx.close()
-        self.assertEqual(self.errors, [])
+        self.assertEqual(self.errors, [], "Unexpected JavaScript errors")
         for fixture in self.fixtures:
             self.assertEqual(fixture.writes, [], "Theme changes must not write preparation records")
             self.assertEqual(fixture.auth_requests, [])
             self.assertEqual(fixture.unexpected, [])
 
-    def open(self, width=390, dpr=1, fallback=False, reduced=False):
-        ctx = self.browser.new_context(viewport={"width": width, "height": 900}, device_scale_factor=dpr, color_scheme="light", reduced_motion="reduce" if reduced else "no-preference")
+    def open(self, width=390, dpr=1, color_scheme="light", stored_theme=None):
+        ctx = self.browser.new_context(
+            viewport={"width": width, "height": 900},
+            device_scale_factor=dpr,
+            color_scheme=color_scheme,
+            reduced_motion="reduce",
+        )
         self.contexts.append(ctx)
         fixture = Fixture()
         self.fixtures.append(fixture)
         ctx.route("**/*", fixture.route)
-        if fallback:
-            ctx.add_init_script("""const get = HTMLCanvasElement.prototype.getContext;
-            HTMLCanvasElement.prototype.getContext = function(type, ...args) {
-              return type === 'webgl' ? null : get.call(this, type, ...args);
-            };""")
+        if stored_theme:
+            ctx.add_init_script("localStorage.setItem('sangbogi:theme', " + repr(stored_theme) + ")")
         page = ctx.new_page()
-        page.on("pageerror", lambda e: self.errors.append(str(e)))
-        page.goto(self.url)
+        page.on("pageerror", lambda error: self.errors.append(str(error)))
+        page.goto(self.url, wait_until="domcontentloaded")
         expect(page.locator("#gate")).to_be_visible()
-        expect(page.locator("#gate .theme-toggle")).to_have_attribute("data-shader", "fallback" if fallback else "webgl")
+        expect(page.locator(".gate-layout")).to_be_visible()
+        expect(page.locator("#gate .theme-toggle iframe[data-theme-frame]")).to_be_visible()
+        page.wait_for_function("""() => {
+          const frame = document.querySelector('#gate iframe[data-theme-frame]');
+          const state = frame && frame.contentWindow && frame.contentWindow.APP && frame.contentWindow.APP.getState();
+          return !!state && document.documentElement.dataset.theme === (state.on ? 'light' : 'dark');
+        }""", timeout=15000)
         return page
 
-    def assert_layout(self, page, selector):
-        metrics = page.locator(selector).evaluate("""el => {
-          const r=el.getBoundingClientRect(), c=el.querySelector('canvas');
-          const cs=getComputedStyle(el), cr=c.getBoundingClientRect();
-          return {w:r.width,h:r.height,left:r.left,right:r.right,viewport:innerWidth,
-            canvasW:cr.width,canvasH:cr.height,bufferW:c.width,bufferH:c.height,
-            overflow:document.documentElement.scrollWidth>innerWidth+1,
-            background:cs.backgroundColor,shadow:cs.boxShadow};
-        }""")
-        self.assertEqual(metrics["w"], 216)
-        self.assertEqual(metrics["h"], 96)
-        self.assertGreaterEqual(metrics["left"], 0)
-        self.assertLessEqual(metrics["right"], metrics["viewport"] + 1)
-        self.assertFalse(metrics["overflow"])
-        self.assertEqual(metrics["canvasW"], 216)
-        self.assertEqual(metrics["canvasH"], 96)
-        self.assertEqual(metrics["background"], "rgba(0, 0, 0, 0)")
-        self.assertEqual(metrics["shadow"], "none")
-        # Shader has a 60px lens in a logical 216x96 viewport, independent of DPR.
-        self.assertEqual(metrics["canvasW"] * 60 / 216, 60)
-        return metrics
+    def assert_frame_theme_matches_page(self, page, selector):
+        page.wait_for_function("""selector => {
+          const frame = document.querySelector(selector);
+          const app = frame && frame.contentWindow && frame.contentWindow.APP;
+          return !!app && document.documentElement.dataset.theme === (app.getState().on ? 'light' : 'dark');
+        }""", arg=selector, timeout=12000)
 
-    def test_lens_does_not_shrink_at_mobile_widths_or_high_dpi(self):
-        for width, dpr in ((1440,1), (390,1), (320,2), (280,2)):
+    def source_point(self, page, selector, x, y):
+        box = page.locator(selector).bounding_box()
+        scale = min(500 / 956, 375 / 718)
+        return box["x"] + x * scale, box["y"] + y * scale
+
+    def test_original_webgl_page_is_cropped_at_its_native_aspect_and_fits_mobile(self):
+        for width, dpr in ((1440, 1), (390, 1), (320, 2), (280, 2)):
             with self.subTest(width=width, dpr=dpr):
                 page = self.open(width=width, dpr=dpr)
-                m = self.assert_layout(page, "#gate .theme-toggle")
-                self.assertEqual(m["bufferW"], 216*dpr)
-                page.evaluate("document.querySelector('#gate').hidden=true; document.querySelector('#app').hidden=false")
-                page.wait_for_function("document.querySelector('.top canvas').width === 216 * Math.min(2, devicePixelRatio)")
-                self.assert_layout(page, ".top .theme-toggle")
-                overlap = page.evaluate("""() => {
-                  const a=document.querySelector('.top .theme-slot').getBoundingClientRect();
-                  const b=document.querySelector('#changeme').getBoundingClientRect();
-                  return a.left<b.right && a.right>b.left && a.top<b.bottom && a.bottom>b.top;
+                frame = page.locator("#gate iframe[data-theme-frame]")
+                expect(frame).to_have_attribute("src", "previews/duskdot/index.html")
+                expect(frame).to_have_attribute("title", "밝기 전환 스위치")
+                self.assertTrue(frame.evaluate("el => el.contentWindow.APP && el.contentWindow.APP.getState() !== undefined"))
+                self.assertTrue(frame.evaluate("el => !!el.contentDocument.getElementById('view').getContext('webgl2')"))
+                metrics = page.locator("#gate .theme-toggle").evaluate("""el => {
+                  const r=el.getBoundingClientRect(), f=el.querySelector('iframe');
+                  const css=getComputedStyle(f), sw=f.contentDocument.getElementById('sw');
+                  const sr=sw.getBoundingClientRect();
+                  return {width:r.width,height:r.height,left:r.left,right:r.right,viewport:innerWidth,
+                    frameWidth:f.contentWindow.innerWidth,frameHeight:f.contentWindow.innerHeight,
+                    scale:css.transform,sourceSwitchWidth:sr.width,sourceSwitchHeight:sr.height,
+                    overflow:document.documentElement.scrollWidth>innerWidth+1};
                 }""")
-                self.assertFalse(overlap)
-                self.assertEqual(page.locator('.top .theme-toggle').get_attribute('data-shader'), 'webgl')
+                self.assertEqual((metrics["width"], metrics["height"]), (220, 133))
+                self.assertGreaterEqual(metrics["left"], 0)
+                self.assertLessEqual(metrics["right"], metrics["viewport"] + 1)
+                self.assertEqual((metrics["frameWidth"], metrics["frameHeight"]), (500, 375))
+                source_scale = min(500 / 956, 375 / 718)
+                self.assertAlmostEqual(metrics["sourceSwitchWidth"], 393.234375 * source_scale, places=1)
+                self.assertAlmostEqual(metrics["sourceSwitchHeight"], 206 * source_scale, places=1)
+                self.assertIn("matrix(1, 0, 0, 1", metrics["scale"])
+                self.assertFalse(metrics["overflow"])
 
-    def test_click_keyboard_reload_and_drag(self):
-        page = self.open(reduced=True)
-        btn = page.locator('#gate .theme-toggle')
-        btn.click()
-        expect(page.locator('html')).to_have_attribute('data-theme', 'dark')
-        self.assertEqual(page.evaluate("localStorage.getItem('sangbogi:theme')"), 'dark')
-        expect(btn).to_have_attribute('aria-pressed', 'true')
-        page.reload()
-        expect(page.locator('html')).to_have_attribute('data-theme', 'dark')
-        btn.press('ArrowRight')
-        expect(page.locator('html')).to_have_attribute('data-theme', 'light')
-        btn.press('Enter')
-        expect(page.locator('html')).to_have_attribute('data-theme', 'dark')
-        btn.press('Space')
-        expect(page.locator('html')).to_have_attribute('data-theme', 'light')
-        r = btn.bounding_box()
-        page.mouse.move(r['x']+r['width']-25, r['y']+r['height']/2)
+    def test_system_scheme_is_not_saved_until_the_original_switch_is_used(self):
+        page = self.open()
+        self.assertEqual(page.locator("html").get_attribute("data-theme"), "light")
+        page.emulate_media(color_scheme="dark")
+        expect(page.locator("html")).to_have_attribute("data-theme", "dark")
+        self.assert_frame_theme_matches_page(page, "#gate iframe[data-theme-frame]")
+        self.assertIsNone(page.evaluate("localStorage.getItem('sangbogi:theme')"))
+        page.emulate_media(color_scheme="light")
+        expect(page.locator("html")).to_have_attribute("data-theme", "light")
+        self.assert_frame_theme_matches_page(page, "#gate iframe[data-theme-frame]")
+        self.assertIsNone(page.evaluate("localStorage.getItem('sangbogi:theme')"))
+
+    def test_pointer_keyboard_drag_and_reload_follow_the_original_state(self):
+        page = self.open()
+        frame = page.frame_locator("#gate iframe[data-theme-frame]")
+        canvas = frame.locator("canvas#view")
+        control = frame.locator("#sw")
+        expect(control).to_have_attribute("role", "switch")
+        expect(control).to_have_attribute("aria-checked", "true")
+
+        control.press("Enter")
+        expect(page.locator("html")).to_have_attribute("data-theme", "dark", timeout=10000)
+        self.assertEqual(page.evaluate("localStorage.getItem('sangbogi:theme')"), "dark")
+        expect(control).to_have_attribute("aria-checked", "false")
+
+        x, y = self.source_point(page, "#gate iframe[data-theme-frame]", 476.6, 355)
+        page.mouse.click(x, y)
+        expect(page.locator("html")).to_have_attribute("data-theme", "light", timeout=10000)
+        self.assertEqual(page.evaluate("localStorage.getItem('sangbogi:theme')"), "light")
+
+        start = self.source_point(page, "#gate iframe[data-theme-frame]", 572, 355)
+        end = self.source_point(page, "#gate iframe[data-theme-frame]", 382, 355)
+        page.mouse.move(*start)
         page.mouse.down()
-        page.mouse.move(r['x']+25, r['y']+r['height']/2, steps=12)
+        page.mouse.move(*end, steps=16)
         page.mouse.up()
-        expect(page.locator('html')).to_have_attribute('data-theme', 'dark')
-        self.assertEqual(page.evaluate("localStorage.getItem('sangbogi:theme')"), 'dark')
-        self.assertEqual(page.locator('.brand-image').first.evaluate('el=>getComputedStyle(el).filter'), 'invert(1)')
+        expect(page.locator("html")).to_have_attribute("data-theme", "dark", timeout=10000)
+        self.assertEqual(page.evaluate("localStorage.getItem('sangbogi:theme')"), "dark")
+        self.assert_frame_theme_matches_page(page, "#gate iframe[data-theme-frame]")
 
-    def test_system_scheme_remains_automatic_until_user_chooses(self):
-        page = self.open(reduced=True)
-        page.emulate_media(color_scheme='dark', reduced_motion='reduce')
-        expect(page.locator('#gate .theme-toggle')).to_have_attribute('aria-pressed', 'true')
-        self.assertIsNone(page.evaluate("localStorage.getItem('sangbogi:theme')"))
-        page.emulate_media(color_scheme='light', reduced_motion='reduce')
-        expect(page.locator('#gate .theme-toggle')).to_have_attribute('aria-pressed', 'false')
-        self.assertIsNone(page.evaluate("localStorage.getItem('sangbogi:theme')"))
+        page.reload(wait_until="domcontentloaded")
+        expect(page.locator(".gate-layout")).to_be_visible()
+        expect(page.locator("html")).to_have_attribute("data-theme", "dark")
+        page.wait_for_function("""() => {
+          const frame=document.querySelector('#gate iframe[data-theme-frame]');
+          return !!(frame && frame.contentWindow && frame.contentWindow.APP && !frame.contentWindow.APP.getState().on);
+        }""", timeout=15000)
+        self.assertEqual(page.evaluate("localStorage.getItem('sangbogi:theme')"), "dark")
 
-    def test_webgl_disabled_still_has_large_lens_and_icons(self):
-        page = self.open(fallback=True, reduced=True)
-        btn=page.locator('#gate .theme-toggle')
-        expect(btn.locator('.theme-fallback-sun')).to_be_visible()
-        lens=btn.locator('.theme-fallback-lens').bounding_box()
-        self.assertEqual((lens['width'], lens['height']), (60,60))
-        btn.click()
-        expect(page.locator('html')).to_have_attribute('data-theme', 'dark')
-        expect(btn.locator('.theme-fallback-moon')).to_be_visible()
-        expect(btn.locator('.theme-fallback-sun')).not_to_be_visible()
+    def test_saved_preference_overrides_system_changes_and_mirrors_into_both_views(self):
+        page = self.open(stored_theme="dark")
+        page.locator('button[data-name="은호당"]').click()
+        expect(page.locator("#lockpane")).to_be_visible()
+        page.locator("#familycode").fill("102938")
+        expect(page.locator("#app")).to_be_visible()
+        app_frame = page.locator("#app iframe[data-theme-frame]")
+        expect(app_frame).to_be_visible()
+        page.wait_for_function("""() => {
+          const frame=document.querySelector('#app iframe[data-theme-frame]');
+          return !!(frame && frame.contentWindow && frame.contentWindow.APP && !frame.contentWindow.APP.getState().on);
+        }""", timeout=15000)
+        self.assert_frame_theme_matches_page(page, "#app iframe[data-theme-frame]")
 
-    def test_shader_defines_large_geometry_and_fades_unused_pixels(self):
-        source=(ROOT/'theme-toggle.js').read_text(encoding='utf-8')
-        self.assertIn('vec2(216.0,96.0)', source)
-        self.assertIn('vec2(30.0),14.0', source)
-        self.assertIn('for(int i=0;i<49;i++)', source)
-        self.assertIn('float visible=mix(m,s,progress)', source)
-        self.assertIn('offset*5.5', source)
-        self.assertIn('1.0-smoothstep', source)
+        page.emulate_media(color_scheme="light")
+        expect(page.locator("html")).to_have_attribute("data-theme", "dark")
+        frame = page.frame_locator("#app iframe[data-theme-frame]")
+        frame.locator("#sw").press("Enter")
+        expect(page.locator("html")).to_have_attribute("data-theme", "light", timeout=10000)
+        self.assertEqual(page.evaluate("localStorage.getItem('sangbogi:theme')"), "light")
+        self.assert_frame_theme_matches_page(page, "#app iframe[data-theme-frame]")
+
+        metrics = page.locator("#app .theme-toggle").evaluate("""el => {
+          const r=el.getBoundingClientRect(), b=document.querySelector('#changeme').getBoundingClientRect();
+          return {left:r.left,right:r.right,viewport:innerWidth,overlap:r.left<b.right&&r.right>b.left&&r.top<b.bottom&&r.bottom>b.top,
+            overflow:document.documentElement.scrollWidth>innerWidth+1};
+        }""")
+        self.assertGreaterEqual(metrics["left"], 0)
+        self.assertLessEqual(metrics["right"], metrics["viewport"] + 1)
+        self.assertFalse(metrics["overlap"])
+        self.assertFalse(metrics["overflow"])
+
+    def test_bridge_only_reads_original_state_and_does_not_reimplement_the_shader(self):
+        source = (ROOT / "theme-toggle.js").read_text(encoding="utf-8")
+        self.assertIn("child.APP.getState()", source)
+        self.assertIn("new child.KeyboardEvent('keydown'", source)
+        self.assertIn("key:'Enter'", source)
+        self.assertNotIn("createShader", source)
+        self.assertNotIn("uniform vec2", source)
+        self.assertNotIn("theme-fallback", source)
+        self.assertEqual((ROOT / "previews/duskdot/index.html").read_text(encoding="utf-8").count("<canvas"), 2)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main(verbosity=2)

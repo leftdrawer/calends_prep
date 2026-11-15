@@ -224,6 +224,11 @@ class BrowserRegression(unittest.TestCase):
         dimensions = page.evaluate("({width: innerWidth, document: document.documentElement.scrollWidth, body: document.body.scrollWidth})")
         self.assertLessEqual(max(dimensions["document"], dimensions["body"]), dimensions["width"])
 
+    def stop_duskdot_webgl_for_clock(self, page):
+        # Calendar tests replace browser time; the original demo's WebGL frames
+        # are unrelated, so unload them before Playwright installs its clock.
+        page.locator("iframe[data-theme-frame]").evaluate_all("frames => frames.forEach(frame => frame.remove())")
+
     def test_family_pins_reject_wrong_codes_and_never_send_email(self):
         for name, wrong in (("은호당", "9394"), ("어머니", "102938")):
             with self.subTest(role=name):
@@ -394,6 +399,7 @@ class BrowserRegression(unittest.TestCase):
         page, fixture = self.open_page({key: record})
         original = fixture.records[key]
         # Verify legacy-key independence before the later explicit completion report.
+        self.stop_duskdot_webgl_for_clock(page)
         page.clock.install(time="2026-10-20T03:00:00Z")
         self.login(page)
         self.select_month(page, 9)
@@ -1121,6 +1127,7 @@ class BrowserRegression(unittest.TestCase):
             with self.subTest(role=role):
                 page, fixture = self.open_page({event_key: old_event})
                 original = fixture.records[event_key]
+                self.stop_duskdot_webgl_for_clock(page)
                 page.clock.install(time="2026-10-21T03:00:00Z")
                 if role == "방문객":
                     self.guest(page, role)
@@ -1166,6 +1173,7 @@ class BrowserRegression(unittest.TestCase):
                            f"sangbogi:event:{year}-09:jungyang": event}
                 page, fixture = self.open_page(records)
                 original = copy.deepcopy(fixture.records)
+                self.stop_duskdot_webgl_for_clock(page)
                 page.clock.install(time=today)
                 self.login(page)
                 expect(page.locator("#title")).to_have_text(title)
@@ -1181,6 +1189,7 @@ class BrowserRegression(unittest.TestCase):
         event["part"]["jungyang-rice-jung"] = stamp(on=True)
         page, fixture = self.open_page({first_key: first, event_key: event})
         original_first = fixture.records[first_key]
+        self.stop_duskdot_webgl_for_clock(page)
         page.clock.install(time="2027-10-10T03:00:00Z")
         self.login(page, "어머니")
         expect(page.locator("#title")).to_have_text("구월 초하루")
@@ -1740,10 +1749,14 @@ class BrowserRegression(unittest.TestCase):
         self.assertEqual(fixture.writes, [])
 
     def test_ritual_cards_fit_320_390_1440_with_large_touch_targets(self):
+        previous_page = None
         for width, height in ((1440, 1000), (390, 844), (320, 640)):
             for event_id, month in ("chilseok", 7), ("chuseok", 8), ("dongji", 11), ("samsin", 3), ("daeboreum", 1), ("seongju", 10), ("hongsumagi", 1), ("samjae", 12):
                 with self.subTest(viewport=f"{width}x{height}", event=event_id):
+                    if previous_page is not None:
+                        previous_page.close()
                     page, _ = self.open_page(width=width, height=height)
+                    previous_page = page
                     self.login(page, "어머니")
                     self.open_event(page, event_id, month)
                     page.locator(".ritual-source-details summary").click()

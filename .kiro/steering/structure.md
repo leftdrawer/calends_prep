@@ -3,9 +3,10 @@
 ## 파일
 
 - `index.html`: 로그인과 가족 암호 입력, 달·행사 탭, 가족 준비/공개 예물 영역, 기록판
-- `styles.css`: 로그인, PC 두 열·모바일 한 열, 행사 승인, 준비 항목과 기록판 스타일. 밝기 스위치는 216×96px, 휴대폰 머리 막대에서는 별도 줄을 확보해 축소하지 않음.
-- `theme-toggle.js`: 이 브라우저 전용 `sangbogi:theme` 선택, WebGL 유리 렌즈(60px)·해/달 픽셀(약 38px), 드래그·키보드 조작. 기기 밝기는 직접 고르기 전까지 추적하고, WebGL 불가 시 같은 크기 렌즈와 SVG로 대체.
-- `tests/theme_toggle_test.py`: 실데이터·이미지 캡처 없이 280–1440px 배치·고해상도 크기·입력·저장·기기 밝기 추적·대체 표시 검사.
+- `styles.css`: 로그인, PC 두 열·모바일 한 열, 행사 승인, 준비 항목과 기록판 스타일. 원본 Duskdot 스위치는 500×375px 반응형 iframe 뷰포트에서 원래 956×718 좌표계를 약 0.52배로 렌더하고 220×133px 창으로 자릅니다.
+- `theme-toggle.js`: `previews/duskdot` iframe의 `APP.getState()`를 읽고 Enter 입력으로 앱 화면 밝기에 정렬. 원본 포인터/키보드 조작을 유지하면서 페이지 테마·theme-color·브라우저 저장값을 동기화합니다. WebGL2 미지원 대체 렌더러는 없습니다.
+- `previews/duskdot/`: 지정한 원본의 로컬 HTML·모듈·이미지 복사본. 원본 코드는 수정하지 않습니다.
+- `tests/theme_toggle_test.py`: 합성 DB 응답으로 원본 WebGL2 로드, 모바일 크롭, 포인터 클릭·끌기, 키보드, 페이지 테마 동기화·저장·새로고침 검사.
 - `app.js`: 아래 데이터·일정·저장·화면 로직
 - `jibang.html`: 합동지방의 세로 이미지 보기, 전체 화면과 설정 숨기기·PNG 저장
 - `assets/`: PNG 로고·기존 홈 아이콘·`jungyang-jibang-s25-ultra.png` 합동지방
@@ -19,7 +20,7 @@
 
 - `previews/glass-toggle/`: 운영과 독립된 유리 스위치 외관 검토 페이지. SVG/CSS 렌즈이며 WebGL 원본과 구현이 다릅니다. app.js를 로드하지 않고 별도 localStorage 키만 사용합니다.
 - `tests/glass_preview_test.py`: 캡처 없이 크기·도안·투명층·조작·저장 격리·모션/투명도 설정 검사.
-- 운영 버튼 교체는 이 미리보기의 외관을 사용자에게 확인받은 뒤 진행합니다.
+- 운영 화면은 `previews/duskdot/`의 원본 구현을 iframe으로 표시합니다. Glass 미리보기는 운영 소스가 아닙니다.
 
 ## 데이터와 일정
 
