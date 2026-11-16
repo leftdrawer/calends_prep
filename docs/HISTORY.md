@@ -1,5 +1,17 @@
 # 작업 이력 (HISTORY)
 
+## 2026-11-17 — Astryx Stone 디자인 기준 적용
+
+- 요청: 7개 사이트 작업 중 남은 Calends 준비 화면의 외관을 Astryx 기준으로 정리하고, 기존 화면 동작과 기록을 보존.
+- 구현: Astryx Stone 0.7.16 테마 CSS와 MIT 라이선스를 `vendor/`에 고정 포함. `<html>`에 Stone 테마를 지정하고 기존 의미색을 테마 토큰에 연결했으며, 기존 Mastercard 분석은 역사 자료로 남겼다.
+- 보존: 저장된 `sangbogi:theme`/`data-theme`, 기록·로그인·권한·일정·도메인 동작을 변경하지 않았다. API/실데이터를 호출하거나 수정하지 않았다.
+- 검증: 최종 `git diff --check` 통과. 합성 전용 `python tests/browser_test.py`는 Python 3.14와 3.12 환경 모두 `ModuleNotFoundError: No module named 'PIL'`로 시작되지 않았다. 정적 검토에서 360px 미디어쿼리, 3px `:focus-visible`, `prefers-reduced-motion` 규칙을 확인했다. Agent Browser의 로컬 데몬이 시작되지 않았고 Chrome 정적 렌더도 PNG를 만들지 못해 실제 화면의 픽셀 검증은 미완료.
+- Impeccable: 2개 경고(테마 공식 Montserrat 글꼴, 기존 `.jungyang-prayer` 왼쪽 강조선)와 4개 권고(기존 01–04 단계 라벨)를 보고했다. 테마 토큰과 정보 구조를 보존해 수정하지 않았고, 자동 훅 설정도 건드리지 않았다.
+- 백업/복구: `C:\Users\phlog\.work\PrSCh6fm2MQlnwHzFcztdk\.work\backups\20261117-0218-ui\calends_prep`; 작업별 명령은 `C:\Users\phlog\.work\PrSCh6fm2MQlnwHzFcztdk\.work\rollback-ui-20261117.md`.
+- 동기화: 로컬 커밋만 진행하며 푸시·배포하지 않음.
+- 관련 파일: `index.html`, `styles.css`, `CLAUDE.md`, `DESIGN.md`, `vendor/astryx-theme-stone-0.7.16.css`, `vendor/astryx-theme-stone-LICENSE.txt`.
+- 작업자: Cue.
+
 ## 2026-11-16 — 미완성 로고 전환 경로 제거
 
 - 무엇: 미완성 로고 전환 실험 경로를 `app.js`와 브라우저 회귀 검사에서 제거하고 현재 PNG 로고를 유지.

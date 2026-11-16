@@ -2,6 +2,14 @@
 
 > 규칙: 상위 `C:\AI Projects\AGENTS.md`. 최신 항목이 위. 이 파일은 요약이고, 자세한 기록(지시·변경·검증·남은 사항)은 이 폴더 `AGENTS.md` 규칙대로 `docs/HISTORY.md`에 있다. 작업할 때 둘 다 갱신한다.
 
+## 2026-11-17 — Astryx Stone 디자인 기준 적용
+
+- Astryx Stone 0.7.16과 MIT 라이선스를 고정 포함하고, 기존 상차림 UI의 색·글자·표면을 테마 토큰으로 연결했다. 저장된 `data-theme` 선택과 기록·로그인 동작은 유지했다.
+- 검증: 최종 `git diff --check` 통과. 합성 전용 `tests/browser_test.py`는 Python 환경에 Pillow(`PIL`)가 없어 시작되지 않았다. 정적 검토로 360px 반응형 규칙, 키보드 포커스, 동작 줄이기 규칙을 확인했으나 브라우저 시각 검증은 도구 시작 실패로 미완료. Impeccable는 Stone 기본 Montserrat 글꼴과 기존 `.jungyang-prayer` 강조선에 경고, 기존 4개 단계 라벨에 권고를 냈다. 테마 기본값과 기존 콘텐츠 의미를 보존했으며 훅 설정은 바꾸지 않았다.
+- 관련 파일: `index.html`, `styles.css`, `CLAUDE.md`, `DESIGN.md`, `vendor/astryx-theme-stone-0.7.16.css`, `vendor/astryx-theme-stone-LICENSE.txt`.
+- 동기화: 로컬 커밋만 진행하며 푸시·배포하지 않음. 실데이터를 읽거나 수정하지 않음.
+- 작업자: Cue.
+
 ## 2026-11-16 — 미완성 로고 전환 경로 정리
 
 - 앱과 브라우저 검사에서 미완성 로고 전환 실험을 제거하고 기존 PNG 로고 경로를 유지. 브라우저 검사는 Pillow 미설치로 실행 불가. 작업자: Cue.

@@ -365,3 +365,14 @@ When refining existing screens generated with this design system:
 - The exact "whisper" cream tone used for ghost-watermark headlines behind circular portraits reads between `#E8E2DA` and `#D1CDC7` in captures; the precise value varies per section.
 - Third-party consent orange (`#CF4500`) is Mastercard's documented consent signal and should not be confused with any marketing CTA color.
 - The Mastercard logo mark (red `#EB001B` + yellow `#F79E1B`) is a brand asset, not a UI palette entry.
+
+
+## 현재 기준 — Astryx Stone 0.7.16
+
+현재 화면의 시각적 기준은 Meta Astryx Stone 0.7.16이다. 이 문서 앞부분의 Mastercard 분석은 원문을 보존한 역사적 참고 자료이며, 현재 색·글자·모양의 지침으로 사용하지 않는다.
+
+- 선택 이유: 상차림과 준비 기록은 내용과 상태가 먼저 읽혀야 하므로, 차분한 중성 바탕과 명확한 표면 위계를 사용한다. 따뜻한 강조는 의미가 있는 놋빛 계열(테마의 orange 텍스트·면 토큰)로 남기고, 경고·구매 표시는 red 토큰으로 구분한다.
+- 색과 모양: 페이지·카드·테두리·그림자·본문·선택 버튼은 Stone의 `--color-*`, `--radius-*`, `--shadow-*` 토큰에 연결한다. 채운 선택 버튼은 대비가 짝지어진 `--color-accent`와 `--color-on-accent`를 사용한다. 기존 `--ink`, `--brass-*`, `--cinnabar-*` 이름은 화면 의미를 보존하는 별칭으로만 쓴다.
+- 글자: Figtree/ Montserrat 계열 뒤에 Pretendard Variable, Pretendard, Apple SD Gothic Neo, Noto Sans KR 폴백을 둔다. 축문·한문 전용 글꼴과 붓글씨 서명은 기존 콘텐츠 자산으로 유지한다.
+- 보조 기준: Apple HIG는 최소 44px의 조작 영역, 키보드 포커스, 라이트·다크 모드, 360px 반응형, 안전 영역, 동작·투명도 줄이기처럼 Astryx가 정하지 않는 동작에만 적용한다.
+- 보존: `sangbogi:theme` 저장값과 `data-theme` 전환은 그대로이며, 기록·로그인·권한·일정·도메인 동작은 이번 스타일 변경 범위가 아니다. Astryx CSS와 MIT 라이선스는 `vendor/`에 고정해 포함한다.
