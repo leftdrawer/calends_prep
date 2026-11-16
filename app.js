@@ -1,28 +1,4 @@
 
-/* 원본 두 PNG가 모두 준비됐을 때만 반응형 붓글씨를 적용합니다.
-   첨부 파일 접근이 막힌 동안에는 기존 로고를 유지합니다. */
-(async function initWordmarks(){
-  const horizontal='assets/wordmark-horizontal.png', vertical='assets/wordmark-vertical.png';
-  const load=src=>new Promise((resolve,reject)=>{
-    const img=new Image();
-    img.onload=()=>img.naturalWidth&&img.naturalHeight?resolve(img):reject(new Error('empty image'));
-    img.onerror=()=>reject(new Error('wordmark unavailable'));
-    img.src=src;
-  });
-  try{
-    const [wide,tall]=await Promise.all([load(horizontal),load(vertical)]);
-    if(wide.naturalWidth<=wide.naturalHeight||tall.naturalHeight<=tall.naturalWidth)return;
-    document.querySelectorAll('.brand-picture').forEach(picture=>{
-      const source=document.createElement('source');
-      source.media='(max-width:760px)'; source.srcset=vertical;
-      picture.prepend(source); picture.querySelector('img').src=horizontal;
-      picture.classList.add('calligraphy-ready');
-    });
-    document.querySelector('.gate-brand').classList.add('calligraphy-ready');
-    document.querySelector('.brand-home').classList.add('calligraphy-ready');
-  }catch(err){ /* 두 원본이 모두 준비되기 전에는 깨진 이미지를 표시하지 않습니다. */ }
-})();
-
 /* 홈 화면 매니페스트는 현재 페이지 테마의 바탕색을 사용합니다. */
 (function(){
   let previousUrl=null;

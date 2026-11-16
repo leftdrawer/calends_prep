@@ -85,8 +85,7 @@ class QuietHandler(SimpleHTTPRequestHandler):
 
 
 class Fixture:
-    def __init__(self, records=None, wordmarks=False):
-        self.wordmarks = wordmarks
+    def __init__(self, records=None):
         self.records = {
             key: value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
             for key, value in copy.deepcopy(records or {}).items()
@@ -100,12 +99,6 @@ class Fixture:
         request = route.request
         url = urlparse(request.url)
         if url.hostname in ("127.0.0.1", "localhost") or url.scheme in ("blob", "data"):
-            if self.wordmarks and url.path in ("/assets/wordmark-horizontal.png", "/assets/wordmark-vertical.png"):
-                width, height = (2000, 800) if "horizontal" in url.path else (800, 2000)
-                # Synthetic shapes exercise picture selection; these are not the user's logo.
-                body = f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}"><rect width="100%" height="100%" fill="#292F29"/></svg>'
-                route.fulfill(status=200, content_type="image/svg+xml", body=body)
-                return
             route.continue_()
             return
         if url.hostname != SUPABASE_HOST:
@@ -180,8 +173,8 @@ class BrowserRegression(unittest.TestCase):
             self.assertEqual(fixture.auth_requests, [], "PIN login must not send email/auth API requests")
             self.assertEqual(fixture.unexpected, [], "Unexpected Supabase request")
 
-    def open_page(self, records=None, width=1440, height=1000, storage=None, wordmarks=False):
-        fixture = Fixture(records, wordmarks=wordmarks)
+    def open_page(self, records=None, width=1440, height=1000, storage=None):
+        fixture = Fixture(records)
         self.fixtures.append(fixture)
         context = self.browser.new_context(viewport={"width": width, "height": height}, timezone_id="Asia/Seoul")
         self.contexts.append(context)
@@ -1071,32 +1064,6 @@ class BrowserRegression(unittest.TestCase):
         expect(viewer.locator("#status")).to_contain_text("PNG를 저장해 갤러리에서")
         expect(viewer.locator("#controls a[download]")).to_be_visible()
         self.assertEqual(fixture.writes, [])
-
-    def test_horizontal_desktop_and_vertical_mobile_wordmarks(self):
-        for width, height in ((1440, 1000), (390, 844), (320, 640)):
-            with self.subTest(viewport=f"{width}x{height}"):
-                page, _ = self.open_page(width=width, height=height, wordmarks=True)
-                page.wait_for_function("document.querySelectorAll('.brand-picture.calligraphy-ready').length === 3")
-
-                def assert_logo(selector, mobile_limit):
-                    page.wait_for_function("selector => { const img=document.querySelector(selector); return img.complete && img.naturalWidth > 0; }", arg=selector)
-                    image = page.locator(selector)
-                    dimensions = image.evaluate("img => ({width: img.getBoundingClientRect().width, height: img.getBoundingClientRect().height, url: img.currentSrc})")
-                    if width <= 760:
-                        self.assertIn("wordmark-vertical.png", dimensions["url"])
-                        self.assertGreater(dimensions["height"], dimensions["width"])
-                        self.assertLessEqual(dimensions["height"], mobile_limit)
-                    else:
-                        self.assertIn("wordmark-horizontal.png", dimensions["url"])
-                        self.assertGreater(dimensions["width"], dimensions["height"])
-                    self.assert_no_overflow(page)
-
-                assert_logo(".gate-brand .brand-image", 160)
-                page.locator('button[data-name="어머니"]').click()
-                assert_logo("#lockpane .brand-image", 140)
-                page.locator("#lockback").click()
-                self.guest(page)
-                assert_logo(".brand-home .sign-image", 64)
 
     def test_desktop_mobile_and_narrow_layout_gate_and_application(self):
         for width, height in ((1440, 1000), (390, 844), (320, 640)):

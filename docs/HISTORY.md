@@ -1,5 +1,13 @@
 # 작업 이력 (HISTORY)
 
+## 2026-11-16 — 미완성 로고 전환 경로 제거
+
+- 무엇: 미완성 로고 전환 실험 경로를 `app.js`와 브라우저 회귀 검사에서 제거하고 현재 PNG 로고를 유지.
+- 왜: 실제 화면에 쓰지 않는 미완성 경로와 그 기대값을 제거해 운영 화면과 검사 기준을 일치시킴.
+- 검증: `git diff --check` 통과. `python tests/browser_test.py`는 `PIL` 미설치(`ModuleNotFoundError`)로 실행되지 않음. 합성 데이터 전용 검사라 실제 Supabase 기록은 건드리지 않음.
+- 관련 파일: `.kiro/steering/tech.md`, `README.md`, `app.js`, `tests/browser_test.py`.
+- 백업/복구: 문서 백업은 `C:\Users\phlog\ai-audit\backups\20261116-1733\calends_prep`에 보관. 복구 명령: `Copy-Item -LiteralPath 'C:\Users\phlog\ai-audit\backups\20261116-1733\calends_prep\CHANGELOG.md' -Destination 'C:\AI Projects\calends_prep\CHANGELOG.md' -Force; Copy-Item -LiteralPath 'C:\Users\phlog\ai-audit\backups\20261116-1733\calends_prep\HISTORY.md' -Destination 'C:\AI Projects\calends_prep\docs\HISTORY.md' -Force`.
+
 ## 2026-11-16 — 라이트·다크 테마 팔레트 정비
 
 - 요청: 라이트 배경 `#DCD8D4`, 다크 배경 `#18181B`로 바꾸고 이에 맞춰 페이지 전체 아이콘·폰트 등 팔레트를 다시 구성.
