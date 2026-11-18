@@ -1849,8 +1849,10 @@ class BrowserRegression(unittest.TestCase):
           return JSON.parse(text);
         }""")
         self.assertIsNotNone(manifest, "A manifest link must be generated")
-        self.assertEqual(manifest["background_color"], "#DCE3EF")
-        self.assertEqual(manifest["theme_color"], "#DCE3EF")
+        theme = page.evaluate("document.documentElement.dataset.theme || ''")
+        expected = "#101018" if theme == "dark" else "#f0f0f7"
+        self.assertEqual(manifest["background_color"], expected)
+        self.assertEqual(manifest["theme_color"], expected)
         sizes = {icon["sizes"]: icon for icon in manifest["icons"]}
         self.assertIn("192x192", sizes)
         self.assertIn("512x512", sizes)

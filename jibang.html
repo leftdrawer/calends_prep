@@ -1,29 +1,36 @@
 <!doctype html>
-<html lang="ko">
+<html lang="ko" data-astryx-theme="stone">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#eee5d1">
   <title>광산김씨·창녕성씨 합동지방 · 은호당</title>
+  <link rel="stylesheet" href="vendor/astryx-theme-stone-fonts.css">
+  <link rel="stylesheet" href="vendor/astryx-theme-stone-0.7.16.css">
   <style>
-    /* 앱과 같은 따뜻한 중성·놋빛 팔레트. 지방 그림의 닥종이 바탕은 유지합니다. */
-    :root{color-scheme:light dark;--accent:#725534;--accent-deep:#654A2D;--panel:#EFECE7;--panel-line:#BBB2A8;--panel-ink:#2D2925;--panel-ink-2:#5A554E;--on-accent:#F5F1EA}
-    @media(prefers-color-scheme:dark){:root{--accent:#785B38;--accent-deep:#E2C99A;--panel:#252528;--panel-line:#403E3D;--panel-ink:#E9E4DC;--panel-ink-2:#BEB7AE}}
+    /* 설정 패널은 Astryx Stone 토큰. 지방 그림의 닥종이 바탕 #eee5d1 은 유지합니다. */
+    :root{color-scheme:light dark;--font-weight-normal:400;--font-weight-medium:500;--font-weight-semibold:600;--font-weight-bold:700}
+    :root[data-theme="dark"]{color-scheme:dark}
+    :root[data-theme="light"]{color-scheme:light}
     [hidden]{display:none!important}
     *{box-sizing:border-box}
     html,body{margin:0;width:100%;height:100%;background:#eee5d1}
-    body{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:var(--panel-ink)}
+    body{font-family:Figtree,"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:var(--color-text-primary);font-size:max(1rem,var(--text-body-size));line-height:max(1.6,var(--text-body-leading))}
     main{width:100%;height:100%;height:100dvh;display:grid;place-items:center}
     #jibang{display:block;width:100%;height:100%;object-fit:contain}
-    #controls{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(440px,calc(100% - 32px));padding:14px;background:var(--panel);border:1px solid var(--panel-line);border-radius:14px;box-shadow:0 3px 20px rgba(23,21,28,.14)}
-    #controls p{margin:0 0 10px;font-size:13px;line-height:1.6;word-break:keep-all;color:var(--panel-ink-2)}
+    #controls{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(440px,calc(100% - 32px));padding:14px;background:var(--color-background-card);border:1px solid var(--color-border);border-radius:var(--radius-container);box-shadow:var(--shadow-med);color:var(--color-text-primary)}
+    #controls p{margin:0 0 10px;font-size:max(.75rem,var(--text-supporting-size));line-height:1.6;word-break:keep-all;color:var(--color-text-secondary)}
     .actions{display:flex;flex-wrap:wrap;gap:8px}
-    button,a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 14px;border:1px solid var(--panel-line);border-radius:999px;background:var(--panel);color:var(--accent-deep);font:inherit;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none}
-    #fullscreen{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
-    button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-    #status{margin:10px 0 0!important;color:var(--panel-ink-2)}
-    #show-controls{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));width:44px;height:44px;padding:0;background:var(--panel);font-size:22px}
+    button,a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 14px;border:1px solid var(--color-border-emphasized);border-radius:var(--radius-full);background:var(--color-background-card);color:var(--color-text-accent);font:inherit;font-size:max(.75rem,var(--text-supporting-size));font-weight:600;cursor:pointer;text-decoration:none}
+    #fullscreen{background:var(--color-accent);color:var(--color-on-accent);border-color:var(--color-accent)}
+    button:focus-visible,a:focus-visible{outline:3px solid var(--color-accent);outline-offset:2px}
+    #status{margin:10px 0 0!important;color:var(--color-text-secondary)}
+    #show-controls{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));width:44px;height:44px;padding:0;background:var(--color-background-card);font-size:22px}
   </style>
+  <script>
+  try{var themeChoice=localStorage.getItem('sangbogi:theme');if(themeChoice==='light'||themeChoice==='dark')document.documentElement.setAttribute('data-theme',themeChoice);}catch(e){}
+  </script>
 </head>
 <body>
   <main aria-label="두 집안 역대 조상님을 함께 모시는 지방">

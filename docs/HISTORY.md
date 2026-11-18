@@ -1,5 +1,16 @@
 # 작업 이력 (HISTORY)
 
+## 2026-11-18 — astryx 테마 이식으로 UX/UI 정비
+
+- 사용자 지시: "astryx와 stageshow를 활용해 웹에 배포된 사이트 UXUI 손보기". 테마만 이식하고 Apple HIG는 보조 기준. React로 다시 쓰지 않음.
+- 왜: 11-17에 Stone 0.7.16 색 별칭만 연결되고 글꼴 파일·지방 패널·글자 단계·브라우저 테마색은 이전 팔레트에 남아 있었다. Stone은 따뜻한 돌색이라 상차림 기록과 맞다. 랜딩·사용법 히어로가 없어 stageshow 일러스트는 넣지 않았다.
+- 변경: `vendor/astryx-theme-stone-fonts.css`로 Figtree·Montserrat를 불러오고, 테마 CSS 앞에 MIT 고지를 붙였다. 생성된 규칙은 고치지 않았다. `styles.css`는 제목·본문·카드 반경·안쪽 여백·알약 반경을 Stone 토큰으로 덮고, 한글은 Pretendard 폴백과 본문 16px 이상을 유지한다. 포커스 링은 3px `--color-accent`. `jibang.html` 설정 패널도 같은 토큰이고 닥종이 `#eee5d1`은 유지한다. 매니페스트·theme-color·duskdot iframe 바탕은 Stone 페이지색 `#f0f0f7` / `#101018`이다.
+- 보존: URL, 저장 키, PIN, 역할, 명절 데이터, 축문·한문 글꼴, 붓글씨 PNG, duskdot 셰이더 코드.
+- 관련 파일: `index.html`, `styles.css`, `jibang.html`, `app.js`, `theme-toggle.js`, `previews/duskdot/index.html`, `vendor/astryx-theme-stone-0.7.16.css`, `vendor/astryx-theme-stone-fonts.css`, `tests/browser_test.py`, `tests/theme_toggle_test.py`, `.kiro/steering/`, `README.md`, `AGENTS.md`, `CHANGELOG.md`
+- 검증: `CALENDS_CHROMIUM`으로 `python3 tests/theme_toggle_test.py` 7개, `python3 tests/browser_test.py` 56개 통과(대비·360px대 배치·지방 전체 화면·진설 칩·신도님 선택 포함). 합성 응답만 사용하고 실데이터는 쓰지 않음. 입구·준비 화면을 1280·390, 라이트, 그리고 다크 입구를 캡처했다.
+- 작업자: Cursor Cloud Agent (Grok Bot 구록이 경유)
+- 남은 일: Safari 실기 확인. 머지 전 수동 배포는 하지 않음. 배포는 GitHub Pages가 main을 받을 때 갱신된다.
+
 ## 2026-11-17 — Astryx Stone 디자인 기준 적용
 
 - 요청: 7개 사이트 작업 중 남은 Calends 준비 화면의 외관을 Astryx 기준으로 정리하고, 기존 화면 동작과 기록을 보존.

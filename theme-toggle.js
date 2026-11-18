@@ -24,7 +24,7 @@
       tag.setAttribute('data-live','');
       document.head.appendChild(tag);
     }
-    tag.setAttribute('content',theme==='dark'?'#18181B':'#DCD8D4');
+    tag.setAttribute('content',theme==='dark'?'#101018':'#f0f0f7');
   }
 
   function readFrameTheme(frame){

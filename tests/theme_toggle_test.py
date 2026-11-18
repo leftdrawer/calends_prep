@@ -203,9 +203,9 @@ class ThemeToggleRegression(unittest.TestCase):
     def test_palette_manifest_and_switch_canvas_match_both_page_backgrounds(self):
         page = self.open(color_scheme="light")
         frame = page.locator("#gate iframe[data-theme-frame]")
-        for scheme, expected_hex, expected_rgb, body_ink, button_bg in (
-            ("light", "#DCD8D4", "rgb(220, 216, 212)", "rgb(45, 41, 37)", "rgb(114, 85, 52)"),
-            ("dark", "#18181B", "rgb(24, 24, 27)", "rgb(233, 228, 220)", "rgb(120, 91, 56)"),
+        for scheme, expected_hex, expected_rgb, body_ink, button_bg, button_fg in (
+            ("light", "#f0f0f7", "rgb(240, 240, 247)", "rgb(37, 37, 42)", "rgb(37, 37, 42)", "rgb(255, 255, 255)"),
+            ("dark", "#101018", "rgb(16, 16, 24)", "rgb(240, 240, 249)", "rgb(240, 240, 249)", "rgb(37, 37, 42)"),
         ):
             with self.subTest(scheme=scheme):
                 page.emulate_media(color_scheme=scheme)
@@ -241,7 +241,7 @@ class ThemeToggleRegression(unittest.TestCase):
                 self.assertEqual(measured["page"], expected_rgb)
                 self.assertEqual(measured["bodyInk"], body_ink)
                 self.assertEqual(measured["buttonBg"], button_bg)
-                self.assertEqual(measured["buttonFg"], "rgb(245, 241, 234)")
+                self.assertEqual(measured["buttonFg"], button_fg)
                 self.assertEqual(measured["frame"], expected_rgb)
                 self.assertEqual(measured["themeColor"], expected_hex)
                 self.assertEqual(measured["manifestBackground"], expected_hex)
@@ -250,12 +250,12 @@ class ThemeToggleRegression(unittest.TestCase):
                 self.assertEqual(measured["outside"][3], 0, measured)
                 self.assertTrue(all(alpha <= 32 for alpha in measured["nearOutside"]), measured)
 
-    def test_jibang_controls_use_warm_palette_in_both_system_themes(self):
+    def test_jibang_controls_use_stone_tokens_in_both_system_themes(self):
         page = self.open(color_scheme="light")
         page.goto(self.url + "jibang.html", wait_until="load")
-        for scheme, button_bg, panel_bg in (
-            ("light", "rgb(114, 85, 52)", "rgb(239, 236, 231)"),
-            ("dark", "rgb(120, 91, 56)", "rgb(37, 37, 40)"),
+        for scheme, button_bg, button_fg, panel_bg in (
+            ("light", "rgb(37, 37, 42)", "rgb(255, 255, 255)", "rgb(255, 255, 255)"),
+            ("dark", "rgb(240, 240, 249)", "rgb(37, 37, 42)", "rgb(37, 37, 42)"),
         ):
             with self.subTest(scheme=scheme):
                 page.emulate_media(color_scheme=scheme)
@@ -266,7 +266,7 @@ class ThemeToggleRegression(unittest.TestCase):
                 })""")
                 self.assertEqual(measured["buttonBg"], button_bg)
                 self.assertEqual(measured["panelBg"], panel_bg)
-                self.assertEqual(measured["buttonFg"], "rgb(245, 241, 234)")
+                self.assertEqual(measured["buttonFg"], button_fg)
 
 
 if __name__ == "__main__":
