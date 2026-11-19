@@ -2,6 +2,13 @@
 
 > 규칙: 상위 `C:\AI Projects\AGENTS.md`. 최신 항목이 위. 이 파일은 요약이고, 자세한 기록(지시·변경·검증·남은 사항)은 이 폴더 `AGENTS.md` 규칙대로 `docs/HISTORY.md`에 있다. 작업할 때 둘 다 갱신한다.
 
+## 2026-11-19 — Astryx 구조 정리 (간격·반경·줄 높이·끝까지 닿는 줄 목록)
+
+- 무엇: 11-17 Stone 테마 위에 Astryx 구조 규칙만 추가. 간격 4px 척도 토큰, 버튼·입력·선택 단추를 `--radius-element`로, 안쪽 상자를 `--radius-container`로, 줄 높이를 4px 격자로, 촘촘한 목록(`.row` 등)을 카드 끝까지 닿는 줄로 바꿈. "기록" 단추는 세로 타원에서 44px 모서리 둥근 사각으로. 색·카드 반경·글자 굵기(Stone 테마)와 DOM·로직·저장 키는 그대로.
+- 왜: 은호당님 지시(Astryx를 웹 디자인 기본으로 삼아 이 페이지를 개선).
+- 관련 파일: `styles.css`(끝의 "Astryx 구조 정리" 구간), `index.html`(`styles.css?v=8`), `docs/HISTORY.md`
+- 작업자: Claude Code
+
 ## 2026-11-17 — Astryx Stone 디자인 기준 적용
 
 - Astryx Stone 0.7.16과 MIT 라이선스를 고정 포함하고, 기존 상차림 UI의 색·글자·표면을 테마 토큰으로 연결했다. 저장된 `data-theme` 선택과 기록·로그인 동작은 유지했다.
