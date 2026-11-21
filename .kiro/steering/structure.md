@@ -4,7 +4,7 @@
 
 - `index.html`: 로그인과 가족 암호 입력, 달·행사 탭, 가족 준비/공개 예물 영역, 기록판
 - `styles.css`: 로그인, PC 두 열·모바일 한 열, 행사 승인, 준비 항목과 기록판 스타일. 색·글자·반경·여백은 Astryx Stone 토큰을 쓰고, 44px·포커스·동작 줄이기는 보조로 둡니다. 원본 Duskdot 스위치는 500×375px 반응형 iframe 뷰포트에서 원래 956×718 좌표계를 약 0.52배로 렌더하고 220×133px 창으로 자릅니다. iframe 바탕만 Stone 페이지색과 맞춥니다.
-- `vendor/astryx-theme-stone-0.7.16.css`, `vendor/astryx-theme-stone-fonts.css`, `vendor/astryx-theme-stone-LICENSE.txt`: 고정한 Stone 테마와 글꼴 불러오기, MIT 라이선스.
+- `vendor/astryx-theme-stone-0.7.16.css`, `vendor/astryx-theme-stone-fonts.css`, `vendor/astryx-theme-stone-LICENSE.txt`: 고정한 Stone 테마, 패키지 글꼴 기록, MIT 라이선스. 화면은 Figtree·Montserrat를 HTML에서 직접 불러온다.
 - `theme-toggle.js`: `previews/duskdot` iframe의 `APP.getState()`를 읽고 Enter 입력으로 앱 화면 밝기에 정렬. 원본 포인터/키보드 조작을 유지하면서 페이지 테마·theme-color·브라우저 저장값을 동기화합니다. WebGL2 미지원 대체 렌더러는 없습니다.
 - `previews/duskdot/`: 지정한 원본의 로컬 HTML·모듈·이미지 복사본. 원본 코드는 수정하지 않습니다.
 - `tests/theme_toggle_test.py`: 합성 DB 응답으로 원본 WebGL2 로드, 모바일 크롭, 포인터 클릭·끌기, 키보드, 페이지 테마 동기화·저장·새로고침 검사.

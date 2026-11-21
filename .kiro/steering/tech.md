@@ -3,7 +3,7 @@
 ## 스택
 
 - 정적 HTML + CSS + 바닐라 JavaScript. 별도 프레임워크나 빌드 과정 없음. React로 다시 쓰지 않습니다.
-- 시각 토큰은 `vendor/astryx-theme-stone-0.7.16.css`(Astryx Stone 0.7.16, MIT)와 `vendor/astryx-theme-stone-fonts.css`를 함께 배포합니다. 화면은 그 변수를 소비하고, 한글 폴백은 Pretendard·Apple SD Gothic Neo·Noto Sans KR입니다.
+- 시각 토큰은 `vendor/astryx-theme-stone-0.7.16.css`(Astryx Stone 0.7.16, MIT)입니다. `vendor/astryx-theme-stone-fonts.css`는 패키지 원본 기록이고, 화면은 Figtree·Montserrat만 HTML에서 직접 불러옵니다. 한글 폴백은 Pretendard·Apple SD Gothic Neo·Noto Sans KR입니다.
 - `index.html`은 화면, `app.js`는 로직, `styles.css`는 반응형 스타일을 맡습니다.
 - `assets/`의 PNG 로고·아이콘·합동지방과 봉행자 한자 WOFF는 정적 파일입니다. 기존 외부 웹폰트도 사용합니다.
 - 테스트는 Python Playwright + Chromium을 사용합니다. 실행 명령은 `python3 tests/browser_test.py`입니다.
