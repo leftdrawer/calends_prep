@@ -2,6 +2,14 @@
 
 > 규칙: 상위 `C:\AI Projects\AGENTS.md`. 최신 항목이 위. 이 파일은 요약이고, 자세한 기록(지시·변경·검증·남은 사항)은 이 폴더 `AGENTS.md` 규칙대로 `docs/HISTORY.md`에 있다. 작업할 때 둘 다 갱신한다.
 
+## 2026-11-21 — 저장소 점검: 글꼴 불러오기만 줄임
+
+- 무엇: 테마 글꼴 CSS의 `@import` 사슬과 쓰지 않는 JetBrains Mono 요청을 빼고, Figtree·Montserrat를 HTML에서 직접 불러온다. Pretendard 링크의 불필요한 `as="style"`도 뺐다. 기록·화면 동작·배포 설정은 그대로다.
+- 왜: 은호당님이 저장소 전체 점검을 승인. 렌더를 막는 글꼴 요청만 줄이고, 키 교체·이미지 재압축·CI 워크플로 변경은 하지 않는다.
+- 관련 파일: `index.html`, `jibang.html`, `vendor/astryx-theme-stone-fonts.css`, `.kiro/steering/tech.md`, `docs/HISTORY.md`
+- 작업자: Cursor Cloud Agent (Grok Bot 구록이 경유)
+- 남은 일·확인 필요: Supabase anon 키와 가족 암호는 소스에 그대로 있다. 큰 PNG, Pages 캐시 10분, 브라우저 검사가 CI에 없는 점은 보고만 한다.
+
 ## 2026-11-19 — Astryx 구조 정리 (간격·반경·줄 높이·끝까지 닿는 줄 목록)
 
 - 무엇: 11-17 Stone 테마 위에 Astryx 구조 규칙만 추가. 간격 4px 척도 토큰, 버튼·입력·선택 단추를 `--radius-element`로, 안쪽 상자를 `--radius-container`로, 줄 높이를 4px 격자로, 촘촘한 목록(`.row` 등)을 카드 끝까지 닿는 줄로 바꿈. "기록" 단추는 세로 타원에서 44px 모서리 둥근 사각으로. 색·카드 반경·글자 굵기(Stone 테마)와 DOM·로직·저장 키는 그대로.

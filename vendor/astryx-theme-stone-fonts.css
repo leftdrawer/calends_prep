@@ -1,6 +1,7 @@
 /* Copyright (c) Meta Platforms, Inc. and affiliates.
- * Vendored unchanged from @astryxdesign/theme-stone@0.7.16 fonts.css.
+ * Vendored from @astryxdesign/theme-stone@0.7.16 fonts.css.
  * MIT license: vendor/astryx-theme-stone-LICENSE.txt
+ * 화면은 이 파일을 @import로 붙이지 않습니다. Figtree·Montserrat만 HTML에서 직접 불러 렌더를 막지 않고, 쓰지 않는 JetBrains Mono는 받지 않습니다.
  */
 
 @import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap');

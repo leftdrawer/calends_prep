@@ -1,5 +1,20 @@
 # 작업 이력 (HISTORY)
 
+## 2026-11-21 — 저장소 점검
+
+- 사용자 지시: 머지된 main에서 저장소 전체를 점검하고 별도 PR만 연다. 동작·데이터·URL·저장 스키마와 배포 설정은 바꾸지 않는다.
+- 고친 것: `index.html`과 `jibang.html`이 `vendor/astryx-theme-stone-fonts.css`의 `@import`를 타지 않게 하고, Figtree·Montserrat만 `preconnect`와 함께 직접 불러온다. 코드 글꼴 JetBrains Mono는 이 화면에 쓰이지 않아 받지 않는다. Pretendard 링크의 `as="style"`은 스타일시트에 필요 없어 뺐다.
+- 고치지 않은 것:
+  - `app.js`의 Supabase anon 키. 처음 들어온 커밋은 `a4d4cde`(2026-10-11, `feat: restore family PINs and separate monthly first-day rituals`)이고 현재도 `app.js`의 `REMOTE.key`에 있다. 브라우저 공개 키라 앱이 이 값으로 저장소를 읽는다. 교체는 사람이 해야 하며 히스토리에서 지우지 않았다.
+  - 가족 화면 잠금 숫자는 `app.js`의 `FAMILY_CODES`와 `tests/browser_test.py`에 있다. 간단한 화면 잠금으로 문서화된 값이라 바꾸지 않았다.
+  - 사용자 글자는 `textContent`로 넣고, `innerHTML`은 고정 문구와 정적 이름표에만 쓴다.
+  - 큰 파일: `previews/duskdot/data/base_kb.png` 약 3.7MB, `base_tb.png` 약 3.5MB, `assets/jungyang-jibang-s25-ultra.png` 약 2.3MB. 붓글씨와 원본 미리보기라 재압축하지 않았다.
+  - GitHub Pages 응답 `cache-control: max-age=600`. 워크플로와 Pages 설정은 건드리지 않았다. CI는 `node tests/domain_test.cjs`만 돌리고 브라우저 검사는 로컬이다.
+  - npm·pip 목록이 없어 `npm audit`/`pip-audit`은 실행하지 않았다.
+- 검증: `node tests/domain_test.cjs` 통과. 글꼴 주소만 바뀌어 저장·화면 로직 검사는 머지 직전에 돌린 56개와 같다.
+- 작업자: Cursor Cloud Agent (Grok Bot 구록이 경유)
+- 남은 일: 키 교체와 Safari 실기. 이 점검 PR은 머지하지 않는다.
+
 ## 2026-11-19 — Astryx 구조 정리 (간격·반경·줄 높이·끝까지 닿는 줄 목록)
 
 - 사용자 지시: "astryx는 전부 반영하고 개선할 것임" (11-10 "이 페이지를 Astryx 스킬 기반으로 개선하는 것부터 해봐"의 이어짐).
