@@ -1,5 +1,19 @@
 # 작업 이력 (HISTORY)
 
+## 2026-11-19 — Astryx 구조 정리 (간격·반경·줄 높이·끝까지 닿는 줄 목록)
+
+- 사용자 지시: "astryx는 전부 반영하고 개선할 것임" (11-10 "이 페이지를 Astryx 스킬 기반으로 개선하는 것부터 해봐"의 이어짐).
+- 바깥 자료: github.com/meta/astryx (MIT, `@astryxdesign/cli` 0.7.11)의 `astryx docs principles / spacing / shape / typography` 규칙(4px 간격 척도, 조작 요소 `element`·상자 `container` 반경, 줄 높이 4px 격자, 촘촘한 자료는 끝까지 닿는 줄). Astryx 컴포넌트(React 19)는 쓰지 않고 규칙만 CSS로 옮김. 11-17에 이미 적용된 Stone 0.7.16 테마의 `--radius-*`·`--duration-*` 토큰을 그대로 사용하고 `--spacing-*`·`--ease-standard`만 추가 정의.
+- 경위: 11-10에 이전 main 기준으로 만든 초안(로컬 브랜치 `astryx-restyle`, 푸시 안 함)이 있었으나, 그 사이 main에 Stone 테마·팔레트 갱신·밝기 스위치가 들어와 카드 반경(28 vs 12)·굵기가 충돌해서, 구조 규칙만 새 main 위에 다시 적용함.
+- 변경 (`styles.css` 끝 "Astryx 구조 정리" 구간, `index.html`의 `styles.css?v=7`→`v=8`; 색·카드 반경·굵기·DOM·로직·저장 키 불변):
+  - 줄 높이 4px 격자(17px→24, 15px→24, 13px→20, 12px→20), 본문 `line-height:1.4118`.
+  - `.card .row`·`.guest-gift`·`.thankrow`·`.card>.note`: 카드 안쪽 여백(`--card-px` 24/모바일 18)만큼 음수 마진으로 구분선이 카드 가장자리까지 닿고, 마우스를 올리면 줄 전체가 옅게 반응.
+  - `.btn`·선택 단추·`.isrc`·`.imore`·`.adm`·입력: `--radius-element`. `.adm`("기록")은 최소 44px 너비. `.parts/.shops/.ilist`: `--radius-container`, 안쪽 여백 12/16. 알약은 칩·진설 자리·프로필에만.
+  - 전환은 `--duration-fast`·`--ease-standard`, `prefers-reduced-motion`에서 전환·눌림 축소 끔.
+- 검증: `python tests/browser_test.py` 56개 중 54개 통과, 2개 실패. ① `test_manifest_references_current_icons_and_palette_colors`는 변경 전 main에서도 같은 실패(아래 남은 사항). ② `test_reserved_guest_names_and_saved_names_require_pin`은 전체 실행 중에만 `Failed to fetch` 페이지 오류로 실패했고(네트워크 타이밍, CSS와 무관), 단독 실행은 이 변경 전후 모두 3회 연속 통과. `node tests/domain_test.cjs` 통과. 합성 데이터(실제 Supabase 요청 차단)로 390·1440px를 변경 전후 비교.
+- 남은 사항: 원격 main의 `test_manifest_references_current_icons_and_palette_colors`는 11-16 팔레트 갱신 이후 이미 실패 중(manifest `background_color`가 `#DCD8D4`인데 테스트는 `#DCE3EF`를 기대). 이번 변경과 무관하며 건드리지 않음.
+- 작업자: Claude Code
+
 ## 2026-11-18 — astryx 테마 이식으로 UX/UI 정비
 
 - 사용자 지시: "astryx와 stageshow를 활용해 웹에 배포된 사이트 UXUI 손보기". 테마만 이식하고 Apple HIG는 보조 기준. React로 다시 쓰지 않음.

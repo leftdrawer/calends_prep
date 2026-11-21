@@ -587,3 +587,47 @@ h1{font-family:var(--font-family-heading);font-size:var(--text-heading-1-size);l
   .btn.solid,.pill.on,.seg button[aria-pressed="true"],.step.done .sno{background:Highlight;color:HighlightText}
   .seg button.gift[aria-pressed="true"]{background:Canvas;color:Highlight;border:2px solid Highlight;box-shadow:none}
 }
+
+/* Astryx 구조 정리 (2026-11-19): Stone 테마가 정한 색·카드 반경·글자 굵기는 그대로 두고,
+   간격 4px 척도·조작 요소 반경(element)·줄 높이 4px 격자·끝까지 닿는 줄 목록만 맞춘다.
+   반경·전환 시간은 Stone 테마 토큰(--radius-*, --duration-*)을 그대로 쓴다. */
+:root{
+  --spacing-1:.25rem;--spacing-2:.5rem;--spacing-3:.75rem;--spacing-4:1rem;--spacing-5:1.25rem;--spacing-6:1.5rem;--spacing-11:2.75rem;--spacing-12:3rem;
+  --ease-standard:cubic-bezier(.24,1,.4,1);
+  --card-px:24px;
+}
+@media(max-width:760px){:root{--card-px:18px}}
+
+/* 줄 높이를 4px 격자에 맞춘다 (17px→24, 15px→24, 13px→20, 12px→20) */
+body{line-height:1.4118}
+.card .sub,.sheet-now,.calendar-note,.gate-sub,.pnm,.stx,.thankline,.logrow,.notice p,.replacement-confirm p{line-height:1.6}
+.row .nm{line-height:1.4118}
+.row .wh,.row .sec,.note,.pnote,.status,.foothint{line-height:1.5385}
+.eyebrow,.section-label,.sheet-lab,.input-label,.row .by,.pby,.memoby{line-height:1.6667}
+.card h2,.sheet-in h3{line-height:1.2727}
+h1{line-height:1.2941}
+
+/* 촘촘한 목록은 카드 끝까지 닿는 줄로: 구분선이 가장자리까지 이어지고 눌렀을 때 줄 전체가 반응한다 */
+.card .row,.card .guest-gift,.card .thankrow,.card>.note{margin-inline:calc(var(--card-px) * -1);padding-inline:var(--card-px)}
+.row{gap:var(--spacing-3);padding-block:var(--spacing-5)}
+@media(hover:hover){.row:hover{background:color-mix(in srgb,var(--line-soft) 35%,transparent)}}
+
+/* 조작 요소(버튼·입력·선택)는 element 반경, 알약은 칩·진설 자리·프로필에만 */
+.btn,.who button,.seg button,.shoprow button,.isrcpick button,.sheet-pick button,.isrc,.imore,.newname button,.adm{border-radius:var(--radius-element)}
+.gate input,.npick,.memo input,.etcline input,.newname input{border-radius:var(--radius-element)}
+.gate input{min-height:var(--spacing-12);padding:var(--spacing-3) var(--spacing-4)}
+.adm{min-width:var(--spacing-11);padding:0 var(--spacing-3)}
+.seg,.shoprow,.isrcpick{gap:var(--spacing-2)}
+.parts,.shops,.ilist{margin-top:var(--spacing-3);padding:var(--spacing-3) var(--spacing-4);border-radius:var(--radius-container)}
+.bar,.bar i{border-radius:var(--radius-full)}
+
+/* 전환은 테마 시간·곡선으로, 모션 줄이기 설정을 따른다 */
+button,.btn,.row,.step,.part{transition:transform var(--duration-fast) var(--ease-standard),background-color var(--duration-fast) var(--ease-standard),border-color var(--duration-fast) var(--ease-standard)}
+@media(prefers-reduced-motion:reduce){
+  button,.btn,.row,.step,.part{transition-duration:.01ms}
+  button:active:not(:disabled){transform:none}
+}
+@media(max-width:760px){
+  h1{line-height:1.2}
+  .card h2{line-height:1.4}
+}
