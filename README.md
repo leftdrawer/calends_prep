@@ -15,7 +15,8 @@
 - `jibang.html` — 합동지방의 세로·전체 화면 보기
 - `assets/` — 로고·홈 화면 아이콘·중양 합동지방 PNG·봉행자 한자 글꼴
 - `tests/browser_test.py` — 브라우저 회귀 검사
-- `CLAUDE.md` / `DESIGN.md` — 기존 디자인 기준과 외부 참고 자료의 적용 범위
+- `vendor/` — Astryx Stone 0.7.16 테마 CSS, 글꼴 불러오기, MIT 라이선스
+- `CLAUDE.md` / `DESIGN.md` — 시각 기준은 Astryx Stone, Apple HIG는 보조. Mastercard 분석은 역사 자료
 - `.kiro/steering/` — 제품·기술·구조·문서 유지 지침
 - `docs/HISTORY.md` / `docs/domain-sangbogi.md` — 변경 이력과 도메인 규칙
 

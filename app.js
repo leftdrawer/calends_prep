@@ -6,7 +6,7 @@
     try{
       const png512=new URL('assets/icon-512.png',document.baseURI).href;
       const png192=new URL('assets/icon-192.png',document.baseURI).href;
-      const pageColor=document.documentElement.dataset.theme==='dark'?'#18181B':'#DCD8D4';
+      const pageColor=document.documentElement.dataset.theme==='dark'?'#101018':'#f0f0f7';
       const manifest={name:'은호당 초하루 준비', short_name:'초하루',
         description:'초하루와 절기 상차림 장보기',
         start_url:new URL('.',document.baseURI).href, scope:new URL('.',document.baseURI).href, display:'standalone',

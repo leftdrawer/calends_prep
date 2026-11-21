@@ -9,6 +9,14 @@
 - 관련 파일: `styles.css`(끝의 "Astryx 구조 정리" 구간), `index.html`(`styles.css?v=8`), `docs/HISTORY.md`
 - 작업자: Claude Code
 
+## 2026-11-18 — astryx 테마 이식으로 UX/UI 정비
+
+- 무엇을 바꿨는지 / 사용자 지시: "astryx와 stageshow를 활용해 웹에 배포된 사이트 UXUI 손보기", 테마만 이식하고 HIG는 보조 기준. 이미 포함된 Stone 0.7.16 CSS에 글꼴 불러오기와 MIT 고지를 보태고, 본문·제목·카드 반경·여백이 테마 토큰을 쓰게 했다. 합동지방 설정 패널과 밝기 스위치 바탕, 브라우저 테마색을 같은 토큰에 맞췄다. 마케팅 히어로가 없어 stageshow 그림은 넣지 않았다.
+- 왜: 상차림은 차분한 기록 화면이라 Stone(따뜻한 돌·슬레이트)이 맞다. 테마가 정한 색·글자·간격으로 화면을 맞추고, 44px·포커스·대비·다크 모드는 HIG로 보완한다. 경고·구매의 빨강과 축문·한문 글꼴은 그대로 둔다.
+- 관련 파일: `index.html`, `styles.css`, `jibang.html`, `app.js`, `theme-toggle.js`, `previews/duskdot/index.html`, `vendor/astryx-theme-stone-0.7.16.css`, `vendor/astryx-theme-stone-fonts.css`, `tests/browser_test.py`, `tests/theme_toggle_test.py`, `CLAUDE.md`, `DESIGN.md`, `docs/HISTORY.md`
+- 작업자: Cursor Cloud Agent (Grok Bot 구록이 경유)
+- 남은 일·확인 필요: Safari에서 `@scope`와 `light-dark()` 실기 확인. duskdot 유리 내부는 원본 셰이더라 페이지 바탕만 Stone과 맞춘다. 검증은 테마 검사 7개·브라우저 회귀 56개 통과, 1280·390 전후 캡처. 배포는 이 PR을 머지할 때 GitHub Pages가 갱신한다.
+
 ## 2026-11-17 — Astryx Stone 디자인 기준 적용
 
 - Astryx Stone 0.7.16과 MIT 라이선스를 고정 포함하고, 기존 상차림 UI의 색·글자·표면을 테마 토큰으로 연결했다. 저장된 `data-theme` 선택과 기록·로그인 동작은 유지했다.
