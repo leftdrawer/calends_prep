@@ -1,5 +1,13 @@
 # 작업 이력 (HISTORY)
 
+
+## 2026-11-26 — eunho-fx 중 안 보이거나 무의미한 효과 정리
+
+- 사용자 지시: 보이지 않거나 해치는 효과는 빼고, 잘 어울리는 것만 남긴 뒤 푸시. `manse_calender`는 건드리지 말 것.
+- 변경: `index.html`에서 `.brand-image` 금속광과 `#othername`/`#familycode` 밑줄 빛(입력칸을 감싸던 `span.fx-input-wrap` 포함)을 제거. `jibang.html`은 그대로.
+- 검증: 헤드리스 Chromium 1440·390.
+- 작업자: Grok Bot. 백업 `C:\Users\phlog\ai-audit\backups\20261126-0406-fx-cleanup\`.
+
 ## 2026-11-25 — 합동지방 화면에 은은한 드러남
 
 - 사용자 지시: 앞서 건너둔 jibang.html에도, 의례 화면답게 아주 약하게 효과를 적용.
