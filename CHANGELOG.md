@@ -2,6 +2,23 @@
 
 > 규칙: 상위 `C:\AI Projects\AGENTS.md`. 최신 항목이 위. 이 파일은 요약이고, 자세한 기록(지시·변경·검증·남은 사항)은 이 폴더 `AGENTS.md` 규칙대로 `docs/HISTORY.md`에 있다. 작업할 때 둘 다 갱신한다.
 
+## 2026-11-25 — 합동지방(jibang.html)에 은은한 드러남만 더함
+
+- 무엇: 은호당님 지시(앞서 손대지 않은 지방 화면에도, 의례에 어울리게 아주 약하게). #jibang 그림이 먹이 번지듯 한 번 드러난다(Image generation). 둘레 빛·구슬·자석·물결은 넣지 않았다. 전체 화면·PNG 저장·설정 숨기기 로직은 그대로다. 이미 넣어 둔 `vendor/eunho-fx.*` 를 불러온다.
+- 관련 파일: `jibang.html`, `CHANGELOG.md`, `docs/HISTORY.md`
+- 지킨 것: `prefers-reduced-motion` 이면 움직임이 멈춘다.
+- 작업자: Grok Bot (백업: `C:\Users\phlog\ai-audit\backups\20261125-2256\`)
+- 남은 일: 커밋·푸시(=Pages 반영)는 은호당님 승인 후.
+
+## 2026-11-25 — libraries.dev 효과 적용 (eunho-fx)
+
+- 무엇: 은호당님 지시("libraries.dev 효과 컴포넌트 중 어울리는 것을 내 AI 페이지 전부에 적용"). libraries.dev 라이브러리(border-beam·thinking-orbs·liquid-gooey·metal-fx·img-fx)는 React 18 전용이라, 같은 효과를 React 없이 쓰는 공용 파일 eunho-fx 1.0(CSS+JS, gzip 약 10KB, thinking-orbs 엔진 MIT 포함)을 붙였다.
+- 이 페이지에 쓴 것: 서명 놋쇠빛 스침, 입구 '기록 보기'·'들어가기' 단추 둘레 빛(Border beam)과 성함·암호 칸 밑줄 빛, 달 넘김 물결, 제목 '불러오는 중' 구슬, 장볼 품목 체크마다 밑줄 빛·다 챙기면 숨 쉬는 빛, 단추 자석·카드 커서 빛. `jibang.html`은 같은 날 바로 위 항목처럼, 지방 그림이 한 번 드러나는 효과만 아주 약하게 더했다.
+- 관련 파일: `index.html`, `vendor/eunho-fx.js`·`vendor/eunho-fx.css`·`vendor/eunho-fx-LICENSE.txt`(새로), `CHANGELOG.md`, `docs/HISTORY.md`
+- 남은 일: 커밋·푸시(=Pages 반영)는 은호당님 승인 후.
+- 지킨 것: 계산·저장·전송 로직과 글자(문구)는 바꾸지 않았다. `prefers-reduced-motion`이면 움직임이 모두 멈추고, 자석·커서 빛은 마우스가 있는 큰 화면에서만 켜진다. 화면 밖·숨은 탭에서는 멈춘다.
+- 작업자: Grok Bot (백업: `C:\Users\phlog\ai-audit\backups\20261125-2045\`)
+
 ## 2026-11-21 — 저장소 점검: 글꼴 불러오기만 줄임
 
 - 무엇: 테마 글꼴 CSS의 `@import` 사슬과 쓰지 않는 JetBrains Mono 요청을 빼고, Figtree·Montserrat를 HTML에서 직접 불러온다. Pretendard 링크의 불필요한 `as="style"`도 뺐다. 기록·화면 동작·배포 설정은 그대로다.

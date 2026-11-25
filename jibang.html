@@ -85,5 +85,17 @@
       setControls(true);
     };
   </script>
+<!-- eunho-fx: libraries.dev 효과(Border beam·Liquid metal·Image generation·Gooey·Distortion waves·Magnetic UI·Thinking orbs)를 React 없이 옮긴 것. 원작 MIT © Jakub Antalik -->
+<link rel="stylesheet" href="vendor/eunho-fx.css?v=1">
+<style id="eunho-fx-page">/* 지방은 의례 화면이라 색만 아주 낮게 둔다. 움직임은 develop 한 번뿐. */
+</style>
+<script src="vendor/eunho-fx.js?v=1"></script>
+<script id="eunho-fx-init">/* 합동지방 — libraries.dev 효과 연결 (eunho-fx). 의례 화면이므로 지방 그림이 먹이 번지듯 한 번만 드러나게 한다. 단추·저장·전체화면 로직은 건드리지 않는다. */
+(function(){
+  if(!window.EunhoFX) return;
+  var img = document.getElementById('jibang');
+  if(img) window.EunhoFX.develop(img, 1600);
+})();
+</script>
 </body>
 </html>

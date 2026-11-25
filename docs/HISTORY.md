@@ -1,5 +1,25 @@
 # 작업 이력 (HISTORY)
 
+## 2026-11-25 — 합동지방 화면에 은은한 드러남
+
+- 사용자 지시: 앞서 건너둔 jibang.html에도, 의례 화면답게 아주 약하게 효과를 적용.
+- 변경: `jibang.html` 끝에서 기존 `vendor/eunho-fx.js`·`eunho-fx.css` 를 불러, 지방 그림(`#jibang`)이 먹이 번지듯 한 번 드러나게 했다. 단추·전체화면·PNG 저장 로직은 불변.
+- 검증: 박스 브라우저에서 스크립트 오류 없음, '움직임 줄이기'면 애니메이션 없음. (시험 서버에는 큰 PNG가 없어 그림 파일 자체는 404였고, 본래 PC 자산 경로에는 파일이 있다.)
+- 작업자: Grok Bot. 백업 `C:\Users\phlog\ai-audit\backups\20261125-2256\calends_prep\`.
+- 남은 일: 커밋·푸시는 은호당님 승인 후.
+
+## 2026-11-25 — libraries.dev 효과 적용 (eunho-fx)
+
+- 사용자 지시: "http://libraries.dev/ 이곳 라이브러리에는 매우 다양한 효과 컴포넌트들이 있어. 아주 예뻐. 내가 만들어서 쓰고 있는 모든 AI 페이지에 대해서 이것들 중 적절해보이는 것을 적용해줘. 전부 다."
+- 바깥 자료: libraries.dev(MIT © Jakub Antalik)의 border-beam 1.4.1·thinking-orbs 0.3.2·metal-fx 2.0.11·liquid-gooey 0.2.2·img-fx 0.5.1. 모두 React 18 전용이라 React 없이 같은 효과를 내는 `vendor/eunho-fx.js`·`vendor/eunho-fx.css`(gzip 약 10KB, thinking-orbs 엔진 MIT 고지는 `vendor/eunho-fx-LICENSE.txt`)를 새로 두고 `index.html` 끝에서 불러온다.
+- 변경 (`index.html` 끝 eunho-fx 블록만; `app.js`·`styles.css`·저장 키·문구 불변):
+  - 서명 그림 놋쇠빛 스침(Liquid metal), 입구 '기록 보기'·'들어가기' 단추 둘레 빛(Border beam), 성함·암호 칸은 `span.fx-input-wrap`으로 감싸 포커스 때 밑줄 빛(칸의 바깥 여백은 감싼 쪽으로 옮김).
+  - 달 넘김 때 제목 물결(Distortion waves), 제목이 '불러오는 중'일 때 숨 쉬는 구슬(Thinking orbs `breathing`), 진행 막대: 체크가 늘면 밑줄 빛 한 번, 다 챙기면 숨 쉬는 빛.
+  - 단추 자석·카드 커서 빛(Magnetic UI, 마우스 화면만). `prefers-reduced-motion`이면 모두 멈춤. 화면 밖에서는 멈춤.
+  - `jibang.html`(제사 때 띄우는 지방)은 의례 화면이라 손대지 않음.
+- 검증: `node tests/domain_test.cjs` 통과. `python tests/browser_test.py` 56개 모두 통과(316초). 박스에서 390·1440px, 밝게·어둡게 화면 확인.
+- 작업자: Grok Bot. 백업 `C:\Users\phlog\ai-audit\backups\20261125-2045\calends_prep\`.
+- 남은 일: 커밋·푸시(=Pages 반영)는 은호당님 승인 후.
 ## 2026-11-21 — 저장소 점검
 
 - 사용자 지시: 머지된 main에서 저장소 전체를 점검하고 별도 PR만 연다. 동작·데이터·URL·저장 스키마와 배포 설정은 바꾸지 않는다.

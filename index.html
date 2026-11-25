@@ -209,5 +209,48 @@ try{var themeChoice=localStorage.getItem('sangbogi:theme');if(themeChoice==='lig
 <script src="theme-toggle.js?v=5" defer></script>
 <script src="rituals.js" defer></script>
 <script src="app.js" defer></script>
+<!-- eunho-fx: libraries.dev 효과(Border beam·Liquid metal·Image generation·Gooey·Distortion waves·Magnetic UI·Thinking orbs)를 React 없이 옮긴 것. 원작 MIT © Jakub Antalik -->
+<link rel="stylesheet" href="vendor/eunho-fx.css?v=1">
+<style id="eunho-fx-page">/* 은호당 상차림 — eunho-fx 색 맞춤 (놋쇠빛) */
+:root{ --fx-beam-a:light-dark(#b8833f, #e2bf86); --fx-beam-b:light-dark(#f0cf8c, #fff1d2); --fx-metal-hi:#fff0c9; --fx-sheen:light-dark(#c4923f, #f0cf8c); --fx-light:rgba(179,116,47,.07); --fx-beam-speed:6s; }
+:root[data-theme="dark"]{ --fx-light:rgba(255,226,180,.06); }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --fx-light:rgba(255,226,180,.06); } }
+.fx-title-orb{ margin-left:10px; vertical-align:-4px; }
+.fx-title-orb[hidden]{ display:none; }
+.fx-input-wrap{ display:block; position:relative; border-radius:inherit; }
+</style>
+<script src="vendor/eunho-fx.js?v=1"></script>
+<script id="eunho-fx-init">/* 은호당 상차림 — libraries.dev 효과 연결 (eunho-fx). 기록·암호·저장 로직은 건드리지 않는다. */
+(function(){
+  if(!window.EunhoFX) return;
+  var FX = window.EunhoFX, $ = function(id){ return document.getElementById(id); };
+  FX.auto({
+    metal: '.brand-image, .sign-image',            // Liquid metal: 서명에 놋쇠빛이 한 번씩 스친다
+    magnetic: '.btn.solid, .who button',           // Magnetic UI (마우스 화면만)
+    light: '.card, .gate-form .who button'         // 커서 빛 (마우스 화면만)
+  });
+  // Border beam: 입구의 '기록 보기'·'들어가기' 단추 둘레를 천천히 도는 빛, 성함·암호 칸은 쓰는 동안 밑줄 빛
+  ['otherbtn','lockverify'].forEach(function(id){ var b = $(id); if(b) FX.beam(b, {variant:'sm', strength:.9}); });
+  ['othername','familycode'].forEach(function(id){ var i = $(id); if(!i || !i.parentNode) return;
+    var wrap = document.createElement('span'); wrap.className = 'fx-input-wrap'; i.parentNode.insertBefore(wrap, i); wrap.appendChild(i);
+    var mb = getComputedStyle(i).marginBottom; wrap.style.marginBottom = mb; i.style.marginBottom = '0';
+    var lb = FX.beam(wrap, {variant:'line', active:false}); i.addEventListener('focus', function(){ lb.on(); }); i.addEventListener('blur', function(){ lb.off(); }); });
+  // Distortion waves: 달을 넘기면 제목과 본문이 물결로 넘어간다
+  ['prev','next'].forEach(function(id){ var b = $(id); if(b) b.addEventListener('click', function(){ FX.wave(document.querySelector('.page-heading'), {ms:520, scale:20}); }); });
+  // Thinking orb: 제목이 '불러오는 중'인 동안 숨 쉬는 구슬
+  var title = $('title');
+  if(title){ var orb = FX.orbEl(null); orb.className = 'fx-orb fx-title-orb'; orb.hidden = true; title.appendChild(orb);
+    var syncT = function(){ var busy = /불러오는 중/.test(title.textContent); if(busy && !orb.isConnected) title.appendChild(orb); orb.hidden = !busy; FX.orb(orb, busy ? 'breathing' : null, 32, {label:'불러오는 중'}); };
+    new MutationObserver(syncT).observe(title, {childList:true, characterData:true, subtree:true}); syncT(); }
+  // 준비 진행: 하나 더 챙길 때마다 아래로 빛이 지나가고, 다 챙기면 숨 쉬듯 빛난다
+  var done = $('done'), total = $('total'), prog = $('prog'), lastN = null;
+  if(done && prog){ var pb = null;
+    new MutationObserver(function(){ var n = parseInt(done.textContent, 10) || 0, t = parseInt((total.textContent||'').replace(/\D/g,''), 10) || 0;
+      if(lastN !== null && n > lastN) FX.beamOnce(prog, 2200, 'line');
+      if(!pb) pb = FX.beam(prog, {variant:'pulse', active:false});
+      (t > 0 && n >= t) ? pb.on() : pb.off(); lastN = n;
+    }).observe(done, {childList:true, characterData:true, subtree:true}); }
+})();
+</script>
 </body>
 </html>
