@@ -3,6 +3,13 @@
 > 규칙: 상위 `C:\AI Projects\AGENTS.md`. 최신 항목이 위. 이 파일은 요약이고, 자세한 기록(지시·변경·검증·남은 사항)은 이 폴더 `AGENTS.md` 규칙대로 `docs/HISTORY.md`에 있다. 작업할 때 둘 다 갱신한다.
 
 
+## 2026-11-28 — 챙긴 수 굴림·품목 창 자리 잡기 (eunho-fx-plus)
+
+- 무엇: 하나 챙길 때마다 진행 칸의 챙긴 수(`#done`)가 아래에서 굴러 올라온다(EasyUI Animated Number Morph). 품목을 눌러 여는 아래 창(`#sheet`)은 올라오며 0.94→1.02→1로 살짝 넘쳤다가 자리 잡고 바탕은 스며든다(EasyUI SettleModal). 기록·암호·저장 로직은 그대로.
+- 출처: EasyUI(MIT © 2026 Suraj Maurya)·Morphin UI(MIT © 2026 Ivan Oliinyk)의 동작을 React 없이 새로 쓴 `eunho-fx-plus` 1.1. `vendor/eunho-fx-plus.js`, 라이선스 `vendor/eunho-fx-plus-LICENSE.txt`.
+- 관련 파일: `index.html`, `vendor/eunho-fx-plus.js`, `vendor/eunho-fx-plus-LICENSE.txt`, `CHANGELOG.md`, `docs/HISTORY.md`
+- 작업자: Grok Bot (백업: `C:\Users\phlog\ai-audit\backups\20261128-1856-round3\calends_prep\`)
+
 ## 2026-11-26 — eunho-fx 중 안 보이거나 무의미한 효과 정리
 
 - 무엇: 가는 먹선 서명(`.brand-image`)의 놋쇠 금속광과, 성함·암호 칸의 밑줄 빛(`#othername`/`#familycode`, 굵은 테두리에 묻힘)을 뺐다. 입구 '기록 보기'·'들어가기' 단추 둘레 빛, 달 넘김 물결, 지방(`jibang.html`) 현상, 진행 막대·불러오는 중 구슬, 단추 자석·카드 커서 빛은 그대로 둔다.

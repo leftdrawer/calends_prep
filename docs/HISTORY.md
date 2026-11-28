@@ -1,6 +1,13 @@
 # 작업 이력 (HISTORY)
 
 
+## 2026-11-28 — 챙긴 수 굴림·품목 창 자리 잡기
+
+- 사용자 지시: kit.uixninja.com·morphin.dev·paceui.com·easyui.site를 살펴 사이트에 어울리는 것을 적용(효과가 확실히 보이고 맥락에 맞는 것만).
+- 변경: `index.html`이 `vendor/eunho-fx-plus.js`를 불러 `#done` 숫자 굴림(EasyUI Animated Number Morph)과 `#sheet` 열림 자리 잡기(EasyUI SettleModal)를 건다. 둘 다 앱이 바꾸는 DOM(`done.textContent`, `sheet.hidden=false`)을 지켜보기만 한다.
+- 검증: 헤드리스 Chromium 1440·390. 보기 전용 화면 요소 좌표 원본과 같음. 가족 화면은 암호가 필요해 같은 DOM 변화를 흉내 내 확인(쓰기 요청은 막음). 움직임 줄이기면 꺼짐.
+- 작업자: Grok Bot. 백업 `C:\Users\phlog\ai-audit\backups\20261128-1856-round3\calends_prep\`.
+
 ## 2026-11-26 — eunho-fx 중 안 보이거나 무의미한 효과 정리
 
 - 사용자 지시: 보이지 않거나 해치는 효과는 빼고, 잘 어울리는 것만 남긴 뒤 푸시. `manse_calender`는 건드리지 말 것.

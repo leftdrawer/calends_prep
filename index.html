@@ -219,6 +219,8 @@ try{var themeChoice=localStorage.getItem('sangbogi:theme');if(themeChoice==='lig
 .fx-title-orb[hidden]{ display:none; }
 </style>
 <script src="vendor/eunho-fx.js?v=1"></script>
+<!-- eunho-fx-plus: EasyUI·Morphin UI 동작을 React 없이 옮김 (MIT, vendor/eunho-fx-plus-LICENSE.txt) -->
+<script src="vendor/eunho-fx-plus.js?v=1"></script>
 <script id="eunho-fx-init">/* 은호당 상차림 — libraries.dev 효과 연결 (eunho-fx). 기록·암호·저장 로직은 건드리지 않는다. */
 (function(){
   if(!window.EunhoFX) return;
@@ -244,6 +246,10 @@ try{var themeChoice=localStorage.getItem('sangbogi:theme');if(themeChoice==='lig
       if(!pb) pb = FX.beam(prog, {variant:'pulse', active:false});
       (t > 0 && n >= t) ? pb.on() : pb.off(); lastN = n;
     }).observe(done, {childList:true, characterData:true, subtree:true}); }
+  // Roll (EasyUI Animated Number Morph): 하나 챙길 때마다 챙긴 수가 아래에서 굴러 올라온다
+  if(FX.roll) FX.roll(done);
+  // Settle (EasyUI SettleModal): 품목을 누르면 아래 창이 올라와 살짝 넘쳤다가 자리 잡는다
+  if(FX.settleOn) FX.settleOn($('sheet'), {panel:'.sheet-in', backdrop:'.sheet-bg', from:'bottom'});
 })();
 </script>
 </body>
